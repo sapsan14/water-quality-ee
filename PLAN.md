@@ -325,7 +325,7 @@ importances.head(10).plot(kind='barh', title='Топ-10 признаков')
 | 4. Препроцессинг | [x] | `03_preprocessing.ipynb`, `src/features.py` — 53 признака, `ml_ready.joblib` |
 | 5. Модели | [x] | `04_models.ipynb` — LR, RF, GradientBoosting, GridSearchCV RF |
 | 6. Оценка | [x] | `05_evaluation.ipynb`, `src/evaluate.py` — матрица, ROC, feature importance |
-| 7. Отчёт | [ ] | `docs/report.md` — **следующий шаг** |
+| 7. Отчёт | [x] | `docs/report.md` — написан: EDA инсайты, методология, результаты, интерпретация |
 
 ### Ключевые результаты (данные: 38 594 проб, 2021–2026)
 

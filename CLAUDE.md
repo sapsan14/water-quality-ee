@@ -77,4 +77,5 @@ Five water domains defined in `src/data_loader.DOMAINS`. Only `supluskoha` and `
 - See `docs/normy.md` for regulatory thresholds by parameter
 - See `docs/glosarij.md` for RU/ET/EN terminology glossary
 - See `docs/parametry.md` for detailed descriptions of every water parameter (what it measures, health effects, typical sources, norms across domains)
+- See `docs/report.md` for the final project report (EDA insights, methodology, model results, interpretation, limitations)
 - `features.NORMS` encodes the key thresholds used for ratio features
