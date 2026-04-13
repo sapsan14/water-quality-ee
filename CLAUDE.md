@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Binary classification ML project for a TalTech Masinõpe (Machine Learning) course. Goal: predict whether a water sample complies with Estonian health norms (`compliant`: 1 = pass, 0 = violation). Data comes from Terviseamet (Estonian Health Department) in XML format via [vtiav.sm.ee](https://vtiav.sm.ee).
+**Probabilistic risk estimator** for water quality compliance — a TalTech Masinõpe (Machine Learning) course project. The model estimates P(violation) based on laboratory measurements from Estonian water samples. It does NOT predict physical water quality or safety directly; it classifies whether a sample's measurement profile matches historical violation patterns.
 
-**Priority metric: Recall on class 0 (violations)** — a False Negative means predicting water is safe when it contains E. coli.
+**What the model predicts:** probability that a water sample violates Estonian health norms (`compliant`: 1 = pass, 0 = violation), based on 15 chemical/biological parameters + engineered features.
+
+**What it does NOT predict:** unmeasured contaminants, future water quality, causal reasons for contamination, or safety beyond the measured parameters. See `docs/ml_framing.md` for full analysis.
+
+**Priority metric: Recall on class 0 (violations)** — a False Negative means predicting water is safe when it contains E. coli. Threshold is optimized via `best_threshold_max_recall_at_precision()` for decision support.
 
 ## Setup
 
@@ -69,7 +73,7 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 
 ## Citizen service
 
-`citizen-service/` — Streamlit map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`). Build: `python citizen-service/scripts/build_citizen_snapshot.py` (full RF layer) or `... --map-only` (official data + map only, no model). See `citizen-service/README.md`.
+`citizen-service/` — Streamlit map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`), drinking water sources (`joogivesi`). Two layers: **official status** (from Terviseamet data) and **model risk assessment** (P(violation) from RF). The service does NOT predict future quality, does NOT replace official assessments, and does NOT provide health recommendations — it visualizes data and probabilistic risk estimates. Build: `python citizen-service/scripts/build_citizen_snapshot.py` (full RF layer) or `... --map-only` (official data + map only, no model). See `citizen-service/README.md`.
 
 ## Notebooks plan
 
@@ -84,10 +88,12 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 
 ## Domain knowledge
 
+- See `docs/ml_framing.md` for **what the model predicts vs what it cannot** (ML problem framing, limitations, mental model)
 - See `docs/normy.md` for regulatory thresholds by parameter
 - See `docs/glosarij.md` for RU/ET/EN terminology glossary
 - See `docs/parametry.md` for detailed descriptions of every water parameter (what it measures, health effects, typical sources, norms across domains)
 - See `docs/report.md` for the final project report (EDA insights, methodology, model results, interpretation, limitations)
+- See `docs/ml_metrics_guide.md` for the ML metrics guide: ROC-AUC, Precision/Recall, Calibration, SHAP — 4 levels of model understanding with intuition, formulas, and project-specific examples
 - `features.NORMS` encodes the key thresholds used for ratio features
 
 ## Tests
