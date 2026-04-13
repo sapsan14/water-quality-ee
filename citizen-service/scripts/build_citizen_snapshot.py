@@ -77,6 +77,40 @@ PLACE_KIND = {
     "veevark": "drinking_water",
     "joogivesi": "drinking_source",
 }
+
+
+def _normalize_location_key(name: str, domain: str) -> str:
+    """
+    Нормализованный ключ названия места для дедупликации.
+
+    Terviseamet переименовывал объекты между годами в opendata XML, например:
+      'Harku järve supluskoht' → 'Harku järve rand'
+      'Abja-Paluoja  veevärk'  → 'Abja-Paluoja veevärk'  (лишний пробел)
+      'Haaslava küla veevärk'  → 'Haaslava küla ühisveevärk'
+      'Tootsi Ujumisbassein'   → 'Tootsi ujumisbassein'   (регистр)
+
+    Алгоритм: нижний регистр → убрать суффиксы домена → нормализовать пунктуацию/пробелы.
+    Два названия с одинаковым ключом в одном домене считаются одним местом;
+    берётся запись с более свежей датой пробы.
+    """
+    import re as _re
+    n = name.lower().strip()
+    # Суффиксы купальных мест (менялись между годами)
+    n = _re.sub(r"\bsupluskoht\b", "", n)
+    n = _re.sub(r"\bsupluskoha\b", "", n)
+    n = _re.sub(r"\brand\b", "", n)
+    n = _re.sub(r"\bsuplusala\b", "", n)
+    # Суффиксы водопровода
+    n = _re.sub(r"\bühistveevärk\b", "", n)
+    n = _re.sub(r"\bühisveevärk\b", "", n)
+    n = _re.sub(r"\bveevärk\b", "", n)
+    n = _re.sub(r"\bveevõrk\b", "", n)
+    n = _re.sub(r"\bveevork\b", "", n)
+    # Нормализация пунктуации и пробелов
+    n = _re.sub(r"[-–—]+", " ", n)
+    n = _re.sub(r"[,;]+", " ", n)
+    n = _re.sub(r"\s+", " ", n).strip()
+    return f"{domain}|{n}"
 # Kui pole Nominatimi ega maakonda: stabiilne punkt EE bbox-is (pole GPS, ainult ülevaade).
 EE_BBOX_LAT = (57.48, 59.68)
 EE_BBOX_LON = (21.65, 28.22)
@@ -245,11 +279,23 @@ def main() -> None:
         _timer_print("5) predict_proba → model_violation_prob по каждой строке", t_run, last)
     full["sample_date"] = pd.to_datetime(full["sample_date"], errors="coerce")
     full = full.sort_values("sample_date")
-    latest_idx = full.groupby(["domain", "location"], sort=False).tail(1).index
+
+    # Нормализованный ключ места: убираем суффиксы, которые Terviseamet менял между годами
+    # (supluskoht → rand, veevärk → ühisveevärk, пробелы, регистр).
+    # Дедупликация идёт по нормализованному ключу, но в снимок записывается
+    # актуальное (последнее) название.
+    full["_loc_key"] = full.apply(
+        lambda r: _normalize_location_key(str(r.get("location", "") or ""), str(r.get("domain", "") or "")),
+        axis=1,
+    )
+    latest_idx = full.groupby(["domain", "_loc_key"], sort=False).tail(1).index
     latest = full.loc[latest_idx].copy()
     latest = latest[latest["domain"].isin(MAP_DOMAINS)]
+    n_dedup = len(full[full["domain"].isin(MAP_DOMAINS)].groupby(["domain", "location"])) - len(latest)
+    if n_dedup > 0:
+        print(f"[citizen] дедупликация по нормализованному имени: объединено {n_dedup} дублей (переименования в XML)")
     _timer_print(
-        "6) dedupe: последняя проба на (domain, location) + фильтр map_domains",
+        "6) dedupe: последняя проба на (domain, norm_location_key) + фильтр map_domains",
         t_run,
         last,
     )

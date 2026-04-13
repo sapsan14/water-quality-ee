@@ -138,6 +138,62 @@ def load_xml(domain_key: str) -> bytes:
     return load_domain_xml_blobs(domain_key, years=default_years()[:1], use_cache=True)[0]
 
 
+# ── Нормализация названий мест ───────────────────────────────────────────────
+
+def normalize_location(name: str, domain: str = "") -> str:
+    """
+    Нормализовать название места отбора пробы.
+
+    ПРОБЛЕМА (обнаружена при анализе данных апреля 2026):
+    Terviseamet переименовывал объекты между годовыми XML файлами. Одно и то же
+    физическое место получало разные строки в поле location:
+
+        'Harku järve supluskoht'  (2021) → 'Harku järve rand'  (2025)
+        'Haaslava küla veevärk'   (2022) → 'Haaslava küla ühisveevärk'  (2026)
+        'Tootsi Ujumisbassein'    (2021) → 'Tootsi ujumisbassein'  (2026, регистр)
+        'Abja-Paluoja  veevärk'   (2022) → 'Abja-Paluoja veevärk'  (2026, двойной пробел)
+
+    Без нормализации любая агрегация по location (группировка, дедупликация,
+    подсчёт проб на место) даёт ложные дубли: место выглядит как два разных объекта,
+    одному из которых годами не берут проб.
+
+    РЕШЕНИЕ: убираем суффиксы типа объекта и нормализуем пунктуацию/регистр.
+    Нормализованный ключ используется только для группировки; в DataFrame сохраняется
+    оригинальное актуальное название (из последней по дате пробы).
+
+    Применяется:
+        - В load_domain() / load_all() — добавляется столбец `location_key`
+        - В build_citizen_snapshot.py — для дедупликации последней пробы на место
+        - В анализе ноутбуков — для корректного подсчёта уникальных мест
+
+    Args:
+        name:   сырое название из XML (поле location в DataFrame)
+        domain: домен ('supluskoha', 'veevark', 'basseinid', 'joogivesi') —
+                позволяет убирать суффиксы, специфичные для домена
+
+    Returns:
+        Нормализованная строка в нижнем регистре без суффиксов типа объекта.
+    """
+    import re as _re
+    n = name.strip().lower()
+    # Суффиксы купальных мест (менялись между годами)
+    n = _re.sub(r"\bsupluskoht\b", "", n)
+    n = _re.sub(r"\bsupluskoha\b", "", n)
+    n = _re.sub(r"\brand\b", "", n)
+    n = _re.sub(r"\bsuplusala\b", "", n)
+    # Суффиксы водопровода
+    n = _re.sub(r"\bühistveevärk\b", "", n)
+    n = _re.sub(r"\bühisveevärk\b", "", n)
+    n = _re.sub(r"\bveevärk\b", "", n)
+    n = _re.sub(r"\bveevõrk\b", "", n)
+    n = _re.sub(r"\bveevork\b", "", n)
+    # Нормализация пунктуации и пробелов
+    n = _re.sub(r"[-–—]+", " ", n)
+    n = _re.sub(r"[,;]+", " ", n)
+    n = _re.sub(r"\s+", " ", n).strip()
+    return n
+
+
 # ── Парсинг: opendata proovivott ────────────────────────────────────────────
 
 def _parse_float_text(val: Optional[str]) -> Optional[float]:
@@ -658,6 +714,14 @@ def load_domain(
         df = pd.DataFrame()
     else:
         df = pd.concat(parts, ignore_index=True)
+
+    # Нормализованный ключ места: убирает суффиксы типа объекта и нормализует
+    # пунктуацию/регистр, чтобы 'Harku järve supluskoht' и 'Harku järve rand'
+    # считались одним местом при агрегации. Подробности: normalize_location().
+    if len(df) > 0 and "location" in df.columns:
+        df["location_key"] = df["location"].fillna("").apply(
+            lambda s: normalize_location(s, domain_key)
+        )
 
     print(
         f"[data_loader] {domain_key}: {len(df)} проб, "

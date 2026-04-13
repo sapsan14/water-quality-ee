@@ -80,30 +80,24 @@
       "sample_id": "237537"
     },
     {
-      "location": "Vinkli tn , Tartu linn, Tartu linn, Tartu maakond ladude ühisveevärk",
+      "location": "Vinkli tn, Tartu linn, Tartu linn, Tartu maakond ladude ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2021-03-01T00:00:00",
+      "sample_date": "2022-10-05T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
-        "ph": 7.7,
-        "nitrates": 0.2,
-        "nitrites": 0.006,
-        "ammonium": 0.33,
-        "manganese": 0.025,
-        "iron": 0.19,
-        "turbidity": 1.38,
-        "color": 2,
-        "coliforms": 0,
-        "chlorides": 5
+        "enterococci": 0,
+        "ph": 7.5,
+        "color": 5,
+        "coliforms": 0
       },
-      "lat": 58.69891241321431,
-      "lon": 25.52517853055619,
+      "lat": 58.7313515678645,
+      "lon": 25.463702220187685,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.1350845158927129,
-      "sample_id": "261789"
+      "model_violation_prob": 0.06441237880524985,
+      "sample_id": "288825"
     },
     {
       "location": "Tuhamäe hosteli veevärk",
@@ -1652,35 +1646,35 @@
       "sample_id": "251456"
     },
     {
-      "location": "Harku järve supluskoht",
+      "location": "Harku järve rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2021-08-16T00:00:00",
+      "sample_date": "2025-08-11T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 15,
-        "enterococci": 14
+        "e_coli": 140,
+        "enterococci": 70
       },
-      "lat": 58.723511482413976,
-      "lon": 25.354993133440146,
+      "lat": 58.659391546501865,
+      "lon": 25.390257495994508,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.010312362379467397,
-      "sample_id": "250826"
+      "model_violation_prob": 0.02844272899577097,
+      "sample_id": "366270"
     },
     {
-      "location": "Haabneeme supluskoht",
+      "location": "Haabneeme rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2021-08-16T00:00:00",
+      "sample_date": "2025-08-26T00:00:00",
       "official_compliant": 1,
       "measurements": {},
-      "lat": 58.530820553902494,
-      "lon": 25.50665178912032,
+      "lat": 58.68729114213779,
+      "lon": 25.625764476997023,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.19633542860626846,
-      "sample_id": "250913"
+      "model_violation_prob": 0.1775876078064213,
+      "sample_id": "366810"
     },
     {
       "location": "Porkuni Jahimaja veevärk",
@@ -1726,18 +1720,18 @@
       "sample_id": "250961"
     },
     {
-      "location": "Vääna-Jõesuu supluskoht",
+      "location": "Vääna-Jõesuu rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2021-08-27T00:00:00",
+      "sample_date": "2025-08-15T08:02:00",
       "official_compliant": 1,
       "measurements": {},
-      "lat": 58.515834668497746,
-      "lon": 25.605865186541543,
+      "lat": 58.81560044251163,
+      "lon": 25.469272526131075,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.19633542860626846,
-      "sample_id": "251749"
+      "model_violation_prob": 0.1775876078064213,
+      "sample_id": "365172"
     },
     {
       "location": "AS Silikaat joogivee süsteem (Silikaltsiidi 8, Männiku tee 123)",
@@ -1844,38 +1838,38 @@
       "sample_id": "252653"
     },
     {
-      "location": "Pikakari supluskoht",
+      "location": "Pikakari rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2021-09-20T00:00:00",
+      "sample_date": "2025-08-26T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 13,
-        "enterococci": 3
+        "e_coli": 30,
+        "enterococci": 10
       },
-      "lat": 58.77180704966811,
-      "lon": 25.415128938735027,
+      "lat": 58.56082436865797,
+      "lon": 25.33220988784619,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.04004142373215518,
-      "sample_id": "253480"
+      "model_violation_prob": 0.013489479904542998,
+      "sample_id": "367219"
     },
     {
-      "location": "Pirita supluskoht",
+      "location": "Pirita rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2021-09-20T00:00:00",
+      "county": "Harju maakond",
+      "sample_date": "2025-10-02T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 9,
-        "enterococci": 3
+        "e_coli": 30,
+        "enterococci": 10
       },
-      "lat": 58.666035324635686,
-      "lon": 25.37096169985504,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.034988558239403895,
-      "sample_id": "253479"
+      "lat": 59.27,
+      "lon": 24.9,
+      "coord_source": "county_centroid",
+      "model_violation_prob": 0.03932553752471222,
+      "sample_id": "370465"
     },
     {
       "location": "Puurkaev PRK0012441 — Pumplast väljuva vee kraan",
@@ -1914,21 +1908,21 @@
       "sample_id": "253697"
     },
     {
-      "location": "Pelgurand / Stroomi supluskoht",
+      "location": "Pelgurand / Stroomi rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2021-09-22T00:00:00",
+      "sample_date": "2025-08-26T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 92,
-        "enterococci": 24
+        "e_coli": 140,
+        "enterococci": 40
       },
-      "lat": 58.66378690775921,
-      "lon": 25.576812008850233,
+      "lat": 58.66565613794155,
+      "lon": 25.36162623025864,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.018450534692004746,
-      "sample_id": "253753"
+      "model_violation_prob": 0.02844272899577097,
+      "sample_id": "367213"
     },
     {
       "location": "Kaarepere küla puurkaev — Kaarepere küla puurkaev",
@@ -2550,32 +2544,32 @@
       "sample_id": "256638"
     },
     {
-      "location": "TÜ Kliinikumi Spordimeditsiini ja taastusravi ujula suur ravibassein",
+      "location": "TÜ Kliinikumi spordimeditsiini ja taastusravi ujula suur ravibassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2021-10-27T00:00:00",
+      "sample_date": "2026-03-10T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "enterococci": 0,
-        "ph": 7,
-        "nitrates": 1.5,
-        "ammonium": 0.05,
-        "turbidity": 1,
-        "color": 0,
+        "ph": 7.5,
+        "nitrates": 4.3,
+        "ammonium": 0.02,
+        "turbidity": 0.5,
+        "color": 5,
         "coliforms": 0,
-        "free_chlorine": 0.9,
-        "combined_chlorine": 0.4,
+        "free_chlorine": 1.1,
+        "combined_chlorine": 0.25,
         "pseudomonas": 0,
         "staphylococci": 0,
-        "oxidizability": 1.2,
+        "oxidizability": 1,
         "colonies_37c": 0
       },
-      "lat": 58.64726291294728,
-      "lon": 25.413793774319068,
+      "lat": 58.57322003509575,
+      "lon": 25.637658121614404,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.28381556115485024,
-      "sample_id": "256452"
+      "model_violation_prob": 0.45007038361867663,
+      "sample_id": "382567"
     },
     {
       "location": "Põnka puhketalu",
@@ -3210,11 +3204,11 @@
       "sample_id": "260891"
     },
     {
-      "location": "Kesklinna Lastepolikliiniku A-bassein",
+      "location": "Kesklinna Lastepolikliiniku A bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2021-12-06T00:00:00",
+      "sample_date": "2025-12-08T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "enterococci": 0,
@@ -3223,11 +3217,11 @@
         "staphylococci": 0,
         "colonies_37c": 0
       },
-      "lat": 58.532385366598,
-      "lon": 25.382476157778285,
+      "lat": 58.79742618448157,
+      "lon": 25.365204470893417,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.2531260767815811,
-      "sample_id": "259959"
+      "model_violation_prob": 0.33519311803176965,
+      "sample_id": "376055"
     },
     {
       "location": "Wiru Spordikeskuse laste bassein",
@@ -3626,32 +3620,32 @@
       "sample_id": "261735"
     },
     {
-      "location": "Tootsi Ujumisbassein",
+      "location": "Tootsi ujumisbassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2021-12-13T00:00:00",
-      "official_compliant": 0,
+      "sample_date": "2026-03-17T00:00:00",
+      "official_compliant": 1,
       "measurements": {
         "enterococci": 0,
-        "ph": 8.4,
-        "nitrates": 0.21,
-        "ammonium": 0.011,
+        "ph": 7.4,
+        "nitrates": 1.9,
+        "ammonium": 0.019,
         "turbidity": 0.5,
-        "color": 2,
+        "color": 2.1,
         "coliforms": 0,
-        "free_chlorine": 1.5,
-        "combined_chlorine": 0.2,
+        "free_chlorine": 0.92,
+        "combined_chlorine": 0.3,
         "pseudomonas": 0,
         "staphylococci": 0,
-        "oxidizability": 4.4,
+        "oxidizability": 3.1,
         "colonies_37c": 0
       },
-      "lat": 58.73504196231021,
-      "lon": 25.46390516517891,
+      "lat": 58.627956435492486,
+      "lon": 25.568459220263982,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.7692189596192153,
-      "sample_id": "260718"
+      "model_violation_prob": 0.6561845750804267,
+      "sample_id": "382680"
     },
     {
       "location": "vSpa lastebassein",
@@ -5039,26 +5033,26 @@
       "sample_id": "291481"
     },
     {
-      "location": "Abja-Paluoja  veevärk",
+      "location": "Abja-Paluoja veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2022-05-23T00:00:00",
+      "sample_date": "2026-03-30T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
-        "ph": 8.1,
-        "ammonium": 0.23,
-        "iron": 0.038,
+        "enterococci": 0,
+        "ph": 7.6,
+        "iron": 0.023,
         "turbidity": 0.2,
-        "color": 5.6,
+        "color": 5.2,
         "coliforms": 0
       },
-      "lat": 58.57888113221942,
-      "lon": 25.410931181811247,
+      "lat": 58.78706530861372,
+      "lon": 25.654166094453345,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.0446065137034078,
-      "sample_id": "275780"
+      "model_violation_prob": 0.05658328750623487,
+      "sample_id": "382984"
     },
     {
       "location": "Suure-jaani Tervisekoda lastebassein 5,1*4,0 m (ühtses süsteemis perebasseiniga)",
@@ -5277,26 +5271,22 @@
       "sample_id": "275323"
     },
     {
-      "location": "Vaimastvere küla veevõrk",
+      "location": "Vaimastvere küla veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2022-06-08T08:15:00",
+      "sample_date": "2025-02-27T11:35:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 0,
         "ph": 7.2,
-        "ammonium": 0.05,
-        "iron": 0.02,
-        "turbidity": 1,
-        "color": 0,
-        "coliforms": 0
+        "nitrates": 44,
+        "chlorides": 100
       },
-      "lat": 58.59789921416037,
-      "lon": 25.64344739452201,
+      "lat": 58.62351834897383,
+      "lon": 25.60154993514916,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.023210323734466083,
-      "sample_id": "274688"
+      "model_violation_prob": 0.21916943681511944,
+      "sample_id": "353888"
     },
     {
       "location": "Siimusti aleviku ühisveevõrk",
@@ -6613,26 +6603,6 @@
       "sample_id": "286600"
     },
     {
-      "location": "Vinkli tn, Tartu linn, Tartu linn, Tartu maakond ladude ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2022-10-05T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.5,
-        "color": 5,
-        "coliforms": 0
-      },
-      "lat": 58.7313515678645,
-      "lon": 25.463702220187685,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.06441237880524985,
-      "sample_id": "288825"
-    },
-    {
       "location": "Mõntu sadama ja külmhoone veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -6654,33 +6624,23 @@
       "sample_id": "286865"
     },
     {
-      "location": "Haaslava küla veevärk",
+      "location": "Haaslava küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2022-10-06T00:00:00",
+      "sample_date": "2026-02-03T10:10:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
         "enterococci": 0,
-        "ph": 7.6,
-        "nitrates": 1.5,
-        "nitrites": 0.01,
-        "ammonium": 0.02,
-        "fluoride": 0.11,
-        "manganese": 0.01,
-        "iron": 0.02,
-        "turbidity": 0.5,
-        "color": 5,
-        "coliforms": 0,
-        "chlorides": 1.9,
-        "sulfates": 3.4
+        "ph": 7.4,
+        "coliforms": 0
       },
-      "lat": 58.76333142595559,
-      "lon": 25.402968261234456,
+      "lat": 58.62938773174639,
+      "lon": 25.61925955596246,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.10160168915043938,
-      "sample_id": "289529"
+      "model_violation_prob": 0.07131852053979325,
+      "sample_id": "380730"
     },
     {
       "location": "Melliste küla ühisveevärk",
@@ -7141,24 +7101,27 @@
       "sample_id": "294281"
     },
     {
-      "location": "Külmavee bassein",
+      "location": "külmavee bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2022-11-04T00:00:00",
-      "official_compliant": 1,
+      "sample_date": "2025-09-02T00:00:00",
+      "official_compliant": 0,
       "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 7
+        "ph": 7,
+        "nitrates": 0.9,
+        "ammonium": 0.07,
+        "turbidity": 0.4,
+        "color": 4,
+        "free_chlorine": 0.8,
+        "combined_chlorine": 1,
+        "oxidizability": 6.1
       },
-      "lat": 58.61072213321126,
-      "lon": 25.674674219882505,
+      "lat": 58.70269893949798,
+      "lon": 25.33853322652018,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.2855072676606288,
-      "sample_id": "288194"
+      "model_violation_prob": 0.7010407504080969,
+      "sample_id": "367668"
     },
     {
       "location": "Ring SPA Spaabassein",
@@ -9535,22 +9498,22 @@
       "sample_id": "300928"
     },
     {
-      "location": "Järlepa küla veevärk",
+      "location": "Järlepa küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-05-03T00:00:00",
+      "sample_date": "2025-11-04T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.5,
-        "turbidity": 1,
-        "color": 3
+        "ph": 7.2,
+        "turbidity": 0.3,
+        "color": 2
       },
-      "lat": 58.75088769359884,
-      "lon": 25.465005340657665,
+      "lat": 58.66751468680857,
+      "lon": 25.45201152056153,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.041384531438624084,
-      "sample_id": "301341"
+      "model_violation_prob": 0.020699183147996816,
+      "sample_id": "373363"
     },
     {
       "location": "Juuru alevi veevärk",
@@ -9899,21 +9862,33 @@
       "sample_id": "304631"
     },
     {
-      "location": "Varbola küla veevärk",
+      "location": "Varbola küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-05-30T00:00:00",
+      "sample_date": "2025-08-12T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
-        "coliforms": 0
+        "enterococci": 0,
+        "ph": 7.7,
+        "nitrates": 4.7,
+        "nitrites": 0.03,
+        "ammonium": 0.025,
+        "fluoride": 0.55,
+        "manganese": 0.01,
+        "iron": 0.02,
+        "turbidity": 0.5,
+        "color": 3.7,
+        "coliforms": 0,
+        "chlorides": 11,
+        "sulfates": 31
       },
-      "lat": 58.80043831540398,
-      "lon": 25.490549706263828,
+      "lat": 58.48659990844587,
+      "lon": 25.334303425650415,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.04919591481041521,
-      "sample_id": "308266"
+      "model_violation_prob": 0.12893457755901308,
+      "sample_id": "377512"
     },
     {
       "location": "Jõgisoo elamute ühisveevärk",
@@ -10036,25 +10011,24 @@
       "sample_id": "305790"
     },
     {
-      "location": "Lokuta küla veevärk",
+      "location": "Lokuta küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-06-13T00:00:00",
+      "sample_date": "2025-07-01T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.5,
+        "ph": 7.4,
         "ammonium": 0.05,
-        "manganese": 0.01,
         "iron": 0.03,
-        "turbidity": 1,
+        "turbidity": 0.3,
         "color": 4
       },
-      "lat": 58.799599832150754,
-      "lon": 25.483788433661402,
+      "lat": 58.603170443274585,
+      "lon": 25.617534523537042,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.044022517579210683,
-      "sample_id": "305586"
+      "model_violation_prob": 0.03717865482349214,
+      "sample_id": "363332"
     },
     {
       "location": "Lepispea Caravan & Camping veevärk",
@@ -10097,22 +10071,30 @@
       "sample_id": "305845"
     },
     {
-      "location": "Hertu küla veevärk",
+      "location": "Hertu küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-06-20T00:00:00",
+      "sample_date": "2025-05-20T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 0
+        "ph": 7.3,
+        "nitrates": 0.5,
+        "nitrites": 0.01,
+        "ammonium": 0.05,
+        "fluoride": 0.69,
+        "manganese": 0.003,
+        "iron": 0.022,
+        "turbidity": 0.3,
+        "color": 2,
+        "chlorides": 6,
+        "sulfates": 3
       },
-      "lat": 58.55648775463493,
-      "lon": 25.408693446250094,
+      "lat": 58.71280880445563,
+      "lon": 25.538759822995345,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05931807569080944,
-      "sample_id": "306305"
+      "model_violation_prob": 0.05865348879350344,
+      "sample_id": "360566"
     },
     {
       "location": "Õhne jõgi",
@@ -10391,24 +10373,27 @@
       "sample_id": "309842"
     },
     {
-      "location": "Tänassilma küla",
+      "location": "Tänassilma küla veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-07-31T00:00:00",
+      "sample_date": "2025-03-31T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.7,
-        "manganese": 0.01,
-        "iron": 0.03,
-        "turbidity": 1,
-        "color": 2
+        "e_coli": 0,
+        "enterococci": 0,
+        "ph": 7.4,
+        "fluoride": 0.13,
+        "iron": 0.02,
+        "turbidity": 0.2,
+        "color": 1.5,
+        "coliforms": 0
       },
-      "lat": 58.698960479133284,
-      "lon": 25.66787022201877,
+      "lat": 58.68205195696956,
+      "lon": 25.379319829098954,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.026222466477190877,
-      "sample_id": "309839"
+      "model_violation_prob": 0.03160570859776442,
+      "sample_id": "356510"
     },
     {
       "location": "Värska Sanatooriumi puurkaevu nr 6 veevärk (mineraalvesi)",
@@ -10442,21 +10427,21 @@
       "sample_id": "310685"
     },
     {
-      "location": "Alajõe  supluskoht",
+      "location": "Alajõe supluskoht",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2023-08-07T00:00:00",
+      "sample_date": "2025-08-14T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 29,
-        "enterococci": 10
+        "e_coli": 10,
+        "enterococci": 30
       },
-      "lat": 58.58413099870298,
-      "lon": 25.338997863736935,
+      "lat": 58.60606507972839,
+      "lon": 25.59290875104906,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.013053836160877599,
-      "sample_id": "310634"
+      "model_violation_prob": 0.012727225914530686,
+      "sample_id": "366536"
     },
     {
       "location": "Remniku laagri supluskoht",
@@ -10497,20 +10482,22 @@
       "sample_id": "310085"
     },
     {
-      "location": "Männiku küla veevõrk",
+      "location": "Männiku küla",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-08-09T00:00:00",
+      "sample_date": "2025-03-11T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "iron": 0.16
+        "e_coli": 0,
+        "enterococci": 0,
+        "coliforms": 0
       },
-      "lat": 58.48822880903334,
-      "lon": 25.509578469520104,
+      "lat": 58.80718890669108,
+      "lon": 25.355601968413826,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.09214668223958032,
-      "sample_id": "310429"
+      "model_violation_prob": 0.05104665268875067,
+      "sample_id": "354451"
     },
     {
       "location": "Viitna Pikkjärv",
@@ -10727,21 +10714,21 @@
       "sample_id": "319738"
     },
     {
-      "location": "Roosna-Alliku Tehisjärv",
+      "location": "Roosna-Alliku tehisjärv",
       "domain": "supluskoha",
       "place_kind": "swimming",
       "county": null,
-      "sample_date": "2023-08-24T09:00:00",
+      "sample_date": "2024-08-15T08:30:00",
       "official_compliant": 1,
       "measurements": {
-        "e_coli": 30,
+        "e_coli": 10,
         "enterococci": 10
       },
-      "lat": 58.55378538185702,
-      "lon": 25.41176966506447,
+      "lat": 58.65173838406958,
+      "lon": 25.447429236285956,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.013053836160877599,
-      "sample_id": "311339"
+      "model_violation_prob": 0.013086812083132008,
+      "sample_id": "338876"
     },
     {
       "location": "Karitsa järv",
@@ -10960,22 +10947,22 @@
       "sample_id": "314780"
     },
     {
-      "location": "Valgu küla veevärk",
+      "location": "Valgu küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-09-25T00:00:00",
+      "sample_date": "2026-02-17T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.6,
+        "ph": 7.9,
         "turbidity": 0.5,
-        "color": 7
+        "color": 4
       },
-      "lat": 58.67144541084917,
-      "lon": 25.560613794155795,
+      "lat": 58.790424582284274,
+      "lon": 25.370764095521476,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.041013396493464326,
-      "sample_id": "319508"
+      "model_violation_prob": 0.037258269018918905,
+      "sample_id": "382865"
     },
     {
       "location": "Soodoma küla ühisveevärk",
@@ -11016,22 +11003,30 @@
       "sample_id": "314608"
     },
     {
-      "location": "Poaka ja Kirna  küla ühisveevärk",
+      "location": "Poaka ja Kirna küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-10-04T00:00:00",
-      "official_compliant": 0,
+      "sample_date": "2025-09-24T00:00:00",
+      "official_compliant": 1,
       "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 1
+        "ph": 7.3,
+        "nitrates": 1.7,
+        "nitrites": 0.01,
+        "ammonium": 0.05,
+        "fluoride": 0.44,
+        "manganese": 0.003,
+        "iron": 0.012,
+        "turbidity": 0.3,
+        "color": 2,
+        "chlorides": 12,
+        "sulfates": 7
       },
-      "lat": 58.67216639963378,
-      "lon": 25.40135004196231,
+      "lat": 58.66530365453574,
+      "lon": 25.528479056992445,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.912971473427043,
-      "sample_id": "316235"
+      "model_violation_prob": 0.05491665339858022,
+      "sample_id": "370079"
     },
     {
       "location": "Ambla veevärk",
@@ -11524,11 +11519,34 @@
       "sample_id": "320059"
     },
     {
-      "location": "Kernu Keller Spa, mullivann",
+      "location": "Kernu Keller Spa mullivann",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2023-11-23T00:00:00",
+      "sample_date": "2026-01-30T00:00:00",
+      "official_compliant": 0,
+      "measurements": {
+        "ph": 7.4,
+        "nitrates": 4.1,
+        "ammonium": 0.67,
+        "turbidity": 2,
+        "color": 7,
+        "free_chlorine": 0.05,
+        "combined_chlorine": 0.4,
+        "oxidizability": 3.2
+      },
+      "lat": 58.77131570916304,
+      "lon": 25.57476653696498,
+      "coord_source": "approximate_ee",
+      "model_violation_prob": 0.8508019588744512,
+      "sample_id": "380281"
+    },
+    {
+      "location": "Kernu Keller Spa bassein",
+      "domain": "basseinid",
+      "place_kind": "pool_spa",
+      "county": null,
+      "sample_date": "2026-01-30T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "enterococci": 0,
@@ -11537,31 +11555,11 @@
         "staphylococci": 0,
         "colonies_37c": 3
       },
-      "lat": 58.75071145189593,
-      "lon": 25.668324177920194,
+      "lat": 58.54982795452811,
+      "lon": 25.50458495460441,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.2976250936744157,
-      "sample_id": "320474"
-    },
-    {
-      "location": "Kernu Keller Spa, bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2023-11-23T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 0
-      },
-      "lat": 58.63852025635157,
-      "lon": 25.67140039673457,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.2976250936744157,
-      "sample_id": "320473"
+      "model_violation_prob": 0.3052413532878358,
+      "sample_id": "380495"
     },
     {
       "location": "Valaste puhkeküla veevärk",
@@ -11847,27 +11845,24 @@
       "sample_id": "321038"
     },
     {
-      "location": "Meriton SPA Hotel  bassein",
+      "location": "Meriton SPA Hotel bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2023-12-05T00:00:00",
+      "sample_date": "2026-03-04T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 6.9,
-        "nitrates": 16,
-        "ammonium": 0.05,
-        "turbidity": 1,
-        "color": 2,
-        "free_chlorine": 0.8,
-        "combined_chlorine": 0.5,
-        "oxidizability": 2.6
+        "enterococci": 0,
+        "coliforms": 0,
+        "pseudomonas": 0,
+        "staphylococci": 0,
+        "colonies_37c": 3
       },
-      "lat": 58.607613870450905,
-      "lon": 25.43216563668269,
+      "lat": 58.56786869611658,
+      "lon": 25.56556458381018,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.628342104478186,
-      "sample_id": "321040"
+      "model_violation_prob": 0.3181937561578264,
+      "sample_id": "382062"
     },
     {
       "location": "Haage Joogid mineraalveetsehh",
@@ -12014,29 +12009,22 @@
       "sample_id": "328537"
     },
     {
-      "location": "Märjamaa alevi veevärk",
+      "location": "Märjamaa alevi ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2023-12-11T00:00:00",
+      "sample_date": "2026-02-17T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.4,
-        "nitrates": 5.5,
-        "nitrites": 0.003,
-        "ammonium": 0.05,
-        "fluoride": 1.1,
-        "iron": 0.01,
-        "turbidity": 1,
-        "color": 3,
-        "chlorides": 21.8,
-        "sulfates": 18.9
+        "ph": 7.5,
+        "turbidity": 0.5,
+        "color": 2
       },
-      "lat": 58.51721789883268,
-      "lon": 25.544431601434347,
+      "lat": 58.495807202258334,
+      "lon": 25.521669718471045,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.06269887658891517,
-      "sample_id": "325477"
+      "model_violation_prob": 0.026862874693554185,
+      "sample_id": "382872"
     },
     {
       "location": "Järva-Jaani aleviku ühisveevärk",
@@ -12394,24 +12382,24 @@
       "sample_id": "321907"
     },
     {
-      "location": "Tervise Paradiisi Lastebassein",
+      "location": "Tervise Paradiisi lastebassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2023-12-13T00:00:00",
-      "official_compliant": 1,
+      "sample_date": "2026-03-11T11:30:00",
+      "official_compliant": 0,
       "measurements": {
         "enterococci": 0,
         "coliforms": 0,
         "pseudomonas": 0,
         "staphylococci": 0,
-        "colonies_37c": 3
+        "colonies_37c": 120
       },
-      "lat": 58.632250324254215,
-      "lon": 25.45403562981613,
+      "lat": 58.643342870222014,
+      "lon": 25.507703898680095,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.31644547103663906,
-      "sample_id": "322185"
+      "model_violation_prob": 0.3181937561578264,
+      "sample_id": "382978"
     },
     {
       "location": "Sanatoorium Tervise 25 m bassein",
@@ -12713,50 +12701,44 @@
       "sample_id": "321899"
     },
     {
-      "location": "Tervise Paradiisi Seikluste bassein",
+      "location": "Tervise Paradiisi seikluste bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2023-12-13T00:00:00",
-      "official_compliant": 0,
-      "measurements": {
-        "ph": 7.6,
-        "nitrates": 11,
-        "ammonium": 0.014,
-        "turbidity": 0.5,
-        "color": 2.2,
-        "free_chlorine": 1.7,
-        "combined_chlorine": 0.9,
-        "oxidizability": 3.6
-      },
-      "lat": 58.70700350957503,
-      "lon": 25.398620965896086,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.7071325476116328,
-      "sample_id": "322168"
-    },
-    {
-      "location": "Tervise Paradiisi Välibassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2023-12-13T00:00:00",
+      "sample_date": "2026-03-11T11:23:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.7,
-        "nitrates": 8.5,
-        "ammonium": 0.012,
-        "turbidity": 0.5,
-        "color": 2,
-        "free_chlorine": 0.84,
-        "combined_chlorine": 0.2,
-        "oxidizability": 3.6
+        "enterococci": 0,
+        "coliforms": 0,
+        "pseudomonas": 0,
+        "staphylococci": 0,
+        "colonies_37c": 81
       },
-      "lat": 58.64194361791409,
-      "lon": 25.567214847028307,
+      "lat": 58.523802929732206,
+      "lon": 25.49537766079194,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.6148988552420176,
-      "sample_id": "322181"
+      "model_violation_prob": 0.3181937561578264,
+      "sample_id": "382935"
+    },
+    {
+      "location": "Tervise Paradiisi välibassein",
+      "domain": "basseinid",
+      "place_kind": "pool_spa",
+      "county": null,
+      "sample_date": "2026-03-11T11:25:00",
+      "official_compliant": 1,
+      "measurements": {
+        "ph": 7.5,
+        "nitrates": 9.6,
+        "free_chlorine": 0.8,
+        "combined_chlorine": 0.3,
+        "oxidizability": 3.3
+      },
+      "lat": 58.763475623712516,
+      "lon": 25.427086671244375,
+      "coord_source": "approximate_ee",
+      "model_violation_prob": 0.3946142339728947,
+      "sample_id": "382936"
     },
     {
       "location": "Farmi Piimatööstuse veevärk",
@@ -13066,32 +13048,27 @@
       "sample_id": "325403"
     },
     {
-      "location": "Haljala lasteaed Pesapuu bassein",
+      "location": "Haljala Lasteaed Pesapuu bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
       "county": null,
-      "sample_date": "2023-12-28T11:35:00",
+      "sample_date": "2026-03-16T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "enterococci": 0,
-        "ph": 7.14,
-        "nitrates": 2.65,
-        "ammonium": 0.08,
-        "turbidity": 0.5,
-        "color": 3,
-        "coliforms": 0,
-        "free_chlorine": 1.29,
-        "combined_chlorine": 0.31,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "oxidizability": 0.3,
-        "colonies_37c": 30
+        "ph": 7.2,
+        "nitrates": 2.8,
+        "ammonium": 0.05,
+        "turbidity": 0.3,
+        "color": 2,
+        "free_chlorine": 1.2,
+        "combined_chlorine": 0.2,
+        "oxidizability": 2.1
       },
-      "lat": 58.7986331731136,
-      "lon": 25.600300221255818,
+      "lat": 58.51488937209125,
+      "lon": 25.6201995117113,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.43735988940600456,
-      "sample_id": "322594"
+      "model_violation_prob": 0.6435362179333463,
+      "sample_id": "383065"
     },
     {
       "location": "Keila Tervisekeskuse mullivann",
@@ -14431,23 +14408,6 @@
       "sample_id": "339531"
     },
     {
-      "location": "Roosna-Alliku tehisjärv",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2024-08-15T08:30:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 10,
-        "enterococci": 10
-      },
-      "lat": 58.65173838406958,
-      "lon": 25.447429236285956,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.013086812083132008,
-      "sample_id": "338876"
-    },
-    {
       "location": "Saustinõmme-Õie veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -14468,18 +14428,21 @@
       "sample_id": "339379"
     },
     {
-      "location": "Narva-Jõesuu supluskoht",
+      "location": "Narva-Jõesuu rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2024-08-27T09:05:00",
+      "county": "Ida-Viru maakond",
+      "sample_date": "2025-08-12T00:00:00",
       "official_compliant": 1,
-      "measurements": {},
-      "lat": 58.54196650644693,
-      "lon": 25.60428969253071,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.19177770244947237,
-      "sample_id": "339635"
+      "measurements": {
+        "e_coli": 60,
+        "enterococci": 30
+      },
+      "lat": 59.44,
+      "lon": 27.12,
+      "coord_source": "county_centroid",
+      "model_violation_prob": 0.013090644731740863,
+      "sample_id": "366537"
     },
     {
       "location": "Ring spaa ja saunad, külmavee bassein õues",
@@ -15746,24 +15709,6 @@
       "sample_id": "353909"
     },
     {
-      "location": "Vaimastvere küla veevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-02-27T11:35:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.2,
-        "nitrates": 44,
-        "chlorides": 100
-      },
-      "lat": 58.62351834897383,
-      "lon": 25.60154993514916,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.21916943681511944,
-      "sample_id": "353888"
-    },
-    {
       "location": "Lehola asula",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -15814,24 +15759,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.07907164422128275,
       "sample_id": "354686"
-    },
-    {
-      "location": "Männiku küla",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-03-11T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 0
-      },
-      "lat": 58.80718890669108,
-      "lon": 25.355601968413826,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05104665268875067,
-      "sample_id": "354451"
     },
     {
       "location": "Vahuküla ühisveevärk",
@@ -16205,29 +16132,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.03084431775548291,
       "sample_id": "356509"
-    },
-    {
-      "location": "Tänassilma küla veevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-03-31T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.4,
-        "fluoride": 0.13,
-        "iron": 0.02,
-        "turbidity": 0.2,
-        "color": 1.5,
-        "coliforms": 0
-      },
-      "lat": 58.68205195696956,
-      "lon": 25.379319829098954,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.03160570859776442,
-      "sample_id": "356510"
     },
     {
       "location": "Valma küla veevärk",
@@ -18435,32 +18339,6 @@
       "sample_id": "360563"
     },
     {
-      "location": "Hertu küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-05-20T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.3,
-        "nitrates": 0.5,
-        "nitrites": 0.01,
-        "ammonium": 0.05,
-        "fluoride": 0.69,
-        "manganese": 0.003,
-        "iron": 0.022,
-        "turbidity": 0.3,
-        "color": 2,
-        "chlorides": 6,
-        "sulfates": 3
-      },
-      "lat": 58.71280880445563,
-      "lon": 25.538759822995345,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05865348879350344,
-      "sample_id": "360566"
-    },
-    {
       "location": "Kutimuti Noortelaagri veevõrk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -20007,26 +19885,6 @@
       "sample_id": "364065"
     },
     {
-      "location": "Lokuta küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-07-01T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.4,
-        "ammonium": 0.05,
-        "iron": 0.03,
-        "turbidity": 0.3,
-        "color": 4
-      },
-      "lat": 58.603170443274585,
-      "lon": 25.617534523537042,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.03717865482349214,
-      "sample_id": "363332"
-    },
-    {
       "location": "Remniku õppe- ja puhkekeskus",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -21561,23 +21419,6 @@
       "sample_id": "366275"
     },
     {
-      "location": "Harku järve rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-11T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 140,
-        "enterococci": 70
-      },
-      "lat": 58.659391546501865,
-      "lon": 25.390257495994508,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.02844272899577097,
-      "sample_id": "366270"
-    },
-    {
       "location": "Paralepa rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
@@ -21831,35 +21672,6 @@
       "sample_id": "365880"
     },
     {
-      "location": "Varbola küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-08-12T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.7,
-        "nitrates": 4.7,
-        "nitrites": 0.03,
-        "ammonium": 0.025,
-        "fluoride": 0.55,
-        "manganese": 0.01,
-        "iron": 0.02,
-        "turbidity": 0.5,
-        "color": 3.7,
-        "coliforms": 0,
-        "chlorides": 11,
-        "sulfates": 31
-      },
-      "lat": 58.48659990844587,
-      "lon": 25.334303425650415,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.12893457755901308,
-      "sample_id": "377512"
-    },
-    {
       "location": "Suure-Jaani paisjärv",
       "domain": "supluskoha",
       "place_kind": "swimming",
@@ -21943,23 +21755,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.013144336682015666,
       "sample_id": "366434"
-    },
-    {
-      "location": "Narva-Jõesuu rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": "Ida-Viru maakond",
-      "sample_date": "2025-08-12T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 60,
-        "enterococci": 30
-      },
-      "lat": 59.44,
-      "lon": 27.12,
-      "coord_source": "county_centroid",
-      "model_violation_prob": 0.013090644731740863,
-      "sample_id": "366537"
     },
     {
       "location": "Narva-Jõesuu supluskoht 2",
@@ -22612,26 +22407,22 @@
       "sample_id": "366885"
     },
     {
-      "location": "Kääpa küla veevärk",
+      "location": "Kääpa küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2025-08-13T00:00:00",
+      "sample_date": "2025-09-16T10:30:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
         "enterococci": 0,
-        "ph": 7.6,
-        "iron": 0.02,
-        "turbidity": 0.5,
-        "color": 5,
         "coliforms": 0
       },
-      "lat": 58.51797627222095,
-      "lon": 25.371244754711224,
+      "lat": 58.545913252460515,
+      "lon": 25.544800106813152,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.06239145054370506,
-      "sample_id": "367722"
+      "model_violation_prob": 0.05800485200377972,
+      "sample_id": "370296"
     },
     {
       "location": "Palalinna järv",
@@ -23074,23 +22865,6 @@
       "sample_id": "366556"
     },
     {
-      "location": "Alajõe supluskoht",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-14T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 10,
-        "enterococci": 30
-      },
-      "lat": 58.60606507972839,
-      "lon": 25.59290875104906,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.012727225914530686,
-      "sample_id": "366536"
-    },
-    {
       "location": "Kauksi rand",
       "domain": "supluskoha",
       "place_kind": "swimming",
@@ -23501,20 +23275,6 @@
       "sample_id": "366549"
     },
     {
-      "location": "Vääna-Jõesuu rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-15T08:02:00",
-      "official_compliant": 1,
-      "measurements": {},
-      "lat": 58.81560044251163,
-      "lon": 25.469272526131075,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.1775876078064213,
-      "sample_id": "365172"
-    },
-    {
       "location": "Kaagjärve küla Keskuse ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -23607,20 +23367,22 @@
       "sample_id": "380181"
     },
     {
-      "location": "Maidla küla veevärk",
+      "location": "Maidla küla",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2025-08-18T10:25:00",
+      "sample_date": "2025-11-18T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 8.4
+        "e_coli": 0,
+        "enterococci": 0,
+        "coliforms": 0
       },
-      "lat": 58.761152437628745,
-      "lon": 25.501412603952087,
+      "lat": 58.61119211108568,
+      "lon": 25.3564030670634,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.07352047156944418,
-      "sample_id": "367168"
+      "model_violation_prob": 0.05844307203742733,
+      "sample_id": "376235"
     },
     {
       "location": "Soonurme küla veevärk",
@@ -24047,54 +23809,6 @@
       "sample_id": "366813"
     },
     {
-      "location": "Haabneeme rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-26T00:00:00",
-      "official_compliant": 1,
-      "measurements": {},
-      "lat": 58.68729114213779,
-      "lon": 25.625764476997023,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.1775876078064213,
-      "sample_id": "366810"
-    },
-    {
-      "location": "Pelgurand / Stroomi rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-26T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 140,
-        "enterococci": 40
-      },
-      "lat": 58.66565613794155,
-      "lon": 25.36162623025864,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.02844272899577097,
-      "sample_id": "367213"
-    },
-    {
-      "location": "Pikakari rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": null,
-      "sample_date": "2025-08-26T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 30,
-        "enterococci": 10
-      },
-      "lat": 58.56082436865797,
-      "lon": 25.33220988784619,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.013489479904542998,
-      "sample_id": "367219"
-    },
-    {
       "location": "Polesno veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -24281,29 +23995,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.07435764620974936,
       "sample_id": "367992"
-    },
-    {
-      "location": "külmavee bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2025-09-02T00:00:00",
-      "official_compliant": 0,
-      "measurements": {
-        "ph": 7,
-        "nitrates": 0.9,
-        "ammonium": 0.07,
-        "turbidity": 0.4,
-        "color": 4,
-        "free_chlorine": 0.8,
-        "combined_chlorine": 1,
-        "oxidizability": 6.1
-      },
-      "lat": 58.70269893949798,
-      "lon": 25.33853322652018,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.7010407504080969,
-      "sample_id": "367668"
     },
     {
       "location": "lõõgastusbassein",
@@ -24839,25 +24530,26 @@
       "sample_id": "369226"
     },
     {
-      "location": "Linnamäe küla ühisveevärk",
+      "location": "Linnamäe küla",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2025-09-10T10:45:00",
+      "sample_date": "2025-09-25T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "ph": 7.2,
-        "nitrates": 2.8,
-        "ammonium": 0.021,
-        "fluoride": 0.16,
-        "chlorides": 11,
-        "sulfates": 9
+        "ph": 8,
+        "ammonium": 0.18,
+        "fluoride": 1.3,
+        "manganese": 0.014,
+        "iron": 0.093,
+        "turbidity": 0.4,
+        "color": 2
       },
-      "lat": 58.48998588540474,
-      "lon": 25.50769855802243,
+      "lat": 58.716841000991835,
+      "lon": 25.42190089265278,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.1100693255370508,
-      "sample_id": "370411"
+      "model_violation_prob": 0.054856770662853424,
+      "sample_id": "369705"
     },
     {
       "location": "Osula küla ühisveevärk",
@@ -25349,24 +25041,6 @@
       "sample_id": "370297"
     },
     {
-      "location": "Kääpa küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-09-16T10:30:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 0
-      },
-      "lat": 58.545913252460515,
-      "lon": 25.544800106813152,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05800485200377972,
-      "sample_id": "370296"
-    },
-    {
       "location": "Surju küla",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -25463,24 +25137,25 @@
       "sample_id": "375567"
     },
     {
-      "location": "Vao küla ühisveevärk",
+      "location": "Vao küla veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2025-09-17T00:00:00",
+      "sample_date": "2026-03-26T00:00:00",
       "official_compliant": 1,
       "measurements": {
         "e_coli": 0,
-        "ph": 7.2,
-        "turbidity": 2.4,
-        "color": 20,
+        "enterococci": 0,
+        "ph": 7.5,
+        "turbidity": 0.5,
+        "color": 2,
         "coliforms": 0
       },
-      "lat": 58.77428511482414,
-      "lon": 25.418653772793164,
+      "lat": 58.530436026550696,
+      "lon": 25.652959105821317,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.10805147918560785,
-      "sample_id": "375569"
+      "model_violation_prob": 0.07834589537814458,
+      "sample_id": "382991"
     },
     {
       "location": "Seidla, Kaalepi küla ühisveevärk",
@@ -25984,54 +25659,6 @@
       "sample_id": "370557"
     },
     {
-      "location": "Poaka ja Kirna küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-09-24T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.3,
-        "nitrates": 1.7,
-        "nitrites": 0.01,
-        "ammonium": 0.05,
-        "fluoride": 0.44,
-        "manganese": 0.003,
-        "iron": 0.012,
-        "turbidity": 0.3,
-        "color": 2,
-        "chlorides": 12,
-        "sulfates": 7
-      },
-      "lat": 58.66530365453574,
-      "lon": 25.528479056992445,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05491665339858022,
-      "sample_id": "370079"
-    },
-    {
-      "location": "Linnamäe küla",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-09-25T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 8,
-        "ammonium": 0.18,
-        "fluoride": 1.3,
-        "manganese": 0.014,
-        "iron": 0.093,
-        "turbidity": 0.4,
-        "color": 2
-      },
-      "lat": 58.716841000991835,
-      "lon": 25.42190089265278,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.054856770662853424,
-      "sample_id": "369705"
-    },
-    {
       "location": "Tabasalu, Teelahkme piirkond (AS Tallinna Vesi ühisveevärgist)",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -26475,23 +26102,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.04322608035333117,
       "sample_id": "370268"
-    },
-    {
-      "location": "Pirita rand",
-      "domain": "supluskoha",
-      "place_kind": "swimming",
-      "county": "Harju maakond",
-      "sample_date": "2025-10-02T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 30,
-        "enterococci": 10
-      },
-      "lat": 59.27,
-      "lon": 24.9,
-      "coord_source": "county_centroid",
-      "model_violation_prob": 0.03932553752471222,
-      "sample_id": "370465"
     },
     {
       "location": "Otsa-Miko, Liikva külas ja Loopealse Sõrve külas",
@@ -28748,24 +28358,6 @@
       "sample_id": "374120"
     },
     {
-      "location": "Järlepa küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-11-04T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.2,
-        "turbidity": 0.3,
-        "color": 2
-      },
-      "lat": 58.66751468680857,
-      "lon": 25.45201152056153,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.020699183147996816,
-      "sample_id": "373363"
-    },
-    {
       "location": "Juuru aleviku ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -29767,24 +29359,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.08432792844409458,
       "sample_id": "377163"
-    },
-    {
-      "location": "Maidla küla",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2025-11-18T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 0
-      },
-      "lat": 58.61119211108568,
-      "lon": 25.3564030670634,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05844307203742733,
-      "sample_id": "376235"
     },
     {
       "location": "Estoveri Piimatööstuse- ja Kaarlijärve küla elamute ühisveevärk",
@@ -30888,23 +30462,22 @@
       "sample_id": "376169"
     },
     {
-      "location": "Kabala küla veevärk",
+      "location": "Kabala küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
       "county": null,
-      "sample_date": "2025-12-02T00:00:00",
+      "sample_date": "2026-02-25T00:00:00",
       "official_compliant": 1,
       "measurements": {
-        "nitrates": 0.48,
-        "manganese": 0.00087,
-        "chlorides": 24,
-        "sulfates": 23
+        "e_coli": 0,
+        "enterococci": 0,
+        "coliforms": 0
       },
-      "lat": 58.49791676203555,
-      "lon": 25.67368085755703,
+      "lat": 58.65870260166323,
+      "lon": 25.565495155260546,
       "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05473286953521229,
-      "sample_id": "377444"
+      "model_violation_prob": 0.04782840922222336,
+      "sample_id": "381864"
     },
     {
       "location": "Raikküla küla veevärk",
@@ -31288,26 +30861,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.05071057702242839,
       "sample_id": "377172"
-    },
-    {
-      "location": "Kesklinna Lastepolikliiniku A bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2025-12-08T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 0
-      },
-      "lat": 58.79742618448157,
-      "lon": 25.365204470893417,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.33519311803176965,
-      "sample_id": "376055"
     },
     {
       "location": "BLRT GRUPP AS (AS Elme) veevärk",
@@ -33700,49 +33253,6 @@
       "sample_id": "380489"
     },
     {
-      "location": "Kernu Keller Spa bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-01-30T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 3
-      },
-      "lat": 58.54982795452811,
-      "lon": 25.50458495460441,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.3052413532878358,
-      "sample_id": "380495"
-    },
-    {
-      "location": "Kernu Keller Spa mullivann",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-01-30T00:00:00",
-      "official_compliant": 0,
-      "measurements": {
-        "ph": 7.4,
-        "nitrates": 4.1,
-        "ammonium": 0.67,
-        "turbidity": 2,
-        "color": 7,
-        "free_chlorine": 0.05,
-        "combined_chlorine": 0.4,
-        "oxidizability": 3.2
-      },
-      "lat": 58.77131570916304,
-      "lon": 25.57476653696498,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.8508019588744512,
-      "sample_id": "380281"
-    },
-    {
       "location": "Haraka Kodu SA veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -33940,25 +33450,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.07417409448553527,
       "sample_id": "380729"
-    },
-    {
-      "location": "Haaslava küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-02-03T10:10:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.4,
-        "coliforms": 0
-      },
-      "lat": 58.62938773174639,
-      "lon": 25.61925955596246,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.07131852053979325,
-      "sample_id": "380730"
     },
     {
       "location": "Ignase küla veevärk",
@@ -35861,24 +35352,6 @@
       "sample_id": "382876"
     },
     {
-      "location": "Märjamaa alevi ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-02-17T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.5,
-        "turbidity": 0.5,
-        "color": 2
-      },
-      "lat": 58.495807202258334,
-      "lon": 25.521669718471045,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.026862874693554185,
-      "sample_id": "382872"
-    },
-    {
       "location": "Vana-Vigala veevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -35899,24 +35372,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.028538244162667616,
       "sample_id": "382869"
-    },
-    {
-      "location": "Valgu küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-02-17T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.9,
-        "turbidity": 0.5,
-        "color": 4
-      },
-      "lat": 58.790424582284274,
-      "lon": 25.370764095521476,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.037258269018918905,
-      "sample_id": "382865"
     },
     {
       "location": "Kuusalu Keskkooli veevärk",
@@ -37578,24 +37033,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.04782840922222336,
       "sample_id": "381865"
-    },
-    {
-      "location": "Kabala küla ühisveevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-02-25T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "coliforms": 0
-      },
-      "lat": 58.65870260166323,
-      "lon": 25.565495155260546,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.04782840922222336,
-      "sample_id": "381864"
     },
     {
       "location": "Taikse küla ühisveevärk",
@@ -39293,26 +38730,6 @@
       "sample_id": "382114"
     },
     {
-      "location": "Meriton SPA Hotel bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-04T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 3
-      },
-      "lat": 58.56786869611658,
-      "lon": 25.56556458381018,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.3181937561578264,
-      "sample_id": "382062"
-    },
-    {
       "location": "Vihula mõisa ujula bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
@@ -40804,34 +40221,6 @@
       "sample_id": "382400"
     },
     {
-      "location": "TÜ Kliinikumi spordimeditsiini ja taastusravi ujula suur ravibassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-10T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "ph": 7.5,
-        "nitrates": 4.3,
-        "ammonium": 0.02,
-        "turbidity": 0.5,
-        "color": 5,
-        "coliforms": 0,
-        "free_chlorine": 1.1,
-        "combined_chlorine": 0.25,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "oxidizability": 1,
-        "colonies_37c": 0
-      },
-      "lat": 58.57322003509575,
-      "lon": 25.637658121614404,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.45007038361867663,
-      "sample_id": "382567"
-    },
-    {
       "location": "TÜ Kliinikumi spordimeditsiini ja taastusravi ujula väike hüdroteraapia bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
@@ -42101,46 +41490,6 @@
       "sample_id": "382933"
     },
     {
-      "location": "Tervise Paradiisi seikluste bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-11T11:23:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 81
-      },
-      "lat": 58.523802929732206,
-      "lon": 25.49537766079194,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.3181937561578264,
-      "sample_id": "382935"
-    },
-    {
-      "location": "Tervise Paradiisi välibassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-11T11:25:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.5,
-        "nitrates": 9.6,
-        "free_chlorine": 0.8,
-        "combined_chlorine": 0.3,
-        "oxidizability": 3.3
-      },
-      "lat": 58.763475623712516,
-      "lon": 25.427086671244375,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.3946142339728947,
-      "sample_id": "382936"
-    },
-    {
       "location": "Kavastu küla ühisveevärk",
       "domain": "veevark",
       "place_kind": "drinking_water",
@@ -42181,26 +41530,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.7611482630105856,
       "sample_id": "382938"
-    },
-    {
-      "location": "Tervise Paradiisi lastebassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-11T11:30:00",
-      "official_compliant": 0,
-      "measurements": {
-        "enterococci": 0,
-        "coliforms": 0,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "colonies_37c": 120
-      },
-      "lat": 58.643342870222014,
-      "lon": 25.507703898680095,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.3181937561578264,
-      "sample_id": "382978"
     },
     {
       "location": "Ihamaru küla ühisveevärk",
@@ -42986,29 +42315,6 @@
       "sample_id": "382989"
     },
     {
-      "location": "Haljala Lasteaed Pesapuu bassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-16T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "ph": 7.2,
-        "nitrates": 2.8,
-        "ammonium": 0.05,
-        "turbidity": 0.3,
-        "color": 2,
-        "free_chlorine": 1.2,
-        "combined_chlorine": 0.2,
-        "oxidizability": 2.1
-      },
-      "lat": 58.51488937209125,
-      "lon": 25.6201995117113,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.6435362179333463,
-      "sample_id": "383065"
-    },
-    {
       "location": "Wasa Resort Spaa suur bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
@@ -43134,34 +42440,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.015684049780260084,
       "sample_id": "383016"
-    },
-    {
-      "location": "Tootsi ujumisbassein",
-      "domain": "basseinid",
-      "place_kind": "pool_spa",
-      "county": null,
-      "sample_date": "2026-03-17T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "enterococci": 0,
-        "ph": 7.4,
-        "nitrates": 1.9,
-        "ammonium": 0.019,
-        "turbidity": 0.5,
-        "color": 2.1,
-        "coliforms": 0,
-        "free_chlorine": 0.92,
-        "combined_chlorine": 0.3,
-        "pseudomonas": 0,
-        "staphylococci": 0,
-        "oxidizability": 3.1,
-        "colonies_37c": 0
-      },
-      "lat": 58.627956435492486,
-      "lon": 25.568459220263982,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.6561845750804267,
-      "sample_id": "382680"
     },
     {
       "location": "Saaremaa Toetava Hariduse Keskuse ujula bassein",
@@ -45167,27 +44445,6 @@
       "sample_id": "382842"
     },
     {
-      "location": "Vao küla veevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-03-26T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.5,
-        "turbidity": 0.5,
-        "color": 2,
-        "coliforms": 0
-      },
-      "lat": 58.530436026550696,
-      "lon": 25.652959105821317,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.07834589537814458,
-      "sample_id": "382991"
-    },
-    {
       "location": "Saue Spordihoone suur bassein",
       "domain": "basseinid",
       "place_kind": "pool_spa",
@@ -45610,28 +44867,6 @@
       "coord_source": "approximate_ee",
       "model_violation_prob": 0.06808851398564086,
       "sample_id": "382985"
-    },
-    {
-      "location": "Abja-Paluoja veevärk",
-      "domain": "veevark",
-      "place_kind": "drinking_water",
-      "county": null,
-      "sample_date": "2026-03-30T00:00:00",
-      "official_compliant": 1,
-      "measurements": {
-        "e_coli": 0,
-        "enterococci": 0,
-        "ph": 7.6,
-        "iron": 0.023,
-        "turbidity": 0.2,
-        "color": 5.2,
-        "coliforms": 0
-      },
-      "lat": 58.78706530861372,
-      "lon": 25.654166094453345,
-      "coord_source": "approximate_ee",
-      "model_violation_prob": 0.05658328750623487,
-      "sample_id": "382984"
     },
     {
       "location": "Surju Kool",
@@ -46392,5 +45627,6 @@
       "model_violation_prob": 0.642667585481174,
       "sample_id": "382898"
     }
-  ]
+  ],
+  "dedup_note": "Location deduplication applied: 38 stale name-variants removed (Terviseamet renamed objects between years in XML, e.g. 'supluskoht'→'rand', 'veevärk'→'ühisveevärk'). Only the most recent probe per normalized location key is kept."
 }

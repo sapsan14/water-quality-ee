@@ -84,4 +84,20 @@
 
 ## 4. Связь с признаками ML
 
-В `src/features.py` для **basseinid** заданы отдельные пороги (pH, мутность, хлор, стафилококки, pseudomonas и т.д.), для **supluskoha** и **veevark** используются общие константы `NORMS` там, где показатель общий (например `ph_min`/`ph_max` для не-бассейна). Подробности реализации — комментарии в `add_ratio_features`.
+В `src/features.py` определены два словаря нормативов:
+
+- **`NORMS`** — общие пороги: `e_coli`, `enterococci`, `turbidity` (4.0 NTU для veevark/joogivesi), `ph` (6.0–9.0) и химические параметры питьевой воды.
+- **`NORMS_POOL`** — специфичные для бассейнов/ujula/СПА: `turbidity` (0.5 NTU), `staphylococci` (≤ 20 КОЕ/100 мл), `pseudomonas` (0), `free_chlorine` (0.2–0.6 мг/л), `combined_chlorine` (≤ 0.4 мг/л), `ph` (6.5–8.5).
+
+Функция `add_ratio_features` автоматически выбирает нужный набор норм по значению столбца `domain`:
+
+| Признак | Расчёт для `basseinid` | Расчёт для остальных |
+|---|---|---|
+| `turbidity_ratio` | `turbidity / 0.5` | `turbidity / 4.0` |
+| `staphylococci_ratio` | `staphylococci / 20` | NaN |
+| `pseudomonas_detected` | `1` если > 0 | NaN |
+| `free_chlorine_deviation` | расстояние от [0.2, 0.6] | NaN |
+| `combined_chlorine_ratio` | `combined_chlorine / 0.4` | NaN |
+| `ph_deviation` | расстояние от [6.5, 8.5] | расстояние от [6.0, 9.0] |
+
+Это исправляет системную проблему ложных тревог для бассейнов, при которой предыдущая версия кода использовала норму 4.0 NTU для мутности бассейнов (реальная норма 0.5 NTU) и не кодировала хлор и стафилококки вообще.
