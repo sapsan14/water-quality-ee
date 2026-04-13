@@ -71,6 +71,7 @@ Five water domains defined in `src/data_loader.DOMAINS`. Only `supluskoha` and `
 | `03_preprocessing.ipynb` | `build_dataset`, train/test split, impute/scale → `ml_ready.joblib` |
 | `04_models.ipynb` | Logistic Regression + Random Forest + GradientBoosting + GridSearchCV RF → `trained_models.joblib` |
 | `05_evaluation.ipynb` | Confusion matrix, ROC, feature importance |
+| `06_advanced_models.ipynb` | LightGBM + темпоральная валидация + калибровка + SHAP → `best_model.joblib` |
 
 ## Domain knowledge
 
