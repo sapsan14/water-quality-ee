@@ -171,7 +171,7 @@ def _matched_addr_html(p: dict) -> str:
 def _model_comparison_html(p: dict, available_models: list[str], model_labels: dict[str, str]) -> str:
     """HTML-таблица с прогнозами всех моделей для popup."""
     if not available_models:
-        return "<i>Прогнозы моделей в этой версии данных не включены.</i>"
+        return "<i>Прогнозы моделей недоступны (снимок собран с --map-only)</i>"
     rows = []
     for m in available_models:
         col = MODEL_PROB_COLS[m]
@@ -399,10 +399,7 @@ def build_map(
 def _render_model_comparison_tab(places: list[dict], available_models: list[str], model_labels: dict) -> None:
     """Таб со сравнением прогнозов всех моделей в виде таблицы."""
     if not available_models:
-        st.info(
-            "В этом снимке данных нет колонок с прогнозами моделей — только официальные статусы. "
-            "Таблица сравнения появится после следующего **полного** обновления снимка (как в репозитории после CI)."
-        )
+        st.warning("Прогнозы моделей отсутствуют в снимке. Пересоберите без флага `--map-only`.")
         return
 
     rows = []
@@ -597,34 +594,19 @@ def main() -> None:
         )
     else:
         st.caption(
-            "Данные Terviseamet (открытый XML). На карте — официальные статусы; "
-            "справочные оценки моделей подтягиваются при полном обновлении снимка данных (см. вкладку «О сервисе»)."
+            "Данные Terviseamet (открытый XML). Карта и официальные статусы; "
+            "прогнозы моделей появятся после полной сборки снимка (без флага --map-only)."
         )
 
-    disc = (snap.get("disclaimer") or "").strip()
-    tech = (snap.get("disclaimer_technical") or "").strip()
-    if not tech and len(disc) > 400:
-        # Старые снимки: один длинный disclaimer — только в раскрывающемся блоке
-        tech, disc = disc, ""
-    if not disc and tech:
-        st.markdown(
-            "Кратко: карта построена по **открытым данным Terviseamet**. "
-            "Технические пояснения (координаты, модели) — в раскрывающемся блоке ниже."
-        )
-    if disc:
-        st.markdown(disc)
-    if tech:
-        with st.expander("Технические подробности (источники координат и моделей)", expanded=False):
-            st.markdown(tech)
+    st.info(snap.get("disclaimer", ""))
 
     places = snap.get("places", [])
     n_places = len(places)
     n_approx = sum(1 for p in places if p.get("coord_source") == "approximate_ee")
     if n_places and n_approx / n_places >= 0.2:
-        st.info(
-            f"У **{n_approx}** из **{n_places}** точек положение на карте **ориентировочное**: "
-            "в открытой выгрузке нет точных координат объекта. Точность улучшается при регулярном обновлении данных "
-            "(автоматически в репозитории по расписанию)."
+        st.warning(
+            f"У **{n_approx}** из **{n_places}** точек координаты **приблизительные** "
+            f"(`coord_source: approximate_ee`). Пересоберите с `--infer-county` и/или `--geocode-limit …`."
         )
 
     kind_labels = {**DEFAULT_PLACE_KIND_LABELS, **(snap.get("place_kinds") or {})}
@@ -662,10 +644,7 @@ def main() -> None:
         with c2:
             use_cluster = st.checkbox("Кластеризация маркеров", value=True)
         with c3:
-            if has_model and avail_models:
-                st.caption("Нажмите маркер для параметров пробы и прогнозов моделей.")
-            else:
-                st.caption("Нажмите маркер для параметров пробы.")
+            st.caption("Нажмите маркер для параметров пробы и прогнозов всех моделей.")
 
         st.subheader("Типы объектов")
         fc1, fc2, fc3, fc4 = st.columns(4)
@@ -913,7 +892,7 @@ baseline (средний риск):         0.30
 
 ### Обновление данных
 
-GitHub Actions по расписанию: `citizen-snapshot.yml` (еженедельно по понедельникам 05:00 UTC).
+GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам 05:00 UTC и 1-е число 04:00 UTC).
 """
         )
 

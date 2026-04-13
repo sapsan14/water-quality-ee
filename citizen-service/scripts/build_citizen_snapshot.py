@@ -65,6 +65,18 @@ import geocode_resolve as _geocode_resolve  # noqa: E402
 ARTIFACTS = ROOT / "citizen-service" / "artifacts"
 GEOCODE_PATH = ROOT / "citizen-service" / "data" / "geocode_cache.json"
 COORD_RESOLVE_PATH = ROOT / "citizen-service" / "data" / "coordinate_resolve_cache.json"
+
+
+def _load_repo_dotenv() -> None:
+    """Подхватить корневой .env (не в git). Явные переменные окружения не перезаписываем."""
+    path = ROOT / ".env"
+    if not path.is_file():
+        return
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    load_dotenv(path, override=False)
 # Точки на карте: купание, бассейны/СПА, водопровод (питьевая вода по точкам сети)
 MAP_DOMAINS = {"supluskoha", "basseinid", "veevark", "joogivesi"}
 OPENDATA_CATALOG_URL = "https://vtiav.sm.ee/index.php/opendata/"
@@ -227,6 +239,7 @@ def main() -> None:
         help="In-ADS → Google → Nominatim по вариантам адреса; --geocode-limit = лимит HTTP на всю сборку",
     )
     args = ap.parse_args()
+    _load_repo_dotenv()
 
     t_run = time.perf_counter()
     last = [t_run]
@@ -492,38 +505,19 @@ def main() -> None:
     else:
         print("[citizen] режим --map-only: citizen_model.joblib не перезаписывался (старый файл может остаться с прошлого полного прогона)")
 
-    # Короткий текст для интерфейса; подробности для разработчиков — disclaimer_technical.
-    disclaimer_public = (
-        "На карте — **официальные статусы** по открытым данным Terviseamet. "
-        "Точные координаты объектов в выгрузке не публикуются; положение на карте подбирается автоматически и может быть ориентировочным."
+    base_disclaimer = (
+        "Официальный статус — по полю vastavus в данных Terviseamet. "
+        "Координаты в XML нет; при --resolve-coordinates используются In-ADS (Maa-amet) и при наличии ключа Google Geocoding, "
+        "затем Nominatim. coord_source=inads|google|nominatim — привязка к найденному адресу (см. geocode_matched_address в точке); "
+        "county_centroid — центроид уезда; approximate_ee — только визуальный разброс по bbox Эстонии, не место объекта."
     )
-    if not args.map_only:
-        disclaimer_public += (
-            " **Оценки риска** по нескольким моделям машинного обучения — справочные, "
-            "не заменяют официальное заключение Terviseamet."
-        )
-    else:
-        disclaimer_public += (
-            " **Оценки моделей** в этом снимке не включены (только официальные статусы); "
-            "они появятся после полной пересборки данных для приложения."
-        )
-    disclaimer_technical = (
-        "Официальный статус в XML/opendata соответствует полям оценки соответствия (в т.ч. hinnang / vastavus). "
-        "Координат в XML нет. При сборке с --resolve-coordinates используется каскад: In-ADS (Maa-amet), "
-        "при наличии ключа — Google Geocoding API, затем Nominatim (OpenStreetMap). "
-        "Поле coord_source у точки: inads | google | nominatim — привязка к найденному адресу "
-        "(подпись geocode_matched_address в данных); county_centroid — центроид уезда; "
-        "approximate_ee — детерминированный разброс внутри bbox Эстонии для отображения, не GPS объекта."
+    model_note = (
+        " Прогнозы моделей (lr/rf/gb/lgbm_violation_prob) — оценки отдельных ML-моделей"
+        " (Logistic Regression, Random Forest, Gradient Boosting, LightGBM),"
+        " не замена официальной оценке Terviseamet."
+        if not args.map_only
+        else " Прогноз моделей в этом снимке не включён; пересоберите без --map-only для слоя модели на карте."
     )
-    if not args.map_only:
-        disclaimer_technical += (
-            " Колонки lr/rf/gb/lgbm_violation_prob — вероятности нарушения по отдельным моделям "
-            "(Logistic Regression, Random Forest, Gradient Boosting, LightGBM)."
-        )
-    else:
-        disclaimer_technical += (
-            " Режим сборки map-only: матрица признаков и обучение моделей не выполнялись, в снимке нет вероятностей моделей."
-        )
 
     available_models: list[str] = []
     if not args.map_only:
@@ -550,8 +544,7 @@ def main() -> None:
             "drinking_source": "Питьевая вода (источник / родник, joogiveeallikas)",
             "other": "Прочее",
         },
-        "disclaimer": disclaimer_public,
-        "disclaimer_technical": disclaimer_technical,
+        "disclaimer": base_disclaimer + model_note,
         "places": rows_out,
     }
     with open(ARTIFACTS / "snapshot.json", "w", encoding="utf-8") as f:
