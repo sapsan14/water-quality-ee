@@ -50,6 +50,8 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 
 **County:** opendata often leaves `maakond` empty. `load_domain` / `load_all` can fill `county` via `src/county_infer.py` (`infer_county=True`, optional Nominatim with `geocode_county=True`). For modeling without leakage, use `engineer_features` → split → `fit_county_mapping(train)` → `encode_categoricals(df, county_mapping=...)` (see notebook 03). `build_dataset(df)` still fits county on all rows for backward compatibility.
 
+**IMPORTANT — location deduplication:** Terviseamet renames locations between annual XML files (e.g. `'Harku järve supluskoht'` in 2021 → `'Harku järve rand'` in 2025; `'veevärk'` suffix → `'ühisveevärk'`). Raw `location` string produces false duplicates: the same physical site appears as two objects, one with a stale date. `load_domain()` / `load_all()` automatically adds a `location_key` column (normalised: lowercase, object-type suffixes stripped). **Always use `location_key` for groupby/aggregation by site** — never raw `location`. See `normalize_location()` in `data_loader.py` and notebook 02 §1b for details.
+
 ## Architecture
 
 **Data flow:**
@@ -62,6 +64,8 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 - `compliant=None` for samples without `hinnang` — dropped in `build_dataset()`
 - Imputation and scaling in `features.impute_and_scale()` — always `fit` on train only
 - `enterococci` and `transparency` mostly in `supluskoha`; rich chemistry in `veevark`
+- `location_key` (from `normalize_location()`) — use for any groupby/dedup by site; raw `location` has naming variants across years
+- `features.NORMS_POOL` — pool/SPA-specific norms (turbidity 0.5 NTU, free_chlorine 0.2–0.6, staphylococci ≤20, etc.); `add_ratio_features()` selects norms by `domain` column
 
 ## Citizen service
 
