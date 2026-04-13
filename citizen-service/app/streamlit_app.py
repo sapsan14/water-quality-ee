@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import folium
@@ -230,6 +231,32 @@ def _filtered_places(
     return out
 
 
+def _sample_age_label(sample_date_str: str | None) -> str:
+    """Человекочитаемый возраст пробы: '3 дня назад', '2 месяца назад' и т.д."""
+    if not sample_date_str:
+        return "дата неизвестна"
+    try:
+        dt = datetime.fromisoformat(sample_date_str.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        days = (datetime.now(timezone.utc) - dt).days
+    except Exception:
+        return str(sample_date_str)[:10]
+    if days < 0:
+        return str(sample_date_str)[:10]
+    if days == 0:
+        return "сегодня"
+    if days == 1:
+        return "вчера"
+    if days < 30:
+        return f"{days} дн. назад"
+    months = days // 30
+    if months < 12:
+        return f"~{months} мес. назад"
+    years = days // 365
+    return f"~{years} г. назад"
+
+
 def build_map(
     places: list[dict],
     color_mode: str,
@@ -287,6 +314,35 @@ def build_map(
         sid = p.get("sample_id")
         sid_line = f"ID пробы: {html.escape(str(sid))}<br/>" if sid else ""
 
+        coord_src = str(p.get("coord_source", "?"))
+        is_approx = coord_src == "approximate_ee"
+        coord_line = (
+            "<small style='color:#b45309'>⚠ Координаты приблизительные (нет геокода)"
+            f" — {html.escape(coord_src)}</small><br/>"
+            if is_approx
+            else f"<small>Источник координат: {html.escape(coord_src)}</small><br/>"
+        )
+
+        sample_date_str = str(p.get("sample_date") or "")
+        age_label = _sample_age_label(sample_date_str or None)
+        try:
+            age_days_val = (
+                datetime.now(timezone.utc)
+                - datetime.fromisoformat(sample_date_str.replace("Z", "+00:00"))
+            ).days if sample_date_str else 999
+        except Exception:
+            age_days_val = 0
+        if age_days_val > 90:
+            freshness_style = "color:#b45309;font-weight:bold"
+            freshness_icon = "⚠ "
+        else:
+            freshness_style = "color:#166534"
+            freshness_icon = ""
+        date_line = (
+            f"Последняя проба: {html.escape(sample_date_str[:10] if sample_date_str else '—')} "
+            f"<span style='{freshness_style}'>({freshness_icon}{html.escape(age_label)})</span><br/>"
+        )
+
         models_html = _model_comparison_html(p, available_models, model_labels)
 
         popup_html = f"""
@@ -296,10 +352,10 @@ def build_map(
         <i style="font-size:12px">{html.escape(dom_label)}</i><br/>
         <hr style="margin:6px 0"/>
         {sid_line}
-        Дата пробы: {html.escape(str(p.get("sample_date") or "—"))}<br/>
+        {date_line}
         Уезд: {html.escape(str(p.get("county") or "не указан"))}<br/>
         Официально: {"соответствует" if p.get("official_compliant") == 1 else "<b style='color:#ef4444'>нарушение</b>"}<br/>
-        <small>Источник координат: {html.escape(str(p.get("coord_source", "?")))}</small><br/>
+        {coord_line}
         {_matched_addr_html(p)}
         <small><a href="{catalog_href}" target="_blank" rel="noopener">Каталог opendata Terviseamet</a></small>
         <hr style="margin:6px 0"/>
@@ -311,16 +367,18 @@ def build_map(
         """
 
         r = radius_by_kind.get(kind, 8)
+        # Приблизительные координаты: пунктирная обводка маркера (dashArray)
         marker = folium.CircleMarker(
             location=[lat, lon],
             radius=r,
             color=border,
-            weight=3,
+            weight=1 if is_approx else 3,
+            dash_array="6 4" if is_approx else None,
             fill=True,
             fill_color=fill,
-            fill_opacity=0.88,
+            fill_opacity=0.55 if is_approx else 0.88,
             popup=folium.Popup(popup_html, max_width=360),
-            tooltip=f"{str(p.get('location', ''))[:42]} · {color_title}",
+            tooltip=f"{str(p.get('location', ''))[:42]} · {color_title}{'  ⚠ приблизит.' if is_approx else ''}",
         )
         if cluster is not None:
             marker.add_to(cluster)
