@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import sys
@@ -38,9 +37,12 @@ from sklearn.impute import SimpleImputer
 
 # корень репозитория: .../water-quality-ee
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
+
+# src/ — модули доступны после `pip install -e .` (см. CLAUDE.md).
+# Fallback для запуска без editable install.
+_SRC = ROOT / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 from data_loader import load_all  # noqa: E402
 from features import (  # noqa: E402
@@ -49,20 +51,13 @@ from features import (  # noqa: E402
     build_dataset_with_meta,
 )
 
-_cc = importlib.util.spec_from_file_location(
-    "county_centroids", ROOT / "citizen-service" / "county_centroids.py"
-)
-_county_mod = importlib.util.module_from_spec(_cc)
-assert _cc.loader is not None
-_cc.loader.exec_module(_county_mod)
-county_to_latlon = _county_mod.county_to_latlon
+# citizen-service/ содержит вспомогательные модули (не часть пакета src/).
+_CS_DIR = ROOT / "citizen-service"
+if str(_CS_DIR) not in sys.path:
+    sys.path.insert(0, str(_CS_DIR))
 
-_gr = importlib.util.spec_from_file_location(
-    "geocode_resolve", ROOT / "citizen-service" / "geocode_resolve.py"
-)
-_geocode_resolve = importlib.util.module_from_spec(_gr)
-assert _gr.loader is not None
-_gr.loader.exec_module(_geocode_resolve)
+from county_centroids import county_to_latlon  # noqa: E402
+import geocode_resolve as _geocode_resolve  # noqa: E402
 
 ARTIFACTS = ROOT / "citizen-service" / "artifacts"
 GEOCODE_PATH = ROOT / "citizen-service" / "data" / "geocode_cache.json"

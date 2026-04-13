@@ -109,6 +109,45 @@ def plot_roc_curve(results_list: list):
     plt.show()
 
 
+def plot_pr_curve(results_list: list):
+    """
+    PR-кривые (Precision-Recall) для нескольких моделей.
+
+    При несбалансированных классах (12 % нарушений) PR-кривая информативнее ROC:
+    она показывает, сколько реальных нарушений находит модель (recall) при заданной
+    доле ложных тревог (precision), без влияния большого числа TN.
+
+    Параметры:
+        results_list: список результатов из evaluate_model()
+    """
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    for result in results_list:
+        # score нарушения = 1 - P(норма)
+        scores_viol = 1.0 - result["y_prob"]
+        y_viol = (result["y_test"] == 0).astype(int)
+        prec, rec, _ = precision_recall_curve(y_viol, scores_viol)
+        # AP — площадь под PR-кривой (average precision)
+        ap = float(np.trapz(prec, rec) * -1)  # trapz по убывающему rec → нужно abs
+        ap = abs(ap)
+        ax.plot(rec, prec, label=f"{result['model_name']} (AP={ap:.3f})")
+
+    # Baseline: доля нарушений в y_test
+    if results_list:
+        baseline = float((results_list[0]["y_test"] == 0).mean())
+        ax.axhline(baseline, color="k", linestyle="--",
+                   label=f"Random baseline (precision={baseline:.3f})")
+
+    ax.set_xlabel("Recall (нарушения)")
+    ax.set_ylabel("Precision (нарушения)")
+    ax.set_title("PR-кривые моделей\n(class 0 = нарушение; лучше ROC при дисбалансе)")
+    ax.legend()
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1.05])
+    plt.tight_layout()
+    plt.show()
+
+
 def plot_feature_importance(model, feature_names: list, top_n: int = 15):
     """Feature importance для Random Forest."""
     if not hasattr(model, "feature_importances_"):

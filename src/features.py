@@ -128,8 +128,9 @@ def add_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
         fc = df["free_chlorine"]
         fc_min = NORMS_POOL["free_chlorine_min"]
         fc_max = NORMS_POOL["free_chlorine_max"]
-        # deviation: 0 = в норме, >0 = отклонение от диапазона
-        deviation = np.maximum(0, fc_min - fc, fc - fc_max)
+        # deviation: 0 = в норме, >0 = выход за диапазон [fc_min, fc_max]
+        # np.maximum принимает ровно 2 массива; вычисляем как max(low_viol, high_viol, 0)
+        deviation = np.maximum(np.maximum(fc_min - fc, fc - fc_max), 0)
         df["free_chlorine_deviation"] = np.where(
             is_pool & fc.notna(), deviation, np.nan
         )

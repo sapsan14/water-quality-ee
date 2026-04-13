@@ -259,10 +259,25 @@ def _compliant_joogiveeallika(elem: etree._Element) -> Optional[int]:
     return _compliant_from_hinnang(elem)
 
 
-def _merge_num(prev: Optional[float], new: Optional[float]) -> Optional[float]:
+# Параметры, для которых берётся последнее измерение (не максимум):
+# pH, свободный/связанный хлор, прозрачность — диапазонные нормы, max не отражает нарушение.
+# Для всех остальных (микробиология, химия) — max: safety-first (худший случай важнее).
+_MERGE_LAST_WINS = frozenset({"ph", "free_chlorine", "combined_chlorine", "transparency"})
+
+
+def _merge_num(
+    prev: Optional[float], new: Optional[float], col: Optional[str] = None
+) -> Optional[float]:
+    """Объединить два измерения одного параметра в одной пробе.
+
+    col in _MERGE_LAST_WINS  → последнее значение (range-параметры: pH, хлор, прозрачность).
+    Остальные               → max (safety-first: хуже = важнее для микробиологии/химии).
+    """
     if new is None:
         return prev
     if prev is None:
+        return new
+    if col in _MERGE_LAST_WINS:
         return new
     return max(prev, new)
 
@@ -316,7 +331,7 @@ def _parse_supluskoha_opendata(tree: etree._Element) -> pd.DataFrame:
             if not col:
                 continue
             val = _parse_float_text(_text(n_el, "sisaldus"))
-            rec[col] = _merge_num(rec[col], val)
+            rec[col] = _merge_num(rec[col], val, col)
 
         rec["compliant"] = _compliant_from_hinnang(pv)
         records.append(rec)
@@ -399,7 +414,7 @@ def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
             yhik = _text(n_el, "yhik")
             if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
                 val = val / 1000.0 if val is not None else None
-            rec[col] = _merge_num(rec[col], val)
+            rec[col] = _merge_num(rec[col], val, col)
 
         rec["compliant"] = _compliant_from_hinnang(pv)
         records.append(rec)
@@ -488,7 +503,7 @@ def _parse_basseinid_opendata(tree: etree._Element) -> pd.DataFrame:
             yhik = _text(n_el, "yhik")
             if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
                 val = val / 1000.0 if val is not None else None
-            rec[col] = _merge_num(rec[col], val)
+            rec[col] = _merge_num(rec[col], val, col)
 
         rec["compliant"] = _compliant_from_hinnang(pv)
         records.append(rec)
@@ -546,7 +561,7 @@ def _parse_joogiveeallika_opendata(tree: etree._Element) -> pd.DataFrame:
             yhik = _text(n_el, "yhik")
             if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
                 val = val / 1000.0 if val is not None else None
-            rec[col] = _merge_num(rec[col], val)
+            rec[col] = _merge_num(rec[col], val, col)
 
         rec["compliant"] = _compliant_joogiveeallika(pv)
         records.append(rec)
