@@ -437,8 +437,8 @@ def main() -> None:
         rows_for_df.append(d)
     df_full = pd.json_normalize(rows_for_df, sep="_")
 
-    tabs_list = ["Карта", "Таблица", "Сравнение моделей", "О сервисе"]
-    tab_map, tab_table, tab_compare, tab_about = st.tabs(tabs_list)
+    tabs_list = ["Карта", "Таблица", "Сравнение моделей", "Диагностика", "О модели", "О сервисе"]
+    tab_map, tab_table, tab_compare, tab_diag, tab_model, tab_about = st.tabs(tabs_list)
 
     with tab_map:
         c1, c2, c3 = st.columns([2, 1, 1])
@@ -545,6 +545,9 @@ def main() -> None:
 
     with tab_compare:
         _render_model_comparison_tab(places, avail_models, model_labels)
+
+    with tab_diag:
+        _render_diagnostics(places, has_model, snap)
 
     with tab_model:
         st.markdown("## Как работает модель и как читать прогноз")
