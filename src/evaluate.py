@@ -12,8 +12,11 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
     precision_recall_curve,
+    recall_score,
+    precision_score,
 )
-from typing import Dict, Any
+from sklearn.model_selection import TimeSeriesSplit
+from typing import Dict, Any, Callable, Optional, Tuple
 
 
 # ── Основная оценка модели ────────────────────────────────────────────────────
@@ -185,3 +188,107 @@ def compare_models(results: list) -> pd.DataFrame:
 
     df = pd.DataFrame(rows).set_index("Модель")
     return df.round(4)
+
+
+# ── Порог по вероятности нарушения ─────────────────────────────────────────────
+
+def best_threshold_max_recall_at_precision(
+    y_true,
+    proba_compliant: np.ndarray,
+    min_precision: float = 0.7,
+) -> Dict[str, Any]:
+    """
+    Подобрать порог по score = P(нарушение) = 1 - P(норма).
+    Максимизируем recall класса 0 при условии precision(0) >= min_precision.
+
+    Если ограничение недостижимо, возвращается порог с лучшим F1 на кривой P–R
+    (constraint_met=False).
+    """
+    y_true = np.asarray(y_true)
+    scores = 1.0 - np.asarray(proba_compliant)
+    y_viol = (y_true == 0).astype(int)
+    prec, rec, thr = precision_recall_curve(y_viol, scores)
+
+    if len(thr) == 0:
+        return {
+            "threshold": 0.5,
+            "recall_violation": float("nan"),
+            "precision_violation": float("nan"),
+            "min_precision": min_precision,
+            "constraint_met": False,
+        }
+
+    best_i: Optional[int] = None
+    best_r = -1.0
+    for i in range(len(thr)):
+        p, r = prec[i + 1], rec[i + 1]
+        if p >= min_precision and r > best_r:
+            best_r, best_i = r, i
+
+    if best_i is not None:
+        return {
+            "threshold": float(thr[best_i]),
+            "recall_violation": float(rec[best_i + 1]),
+            "precision_violation": float(prec[best_i + 1]),
+            "min_precision": min_precision,
+            "constraint_met": True,
+        }
+
+    f1 = 2.0 * prec[1:] * rec[1:] / (prec[1:] + rec[1:] + 1e-12)
+    j = int(np.nanargmax(f1))
+    return {
+        "threshold": float(thr[j]),
+        "recall_violation": float(rec[j + 1]),
+        "precision_violation": float(prec[j + 1]),
+        "min_precision": min_precision,
+        "constraint_met": False,
+    }
+
+
+def predict_compliant_from_violation_threshold(
+    proba_compliant: np.ndarray,
+    threshold_violation: float,
+) -> np.ndarray:
+    """1 = норма, 0 = нарушение; нарушение если P(нарушение) >= threshold_violation."""
+    viol = 1.0 - np.asarray(proba_compliant)
+    return np.where(viol >= threshold_violation, 0, 1)
+
+
+# ── Кросс-валидация по времени ────────────────────────────────────────────────
+
+def temporal_cv_metrics(
+    model_factory: Callable,
+    X: pd.DataFrame,
+    y: pd.Series,
+    n_splits: int = 5,
+) -> Tuple[pd.DataFrame, pd.Series]:
+    """
+    TimeSeriesSplit на уже отсортированных по времени X, y (одинаковый индекс).
+
+    model_factory: вызывается без аргументов, возвращает новый не обученный estimator
+    с методами fit, predict, predict_proba.
+    """
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    rows = []
+    for fold, (tr_idx, te_idx) in enumerate(tscv.split(X)):
+        model = model_factory()
+        model.fit(X.iloc[tr_idx], y.iloc[tr_idx])
+        proba = model.predict_proba(X.iloc[te_idx])[:, 1]
+        y_te = y.iloc[te_idx].to_numpy()
+        pred = model.predict(X.iloc[te_idx])
+        auc = roc_auc_score(y_te, proba)
+        r0 = recall_score(y_te, pred, pos_label=0, zero_division=0)
+        p0 = precision_score(y_te, pred, pos_label=0, zero_division=0)
+        rows.append(
+            {
+                "fold": fold + 1,
+                "n_train": len(tr_idx),
+                "n_test": len(te_idx),
+                "roc_auc": auc,
+                "recall_violation": r0,
+                "precision_violation": p0,
+            }
+        )
+    df_fold = pd.DataFrame(rows)
+    summary = df_fold[["roc_auc", "recall_violation", "precision_violation"]].agg(["mean", "std"])
+    return df_fold, summary

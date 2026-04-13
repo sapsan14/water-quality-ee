@@ -9,7 +9,9 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Dict
+
+COUNTY_UNKNOWN = "unknown"
 
 
 # ── Временные признаки ────────────────────────────────────────────────────────
@@ -97,26 +99,60 @@ def add_missing_indicators(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
 
 # ── Кодирование категорий ─────────────────────────────────────────────────────
 
-def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """Кодировать категориальные признаки: county, domain, season."""
+def fit_county_mapping(train_county: pd.Series) -> Dict[str, int]:
+    """
+    Словарь уезд → int по обучающей выборке (без утечки из test).
+    Редкие / новые уезды в test кодируются как unknown при применении.
+    """
+    s = train_county.fillna(COUNTY_UNKNOWN).astype(str)
+    vals = sorted(s.unique())
+    return {v: i for i, v in enumerate(vals)}
+
+
+def encode_categoricals(
+    df: pd.DataFrame,
+    county_mapping: Optional[Dict[str, int]] = None,
+) -> pd.DataFrame:
+    """
+    Кодировать категориальные признаки: county, domain, season.
+
+    county_mapping:
+        None — обучить LabelEncoder на всех строках df (как раньше; возможна утечка).
+        dict — из fit_county_mapping(train_county); неизвестные уезды → код unknown.
+    """
     df = df.copy()
 
-    # Уезд (maakond) — Label Encoding
     if "county" in df.columns:
-        le = LabelEncoder()
-        df["county_encoded"] = le.fit_transform(df["county"].fillna("unknown"))
+        s = df["county"].fillna(COUNTY_UNKNOWN).astype(str)
+        if county_mapping is None:
+            le = LabelEncoder()
+            df["county_encoded"] = le.fit_transform(s)
+        else:
+            unk_code = county_mapping.get(COUNTY_UNKNOWN, 0)
+            df["county_encoded"] = s.map(lambda x: county_mapping.get(x, unk_code))
 
-    # Домен (supluskoha / veevark / ...) — One-Hot Encoding
     if "domain" in df.columns:
         dummies = pd.get_dummies(df["domain"], prefix="domain")
         df = pd.concat([df, dummies], axis=1)
 
-    # Сезон — One-Hot
     if "season" in df.columns:
         dummies = pd.get_dummies(df["season"], prefix="season")
         df = pd.concat([df, dummies], axis=1)
 
     return df
+
+
+def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    До кодирования категорий: фильтр compliant, время, ratio, индикаторы пропусков.
+    Дальше — train_test_split по индексу и encode_categoricals(..., county_mapping=...).
+    """
+    df_clean = df.dropna(subset=["compliant"]).copy()
+    print(f"[features] После удаления без compliant: {len(df_clean)} строк")
+    df_clean = add_time_features(df_clean)
+    df_clean = add_ratio_features(df_clean)
+    df_clean = add_missing_indicators(df_clean, NUMERIC_PARAMS)
+    return df_clean
 
 
 # ── Сборка финального датасета ────────────────────────────────────────────────
@@ -136,36 +172,34 @@ FEATURE_COLS = (
     RATIO_COLS +
     [f"{p}_missing" for p in NUMERIC_PARAMS] +
     ["month", "year", "is_summer", "county_encoded"] +
-    ["domain_supluskoha", "domain_veevark", "domain_basseinid",
-     "season_summer", "season_winter", "season_spring", "season_autumn"]
+    [
+        "domain_supluskoha",
+        "domain_veevark",
+        "domain_basseinid",
+        "domain_joogivesi",
+        "season_summer",
+        "season_winter",
+        "season_spring",
+        "season_autumn",
+    ]
 )
 
 
-def build_dataset(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+def build_dataset(
+    df: pd.DataFrame,
+    county_mapping: Optional[Dict[str, int]] = None,
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Полный пайплайн: сырой DataFrame → (X, y).
 
-    Параметры:
-        df: результат load_domain() или load_all()
-
-    Возвращает:
-        X: DataFrame с признаками
-        y: Series с целевой переменной (1/0)
+    county_mapping:
+        None — кодирование уезда на всём df (совместимость со старыми ноутбуками).
+        Иначе — передать fit_county_mapping(train_county) после split на train.
     """
-    # Убрать строки без целевой переменной
-    df_clean = df.dropna(subset=["compliant"]).copy()
-    print(f"[features] После удаления без compliant: {len(df_clean)} строк")
+    df_clean = engineer_features(df)
+    df_clean = encode_categoricals(df_clean, county_mapping=county_mapping)
 
-    # Добавить производные признаки
-    df_clean = add_time_features(df_clean)
-    df_clean = add_ratio_features(df_clean)
-    df_clean = add_missing_indicators(df_clean, NUMERIC_PARAMS)
-    df_clean = encode_categoricals(df_clean)
-
-    # Целевая переменная
     y = df_clean["compliant"].astype(int)
-
-    # Признаки — берём только то, что есть в датасете
     available_features = [c for c in FEATURE_COLS if c in df_clean.columns]
     X = df_clean[available_features].copy()
 
@@ -173,6 +207,49 @@ def build_dataset(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
     print(f"[features] Распределение классов:\n{y.value_counts()}")
 
     return X, y
+
+
+# Дополнительные столбцы в meta для citizen-service / отчётов по пробам
+META_EXTRA_NUMERIC = NUMERIC_PARAMS + [
+    "free_chlorine",
+    "combined_chlorine",
+    "pseudomonas",
+    "staphylococci",
+    "oxidizability",
+    "colonies_37c",
+]
+
+
+def build_dataset_with_meta(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame]:
+    """
+    Как build_dataset, но дополнительно возвращает meta со столбцами места, даты и измерений
+    (для снимков карты и трассировки строк).
+
+    Уезд кодируется по всей выборке (офлайн-снимок / полное обучение citizen-модели).
+    """
+    df_clean = engineer_features(df)
+    df_clean = encode_categoricals(df_clean, county_mapping=None)
+
+    y = df_clean["compliant"].astype(int)
+    available_features = [c for c in FEATURE_COLS if c in df_clean.columns]
+    X = df_clean[available_features].copy()
+
+    base_meta = ["location", "domain", "sample_date", "compliant"]
+    meta_cols = [c for c in base_meta if c in df_clean.columns]
+    if "sample_id" in df_clean.columns:
+        meta_cols.append("sample_id")
+    if "county" in df_clean.columns:
+        meta_cols.append("county")
+    for c in META_EXTRA_NUMERIC:
+        if c in df_clean.columns and c not in meta_cols:
+            meta_cols.append(c)
+
+    meta = df_clean[meta_cols].copy()
+
+    print(f"[features] Итого признаков: {X.shape[1]}")
+    print(f"[features] Распределение классов:\n{y.value_counts()}")
+
+    return X, y, meta
 
 
 def impute_and_scale(

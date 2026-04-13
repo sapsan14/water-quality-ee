@@ -17,3 +17,6 @@ notebooks/*_executed.ipynb
 # OS
 .DS_Store
 Thumbs.db
+
+# Модель пересобирается build_citizen_snapshot.py
+citizen-service/artifacts/*.joblib

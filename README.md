@@ -52,7 +52,7 @@
 
 1. Загрузите репозиторий на **GitHub** (или используйте zip: *File → Upload* в Colab).
 2. В `colab_quickstart.ipynb` укажите свой `REPO_URL` и выполните ячейки: клонирование в `/content/water-quality-ee`, `pip install -r requirements.txt`, `pip install -e .`, проверка `load_domain`.
-3. Остальные ноутбуки **01→05** открывайте из файлового браузера Colab; в начале сессии в них выполните `%cd /content/water-quality-ee` (если kernel стартовал в другой папке).
+3. Остальные ноутбуки **01→06** открывайте из файлового браузера Colab; в начале сессии в них выполните `%cd /content/water-quality-ee` (если kernel стартовал в другой папке). Для `06_advanced_models.ipynb` дополнительно: `pip install lightgbm shap`.
 
 **GPU:** модели в `04_models.ipynb` — *scikit-learn*; они **не используют GPU**. Colab с T4 не ускорит LR/Random Forest. GPU имело бы смысл при отдельных GPU-библиотеках (XGBoost-GPU, PyTorch и т.д.).
 
@@ -72,20 +72,27 @@ water-quality-ee/
 │
 ├── notebooks/
 │   ├── colab_quickstart.ipynb    # старт в Google Colab (клон + pip + проверка)
+│   ├── 00_polnoye_rukovodstvo.ipynb  # сквозное руководство (опционально)
 │   ├── 01_eda_supluskoha.ipynb    # разведочный анализ: места купания
-│   ├── 02_eda_full.ipynb          # полный EDA по всем доменам
+│   ├── 02_eda_full.ipynb          # EDA: load_all() (+ joogivesi / joogiveeallikas)
 │   ├── 03_preprocessing.ipynb     # предобработка, feature engineering
 │   ├── 04_models.ipynb            # обучение моделей
-│   └── 05_evaluation.ipynb        # оценка, интерпретация, итог
+│   ├── 05_evaluation.ipynb        # оценка, интерпретация, итог
+│   └── 06_advanced_models.ipynb   # LightGBM, темпоральный split, калибровка, SHAP
+│
+├── scripts/
+│   └── warm_county_geocode_cache.py  # долгий прогон кэша уездов (Nominatim)
 │
 ├── src/
 │   ├── data_loader.py    # загрузка и парсинг XML
+│   ├── county_infer.py   # инференс уезда (XML → overrides → кэш → опц. геокодер)
 │   ├── features.py       # извлечение признаков
 │   └── evaluate.py       # метрики и визуализация
 │
 ├── data/
 │   ├── raw/              # скачанные XML файлы (не в git)
-│   └── processed/        # подготовленные CSV (не в git)
+│   ├── processed/        # joblib/кэши (не в git)
+│   └── reference/        # справочники (напр. location → county)
 │
 └── docs/
     ├── normy.md          # нормативы по каждому параметру
@@ -101,6 +108,8 @@ water-quality-ee/
 - **scikit-learn** — модели и пайплайны
 - **matplotlib / seaborn** — визуализация
 - **lxml / xml.etree** — парсинг XML
+- **geopy** (опционально) — геокодирование для заполнения `county`, если включить `geocode_county=True`
+- **lightgbm / shap** (опционально) — ноутбук `06_advanced_models.ipynb`
 - **Jupyter Notebook** — интерактивный анализ
 
 ---
@@ -109,7 +118,8 @@ water-quality-ee/
 
 1. **Logistic Regression** — baseline, интерпретируемость
 2. **Random Forest** — основная модель, feature importance
-3. (опционально) **Gradient Boosting** — если Random Forest недостаточно
+3. **Gradient Boosting** (sklearn) — в `04_models.ipynb`
+4. **LightGBM** + калибровка + SHAP — в `06_advanced_models.ipynb`
 
 ---
 
@@ -139,6 +149,12 @@ water-quality-ee/
 - [x] Сравнение метрик
 - [x] Интерпретация результатов
 - [x] Финальный отчёт / презентация
+
+---
+
+## Гражданский сервис (карта + прогноз)
+
+Отдельная папка **[citizen-service/](citizen-service/)**: Streamlit-приложение с картой точек (открытые места купания и бассейны/СПА), официальным статусом и слоем прогноза модели. Сбор снимка данных и план деплоя (GitHub Actions + Streamlit Cloud) описаны в `citizen-service/README.md` и `citizen-service/PLAN.md`.
 
 ---
 

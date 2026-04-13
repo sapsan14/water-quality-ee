@@ -1,0 +1,42 @@
+# Черновик: обновление снимка для citizen-service (раскомментируйте push при необходимости)
+name: Citizen snapshot
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 5 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt -r citizen-service/requirements.txt
+
+      - name: Download open data (uses cache if XML committed — prefer secrets/cache in production)
+        run: python src/data_loader.py || true
+        continue-on-error: true
+
+      - name: Build snapshot
+        run: python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 0
+
+      # Раскомментируйте для автокоммита артефактов:
+      # - uses: stefanzweifel/git-auto-commit-action@v5
+      #   with:
+      #     commit_message: "chore(citizen): refresh snapshot"
+      #     file_pattern: citizen-service/artifacts/snapshot.json citizen-service/artifacts/citizen_model.joblib
+
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citizen-snapshot
+          path: |
+            citizen-service/artifacts/snapshot.json
+            citizen-service/artifacts/citizen_model.joblib

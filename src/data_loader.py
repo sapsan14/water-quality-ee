@@ -34,6 +34,8 @@ OPENDATA_BASE = "https://vtiav.sm.ee/index.php/opendata/"
 OPENDATA_PREFIX = {
     "supluskoha": "supluskoha_veeproovid",
     "veevark": "veevargi_veeproovid",
+    "basseinid": "basseini_veeproovid",
+    "joogivesi": "joogiveeallika_veeproovid",
 }
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
@@ -163,6 +165,42 @@ def _compliant_from_hinnang(elem: etree._Element) -> Optional[int]:
     if not seen:
         return None
     return 1
+
+
+def _compliant_joogiveeallika(elem: etree._Element) -> Optional[int]:
+    """
+    Источники питьевой воды (joogiveeallika): протокол даёт «Kvaliteediklass I/II/…»
+    или «vastab» / «ei vasta» на показателях.
+    """
+    for h in elem.findall(".//hinnang"):
+        if not h.text:
+            continue
+        t = h.text.strip().lower()
+        if "ei vasta" in t:
+            return 0
+
+    seen_klass = False
+    worst = 1
+    for h in elem.findall(".//katseprotokoll/hinnang"):
+        if not h.text:
+            continue
+        tl = h.text.strip().lower()
+        if "kvaliteediklass" not in tl:
+            continue
+        seen_klass = True
+        if re.search(r"kvaliteediklass\s+iii\b", tl):
+            worst = 0
+        elif re.search(r"kvaliteediklass\s+ii\b", tl):
+            worst = min(worst, 0)
+        elif re.search(r"kvaliteediklass\s+i\b", tl):
+            worst = min(worst, 1)
+        else:
+            worst = min(worst, 0)
+
+    if seen_klass:
+        return worst
+
+    return _compliant_from_hinnang(elem)
 
 
 def _merge_num(prev: Optional[float], new: Optional[float]) -> Optional[float]:
@@ -317,6 +355,155 @@ def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
     return df
 
 
+def _basseinid_naitaja_col(nimetus: str) -> Optional[str]:
+    """Маппинг эстонских названий показателей бассейна → колонки DataFrame."""
+    n = nimetus.strip().lower()
+    if "escherichia coli" in n:
+        return "e_coli"
+    if "coli-laadsed" in n:
+        return "coliforms"
+    if "enterokok" in n:
+        return "enterococci"
+    if "pseudomonas" in n:
+        return "pseudomonas"
+    if "stafül" in n or "staphylococcus" in n:
+        return "staphylococci"
+    if "kolooniate arv" in n:
+        return "colonies_37c"
+    if "nitraatioon" in n:
+        return "nitrates"
+    if "oksüdeeritavus" in n or "oksudeeritavus" in n:
+        return "oxidizability"
+    if "vaba kloor" in n:
+        return "free_chlorine"
+    if "seotud kloor" in n:
+        return "combined_chlorine"
+    if "hägusus" in n or "hagusus" in n:
+        return "turbidity"
+    if "värvus" in n:
+        return "color"
+    if "ammoonium" in n:
+        return "ammonium"
+    if re.match(r"^ph\b", n) or n.startswith("ph "):
+        return "ph"
+    return None
+
+
+def _parse_basseinid_opendata(tree: etree._Element) -> pd.DataFrame:
+    """Opendata: корень basseini_veeproovid, записи proovivott (бассейны, SPA)."""
+    records = []
+    for pv in tree.findall(".//proovivott"):
+        loc = _text(pv, "bassein") or _text(pv.find("proovivotukoht"), "nimetus")
+        rec = {
+            "domain": "basseinid",
+            "sample_id": _text(pv, "id"),
+            "location": loc,
+            "county": _text(pv, "maakond"),
+            "sample_date": _text(pv, "proovivotu_aeg"),
+        }
+        keys = (
+            "e_coli", "coliforms", "enterococci", "ph", "turbidity", "color",
+            "ammonium", "nitrates", "pseudomonas", "staphylococci",
+            "free_chlorine", "combined_chlorine", "oxidizability", "colonies_37c",
+        )
+        for k in keys:
+            rec[k] = None
+
+        for n_el in pv.findall(".//naitaja"):
+            nm = _text(n_el, "nimetus")
+            if not nm:
+                continue
+            col = _basseinid_naitaja_col(nm)
+            if not col:
+                continue
+            val = _parse_float_text(_text(n_el, "sisaldus"))
+            yhik = _text(n_el, "yhik")
+            if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
+                val = val / 1000.0 if val is not None else None
+            rec[col] = _merge_num(rec[col], val)
+
+        rec["compliant"] = _compliant_from_hinnang(pv)
+        records.append(rec)
+
+    df = pd.DataFrame(records)
+    if len(df) == 0:
+        return df
+    df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    num_cols = [
+        "e_coli", "coliforms", "enterococci", "ph", "turbidity", "color",
+        "ammonium", "nitrates", "pseudomonas", "staphylococci",
+        "free_chlorine", "combined_chlorine", "oxidizability", "colonies_37c",
+    ]
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
+
+
+def _parse_joogiveeallika_opendata(tree: etree._Element) -> pd.DataFrame:
+    """Opendata: корень joogiveeallika_veeproovid — структура как у veevärk (proovivott + naitaja)."""
+    records = []
+    for pv in tree.findall(".//proovivott"):
+        src = _text(pv, "veeallikas")
+        spot = _text(pv.find("proovivotukoht"), "nimetus")
+        if src and spot:
+            loc = f"{src} — {spot}"
+        else:
+            loc = src or spot or ""
+        rec = {
+            "domain": "joogivesi",
+            "sample_id": _text(pv, "id"),
+            "location": loc,
+            "county": _text(pv, "maakond"),
+            "sample_date": _text(pv, "proovivotu_aeg"),
+        }
+        keys = (
+            "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+            "ammonium", "fluoride", "manganese", "iron", "chlorides",
+            "sulfates", "ph", "turbidity", "color",
+        )
+        for k in keys:
+            rec[k] = None
+
+        for n_el in pv.findall(".//naitaja"):
+            nm = _text(n_el, "nimetus")
+            if not nm:
+                continue
+            col = _veevark_naitaja_col(nm)
+            if not col:
+                continue
+            val = _parse_float_text(_text(n_el, "sisaldus"))
+            yhik = _text(n_el, "yhik")
+            if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
+                val = val / 1000.0 if val is not None else None
+            rec[col] = _merge_num(rec[col], val)
+
+        rec["compliant"] = _compliant_joogiveeallika(pv)
+        records.append(rec)
+
+    df = pd.DataFrame(records)
+    if len(df) == 0:
+        return df
+    df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    num_cols = [
+        "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+        "ammonium", "fluoride", "manganese", "iron", "chlorides",
+        "sulfates", "ph", "turbidity", "color",
+    ]
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
+
+
+def parse_basseinid(xml_bytes: bytes) -> pd.DataFrame:
+    tree = etree.fromstring(xml_bytes)
+    root_tag = etree.QName(tree).localname
+    if root_tag == "basseini_veeproovid":
+        return _parse_basseinid_opendata(tree)
+    return pd.DataFrame()
+
+
 # ── Парсинг: старый формат (uuring) ─────────────────────────────────────────
 
 def _parse_supluskoha_legacy(tree: etree._Element) -> pd.DataFrame:
@@ -407,11 +594,21 @@ def parse_veevark(xml_bytes: bytes) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def parse_joogivesi(xml_bytes: bytes) -> pd.DataFrame:
+    tree = etree.fromstring(xml_bytes)
+    root_tag = etree.QName(tree).localname
+    if root_tag == "joogiveeallika_veeproovid":
+        return _parse_joogiveeallika_opendata(tree)
+    return pd.DataFrame()
+
+
 # ── Универсальная загрузка ───────────────────────────────────────────────────
 
 PARSERS = {
     "supluskoha": parse_supluskoha,
     "veevark": parse_veevark,
+    "basseinid": parse_basseinid,
+    "joogivesi": parse_joogivesi,
 }
 
 
@@ -419,14 +616,20 @@ def load_domain(
     domain_key: str,
     use_cache: bool = True,
     years: Optional[List[int]] = None,
+    infer_county: bool = True,
+    geocode_county: bool = False,
+    geocode_limit: Optional[int] = 200,
 ) -> pd.DataFrame:
     """
     Загрузить домен: несколько годов opendata, объединить в один DataFrame.
 
     Параметры:
-        domain_key: supluskoha | veevark
+        domain_key: supluskoha | veevark | basseinid | joogivesi
         use_cache: читать data/raw/{domain}_{year}.xml
         years: список лет (по умолчанию текущий и 5 предыдущих)
+        infer_county: заполнить пустой maakond из overrides + кэша (+ опционально Nominatim)
+        geocode_county: HTTP к geopy/Nominatim (медленно; см. geocode_limit)
+        geocode_limit: макс. новых геозапросов за вызов (None = без лимита)
     """
     if domain_key not in PARSERS:
         raise NotImplementedError(
@@ -446,20 +649,40 @@ def load_domain(
         f"[data_loader] {domain_key}: {len(df)} проб, "
         f"{df['compliant'].notna().sum() if len(df) else 0} с известным статусом"
     )
+    if infer_county and len(df) > 0:
+        from county_infer import enrich_county_column
+
+        df = enrich_county_column(
+            df,
+            geocode=geocode_county,
+            geocode_limit=geocode_limit,
+        )
     return df
 
 
-def load_all(domains: Optional[list] = None, use_cache: bool = True) -> pd.DataFrame:
+def load_all(
+    domains: Optional[list] = None,
+    use_cache: bool = True,
+    infer_county: bool = True,
+    geocode_county: bool = False,
+    geocode_limit: Optional[int] = 200,
+) -> pd.DataFrame:
     """
     Загрузить несколько доменов и объединить в один DataFrame.
+
+    infer_county выполняется один раз по объединённой таблице (общий лимит геокодирования).
     """
     if domains is None:
-        domains = ["supluskoha", "veevark"]
+        domains = ["supluskoha", "veevark", "basseinid", "joogivesi"]
 
     dfs = []
     for domain_key in domains:
         try:
-            df = load_domain(domain_key, use_cache=use_cache)
+            df = load_domain(
+                domain_key,
+                use_cache=use_cache,
+                infer_county=False,
+            )
             dfs.append(df)
         except Exception as e:
             print(f"[data_loader] ОШИБКА при загрузке {domain_key}: {e}")
@@ -469,6 +692,14 @@ def load_all(domains: Optional[list] = None, use_cache: bool = True) -> pd.DataF
 
     combined = pd.concat(dfs, ignore_index=True)
     print(f"[data_loader] Итого: {len(combined)} проб из {len(dfs)} доменов")
+    if infer_county and len(combined) > 0:
+        from county_infer import enrich_county_column
+
+        combined = enrich_county_column(
+            combined,
+            geocode=geocode_county,
+            geocode_limit=geocode_limit,
+        )
     return combined
 
 

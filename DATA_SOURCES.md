@@ -8,6 +8,15 @@
 
 ---
 
+## География (maakond) и справочники в репозитории
+
+- В opendata-XML поле **maakond** часто пустое; для признака `county` и карт используется **`src/county_infer.py`**: переопределения `data/reference/location_county_overrides.csv`, кэш геокодера `data/processed/county_geocode_cache.json`, опционально Nominatim.
+- **Центроиды уездов** для fallback на карте: `citizen-service/county_centroids.py` (упрощённые координаты, не замена точного адреса).
+- Официальные названия уездов (эт/англ) сверяйте с публичными справочниками Эстонии (например классификаторы на [riigiteataja.ee](https://www.riigiteataja.ee) / порталы РИК).
+- В **ноутбуках 03 и 06** кодирование **`county_encoded`** строится **только по обучающей части** выборки; редкие уезды в test маппятся как `unknown`.
+
+---
+
 ## 1. Supluskohad — Места для купания
 
 **Описание:** Морские пляжи, озёра, реки — публичные места для купания. Мониторинг ведётся Департаментом здоровья в купальный сезон (июнь–август).
@@ -77,6 +86,15 @@ https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=veevargi_uu
 https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=basseini_uuringud
 ```
 
+**Opendata (годовые файлы, как у купален и водопровода):**
+```
+https://vtiav.sm.ee/index.php/opendata/basseini_veeproovid_YYYY.xml
+```
+
+Парсер в проекте: `load_domain("basseinid")` / `load_all()` (входит в объединённый датасет по умолчанию).
+
+**Где это лежит у вас:** сырые годовые файлы — `data/raw/basseinid_YYYY.xml`. Файл `data/processed/raw_combined.csv` из ноутбука `02_eda_full.ipynb` содержит бассейны **только после** вызова `load_all()` (три домена); старый CSV на ~38k строк — без `basseinid`, его нужно пересоздать. В столбце `location` имя часто **длинное**, по объекту пробы (например `My Fitness Rävala pst 4 ujula suur bassein`, отдельно `… mullivann`) — поиск только по «My Fitness» или «Rävala» в таблице/CSV.
+
 **Параметры анализа:**
 
 | Параметр | Норматив |
@@ -98,12 +116,19 @@ https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=basseini_uu
 
 **Описание:** Природные источники, колодцы, нецентрализованные системы. Мониторинг менее частый, данных меньше.
 
-**XML endpoint:**
+**Opendata (годовые XML, как у остальных доменов):**
+```
+https://vtiav.sm.ee/index.php/opendata/joogiveeallika_veeproovid_YYYY.xml
+```
+
+**Старый query-endpoint (часто отдаёт HTML, не сырые данные):**
 ```
 https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=joogiveeallikas_uuringud
 ```
 
-**Параметры:** аналогичны водопроводной воде (veevärk), но нормативы могут отличаться. Часто более простой набор показателей.
+В проекте: `load_domain("joogivesi")` / `load_all()` (ключ домена в коде — **`joogivesi`**). Оценка `compliant` по полю протокола «Kvaliteediklass I» (1) vs «II/III» (0) и по «ei vasta» на показателях.
+
+**Параметры:** часто как у veevärk (nitraat, pH, E. coli, …), плюс специфические поля в XML.
 
 **Интерес:** сравнение природных источников vs централизованного водоснабжения.
 
@@ -113,7 +138,9 @@ https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=joogiveeall
 
 **Описание:** Природные минеральные воды, спа-источники, термальные воды Эстонии.
 
-**XML endpoint:**
+**Важно:** на момент проверки (2026) **годовых файлов** вида `…_veeproovid_YYYY.xml` для минеральной воды в каталоге opendata не найдено (в отличие от supluskoha / veevärk / basseinid / joogiveeallika). Загрузчик в репозитории этот домен **не подключает** — только после появления стабильного URL opendata.
+
+**Старый query-endpoint (часто HTML):**
 ```
 https://vtiav.sm.ee/index.php/?active_tab_id=A&lang=et&type=xml&area=mineraalvee_uuringud
 ```

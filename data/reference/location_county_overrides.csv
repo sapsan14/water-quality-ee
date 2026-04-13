@@ -1,0 +1,20 @@
+location_norm,county,note
+# Точное совпадение после normalize_location(); пополняйте вручную при необходимости.
+pirita rand,Harju maakond,Pirita
+pärnu keskrand,Pärnu maakond,
+pärnu rand,Pärnu maakond,
+narva-jõesuu rand,Ida-Viru maakond,
+kuressaare supelrand,Saare maakond,
+anne kanal,Tartu maakond,Tartu
+viimsi spa spordiklubi lastebassein,Harju maakond,SPA
+metropol spa lõõgastuskeskuse bassein,Harju maakond,SPA Tallinn
+atlantis h2o ringvoolu bassein,Harju maakond,SPA Tallinn
+aqva sportbassein,Lääne-Viru maakond,Rakvere Aqva
+grand rose suur bassein,Pärnu maakond,hotell
+fra mare thalasso spa suur bassein,Lääne maakond,Haapsalu
+arensburg spa bassein,Saare maakond,Kuressaare
+estonia spaakeskuse spa & saun suur bassein,Harju maakond,Tallinn
+estonia termide suur bassein,Harju maakond,Tallinn
+club 26 vip bassein,Harju maakond,
+moow spordibassein,Harju maakond,
+valtu suur bassein,Harju maakond,
