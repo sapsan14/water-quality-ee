@@ -242,7 +242,6 @@ def enrich_county_column(
     out.drop(columns=["_county_src"], inplace=True)
 
     if verbose:
-        filled = (out["county_source"] != "xml") & (out["county_source"] != "unknown")
         n_new = (out["county"].notna() & (out["county_source"] != "xml")).sum()
         print(
             f"[county_infer] Заполнено county не из XML: {int(n_new)} строк; "

@@ -443,6 +443,131 @@ def _render_model_comparison_tab(places: list[dict], available_models: list[str]
     )
 
 
+def _render_diagnostics(places: list, has_model: bool, snap: dict) -> None:
+    """Вкладка «Диагностика»: пробелы в мониторинге и ограничения модели."""
+    snap_time_str = snap.get("generated_at", "")
+    try:
+        snap_time = datetime.fromisoformat(snap_time_str)
+        if snap_time.tzinfo is None:
+            snap_time = snap_time.replace(tzinfo=timezone.utc)
+    except Exception:
+        snap_time = datetime.now(timezone.utc)
+
+    def age_days(p: dict) -> int | None:
+        sd = p.get("sample_date")
+        if not sd:
+            return None
+        try:
+            dt = datetime.fromisoformat(str(sd).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return (snap_time - dt).days
+        except Exception:
+            return None
+
+    st.subheader("Диагностика качества мониторинга")
+    st.markdown(
+        "Потенциальные пробелы в надзоре — места, которые требуют внимания "
+        "со стороны Terviseamet (давно без пробы) или в части модели."
+    )
+    dedup_note = snap.get("dedup_note")
+    if dedup_note:
+        st.info(f"ℹ️ **Дедупликация имён:** {dedup_note}")
+
+    # 1. Незакрытые нарушения
+    st.markdown("---")
+    st.markdown("### ⚠️ Незакрытые нарушения")
+    st.markdown(
+        "Места, где **последняя официальная проба — нарушение** и нет новых данных > 30 дней."
+    )
+    open_violations = []
+    for p in places:
+        if p.get("official_compliant") != 0:
+            continue
+        if p.get("domain") not in ("supluskoha", "veevark", "joogivesi"):
+            continue
+        age = age_days(p)
+        if age is not None and age > 30:
+            open_violations.append({
+                "Место": p.get("location", "—"),
+                "Тип": DOMAIN_LABELS.get(p.get("domain", ""), p.get("domain", "—")),
+                "Последняя проба": (p.get("sample_date") or "—")[:10],
+                "Дней назад": age,
+                "Риск (модель)": round(p["model_violation_prob"], 2)
+                if has_model and isinstance(p.get("model_violation_prob"), (int, float)) else "—",
+            })
+    open_violations.sort(key=lambda x: x["Дней назад"], reverse=True)
+    if open_violations:
+        st.error(f"Найдено **{len(open_violations)}** мест с незакрытым нарушением.")
+        st.dataframe(pd.DataFrame(open_violations), use_container_width=True, hide_index=True)
+    else:
+        st.success("Незакрытых нарушений не обнаружено.")
+
+    # 2. Давно не проверялись
+    st.markdown("---")
+    st.markdown("### 🕐 Места без свежей пробы")
+    domain_thresholds = {
+        "supluskoha": (540, "пропущен целый купальный сезон"),
+        "veevark":    (365, "питьевая вода должна проверяться регулярно"),
+        "joogivesi":  (365, "источники питьевой воды — редко проверяются"),
+        "basseinid":  (365, "бассейны работают круглый год"),
+    }
+    for domain, (threshold_days, reason) in domain_thresholds.items():
+        stale = [p for p in places if p.get("domain") == domain and (age_days(p) or 0) > threshold_days]
+        total = sum(1 for p in places if p.get("domain") == domain)
+        if not total:
+            continue
+        pct = len(stale) / total * 100
+        label = DOMAIN_LABELS.get(domain, domain)
+        msg = f"**{label}**: {len(stale)}/{total} точек без пробы > {threshold_days} дней ({pct:.0f}%) — {reason}"
+        if pct >= 50:
+            st.error(msg)
+        elif pct >= 25:
+            st.warning(msg)
+        else:
+            st.info(msg)
+    stale_swim = sorted(
+        [p for p in places if p.get("domain") == "supluskoha" and (age_days(p) or 0) > 365],
+        key=lambda x: age_days(x) or 0, reverse=True,
+    )
+    if stale_swim:
+        with st.expander(f"Купальные места без пробы > 1 года ({len(stale_swim)} шт.)"):
+            rows = [{"Место": p.get("location", "—"), "Дней без пробы": age_days(p),
+                     "Официально": "норма" if p.get("official_compliant") == 1 else "нарушение"}
+                    for p in stale_swim]
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    # 3. Бассейновые нормы
+    st.markdown("---")
+    st.markdown("### 🏊 Бассейны: pool-специфические нормы")
+    st.markdown(
+        "Нормы бассейнов (turbidity 0.5 NTU, хлор, стафилококки) отличаются от питьевой воды. "
+        "`features.py` применяет `NORMS_POOL` при `domain=basseinid`."
+    )
+    if has_model:
+        pool_ok = [p for p in places if p.get("domain") == "basseinid" and p.get("official_compliant") == 1]
+        pool_fp = [p for p in pool_ok if isinstance(p.get("model_violation_prob"), (int, float)) and p["model_violation_prob"] > 0.5]
+        if pool_fp:
+            st.warning(f"**{len(pool_fp)}** бассейнов: модель риск > 0.5 при официальной норме — возможные ложные тревоги.")
+        else:
+            st.success("Ложных тревог для бассейнов не обнаружено.")
+
+    # 4. Источники питьевой воды
+    st.markdown("---")
+    st.markdown("### 💧 Источники питьевой воды (`joogiveeallikas`)")
+    joogi = [p for p in places if p.get("domain") == "joogivesi"]
+    if joogi:
+        ages = [a for p in joogi if (a := age_days(p)) is not None]
+        stale_1y = sum(1 for a in ages if a > 365)
+        if ages:
+            import statistics as _stats
+            median_age = int(_stats.median(ages))
+            st.error(
+                f"**{stale_1y}/{len(joogi)}** источников питьевой воды не проверялись > 1 года "
+                f"(медиана: **{median_age} дней ≈ {median_age // 365} лет**)."
+            )
+
+
 def main() -> None:
     st.set_page_config(page_title="Качество воды (гражданский вид)", layout="wide")
     snap = load_snapshot()

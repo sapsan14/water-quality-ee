@@ -69,11 +69,19 @@ jobs:
           pip install -r citizen-service/requirements.txt
 
       - name: Download open data from vtiav.sm.ee
-        run: python src/data_loader.py
-        continue-on-error: true   # не прерываем если сайт недоступен; используем кэш XML
+        id: download
+        run: |
+          python src/data_loader.py && echo "status=ok" >> "$GITHUB_OUTPUT" || echo "status=fallback" >> "$GITHUB_OUTPUT"
+
+      - name: Warn if data download failed (using cached XML)
+        if: steps.download.outputs.status == 'fallback'
+        run: |
+          echo "::warning::vtiav.sm.ee недоступен или вернул ошибку — используем кэшированный XML из предыдущего запуска."
 
       - name: Build snapshot — map-only (данные + координаты, без модели)
         if: env.SNAPSHOT_MODE != 'full'
+        env:
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
         run: |
           python citizen-service/scripts/build_citizen_snapshot.py \
             --map-only \
@@ -83,6 +91,8 @@ jobs:
 
       - name: Build snapshot — full (данные + 4 модели + координаты)
         if: env.SNAPSHOT_MODE == 'full'
+        env:
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
         run: |
           python citizen-service/scripts/build_citizen_snapshot.py \
             --infer-county \

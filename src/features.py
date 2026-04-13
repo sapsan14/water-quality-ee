@@ -7,7 +7,7 @@ features.py — Инженерия признаков для модели кач
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, RobustScaler
 from sklearn.impute import SimpleImputer
 from typing import Tuple, List, Optional, Dict
 
@@ -389,7 +389,9 @@ def impute_and_scale(
             X_test[col] = X_test[col].fillna(0.0)
 
     imputer = SimpleImputer(strategy="median", keep_empty_features=True)
-    scaler = StandardScaler()
+    # RobustScaler вместо StandardScaler: устойчив к выбросам (E. coli max=100 000 при норме 500).
+    # Масштабирует по медиане и IQR — выбросы не искажают признаки для всей выборки.
+    scaler = RobustScaler()
 
     X_train_imp = imputer.fit_transform(X_train)
     X_test_imp = imputer.transform(X_test)
