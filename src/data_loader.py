@@ -2,43 +2,48 @@
 data_loader.py — Загрузка и парсинг данных о качестве воды из vtiav.sm.ee
 
 Источник: Terviseamet (Департамент здоровья Эстонии)
-Формат: XML
+Формат: XML (каталог opendata: * _veeproovid_YYYY.xml)
 """
 
-import os
-import requests
-import pandas as pd
-from lxml import etree
+from __future__ import annotations
+
+import re
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
+
+import pandas as pd
+import requests
+from lxml import etree
 
 # ── Конфигурация ──────────────────────────────────────────────────────────────
 
 BASE_URL = "https://vtiav.sm.ee/index.php/"
 
+# Старые query-параметры (сайт часто отдаёт HTML-страницу каталога, не сырой XML)
 DOMAINS = {
-    "supluskoha": "supluskoha_uuringud",      # места для купания
-    "veevark":    "veevargi_uuringud",         # водопроводная вода
-    "basseinid":  "basseini_uuringud",         # бассейны
-    "joogivesi":  "joogiveeallikas_uuringud",  # источники питьевой воды
-    "mineraalvesi": "mineraalvee_uuringud",    # минеральная вода
+    "supluskoha": "supluskoha_uuringud",
+    "veevark": "veevargi_uuringud",
+    "basseinid": "basseini_uuringud",
+    "joogivesi": "joogiveeallikas_uuringud",
+    "mineraalvesi": "mineraalvee_uuringud",
+}
+
+# Актуальные полные XML: https://vtiav.sm.ee/index.php/opendata/…
+OPENDATA_BASE = "https://vtiav.sm.ee/index.php/opendata/"
+OPENDATA_PREFIX = {
+    "supluskoha": "supluskoha_veeproovid",
+    "veevark": "veevargi_veeproovid",
 }
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
 
 
-# ── Загрузка XML ──────────────────────────────────────────────────────────────
+# ── Загрузка (legacy + opendata) ─────────────────────────────────────────────
 
 def download_xml(domain_key: str, save: bool = True) -> bytes:
     """
-    Скачать XML по ключу домена.
-
-    Параметры:
-        domain_key: ключ из DOMAINS ('supluskoha', 'veevark', ...)
-        save: сохранять ли в data/raw/
-
-    Возвращает:
-        bytes — сырой XML
+    Скачать ответ по старым параметрам area=… (часто это HTML, не данные).
     """
     if domain_key not in DOMAINS:
         raise ValueError(f"Неизвестный домен: {domain_key}. Доступные: {list(DOMAINS.keys())}")
@@ -47,10 +52,10 @@ def download_xml(domain_key: str, save: bool = True) -> bytes:
         "active_tab_id": "A",
         "lang": "et",
         "type": "xml",
-        "area": DOMAINS[domain_key]
+        "area": DOMAINS[domain_key],
     }
 
-    print(f"[data_loader] Скачиваю {domain_key}...")
+    print(f"[data_loader] Скачиваю {domain_key} (legacy URL)...")
     response = requests.get(BASE_URL, params=params, timeout=60)
     response.raise_for_status()
 
@@ -63,103 +68,258 @@ def download_xml(domain_key: str, save: bool = True) -> bytes:
     return response.content
 
 
+def _looks_like_data_xml(content: bytes) -> bool:
+    head = content[:500].lstrip().lower()
+    if head.startswith(b"<!doctype html") or head.startswith(b"<html"):
+        return False
+    return b"<proovivott" in content or b"<uuring" in content
+
+
+def download_opendata_year(domain_key: str, year: int) -> bytes:
+    """Скачать один годовой файл opendata XML."""
+    if domain_key not in OPENDATA_PREFIX:
+        raise ValueError(f"Нет opendata-префикса для: {domain_key}")
+    url = f"{OPENDATA_BASE}{OPENDATA_PREFIX[domain_key]}_{year}.xml"
+    r = requests.get(url, timeout=90)
+    r.raise_for_status()
+    if not _looks_like_data_xml(r.content):
+        raise ValueError(f"Не похоже на XML проб: {url}")
+    return r.content
+
+
+def default_years() -> List[int]:
+    y = datetime.now().year
+    return [y - i for i in range(6)]
+
+
+def load_domain_xml_blobs(
+    domain_key: str,
+    years: Optional[List[int]] = None,
+    use_cache: bool = True,
+) -> List[bytes]:
+    """Загрузить XML по годам (кэш: data/raw/{domain}_{year}.xml)."""
+    if years is None:
+        years = default_years()
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    blobs: List[bytes] = []
+
+    for year in years:
+        path = DATA_DIR / f"{domain_key}_{year}.xml"
+        data: Optional[bytes] = None
+        if use_cache and path.exists():
+            cached = path.read_bytes()
+            if _looks_like_data_xml(cached):
+                data = cached
+                print(f"[data_loader] Кэш: {path.name}")
+        if data is None:
+            try:
+                print(f"[data_loader] Скачиваю {domain_key} за {year}…")
+                data = download_opendata_year(domain_key, year)
+                path.write_bytes(data)
+                print(f"[data_loader] Сохранено: {path}")
+            except Exception as e:
+                print(f"[data_loader] Год {year} недоступен: {e}")
+                continue
+        blobs.append(data)
+
+    if not blobs:
+        raise RuntimeError(
+            f"Не удалось загрузить opendata XML для '{domain_key}'. "
+            "Проверьте сеть и наличие файлов на vtiav.sm.ee."
+        )
+    return blobs
+
+
 def load_xml(domain_key: str) -> bytes:
-    """
-    Загрузить XML — сначала из кэша, если нет — скачать.
-    """
-    cached = DATA_DIR / f"{domain_key}.xml"
-    if cached.exists():
-        print(f"[data_loader] Загружаю из кэша: {cached}")
-        return cached.read_bytes()
-    return download_xml(domain_key, save=True)
+    """Один сырой XML (первый доступный год из default_years). Для отладки."""
+    return load_domain_xml_blobs(domain_key, years=default_years()[:1], use_cache=True)[0]
 
 
-# ── Парсинг: Supluskohad (места для купания) ─────────────────────────────────
+# ── Парсинг: opendata proovivott ────────────────────────────────────────────
 
-def parse_supluskoha(xml_bytes: bytes) -> pd.DataFrame:
-    """
-    Парсить XML для домена supluskohad.
+def _parse_float_text(val: Optional[str]) -> Optional[float]:
+    if val is None:
+        return None
+    s = val.strip().replace(",", ".")
+    if not s:
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
 
-    Возвращает DataFrame с колонками:
-        sample_id, location, county, sample_date,
-        e_coli, enterococci, ph, transparency,
-        compliant (1/0)
-    """
-    tree = etree.fromstring(xml_bytes)
+
+def _compliant_from_hinnang(elem: etree._Element) -> Optional[int]:
+    """Любой hinnang с «ei vasta» → нарушение (0)."""
+    seen = False
+    for h in elem.findall(".//hinnang"):
+        if not h.text:
+            continue
+        seen = True
+        t = h.text.strip().lower()
+        if "ei vasta" in t:
+            return 0
+    if not seen:
+        return None
+    return 1
+
+
+def _merge_num(prev: Optional[float], new: Optional[float]) -> Optional[float]:
+    if new is None:
+        return prev
+    if prev is None:
+        return new
+    return max(prev, new)
+
+
+def _ugl_to_mgl(yhik: Optional[str]) -> bool:
+    if not yhik:
+        return False
+    y = yhik.lower().replace("µ", "u").replace("μ", "u")
+    return "ug/l" in y or "µg/l" in y or "μg/l" in y
+
+
+def _supluskoha_naitaja_col(nimetus: str) -> Optional[str]:
+    n = nimetus.lower()
+    if "escherichia coli" in n:
+        return "e_coli"
+    if "coli-laadsed" in n:
+        return None
+    if "enterokokk" in n or "enterococc" in n:
+        return "enterococci"
+    if re.match(r"^ph\b", n) or n.startswith("ph "):
+        return "ph"
+    if "läbipaistvus" in n or "labipaistvus" in n:
+        return "transparency"
+    return None
+
+
+def _parse_supluskoha_opendata(tree: etree._Element) -> pd.DataFrame:
     records = []
+    for pv in tree.findall(".//proovivott"):
+        loc = _text(pv, "supluskoht") or _text(pv.find("proovivotukoht"), "nimetus")
+        rec = {
+            "domain": "supluskoha",
+            "sample_id": _text(pv, "id"),
+            "location": loc,
+            "county": _text(pv, "maakond"),
+            "sample_date": _text(pv, "proovivotu_aeg"),
+        }
+        for k in ("e_coli", "enterococci", "ph", "transparency"):
+            rec[k] = None
 
+        for n_el in pv.findall(".//naitaja"):
+            nm = _text(n_el, "nimetus")
+            if not nm:
+                continue
+            col = _supluskoha_naitaja_col(nm)
+            if not col:
+                continue
+            val = _parse_float_text(_text(n_el, "sisaldus"))
+            rec[col] = _merge_num(rec[col], val)
+
+        rec["compliant"] = _compliant_from_hinnang(pv)
+        records.append(rec)
+
+    df = pd.DataFrame(records)
+    if len(df) == 0:
+        return df
+    df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    return df
+
+
+def _veevark_naitaja_col(nimetus: str) -> Optional[str]:
+    n = nimetus.lower()
+    if "escherichia coli" in n:
+        return "e_coli"
+    if "coli-laadsed" in n:
+        return "coliforms"
+    if "enterokokk" in n or "enterococc" in n:
+        return "enterococci"
+    if "nitraat" in n and "nitrit" not in n:
+        return "nitrates"
+    if "nitrit" in n:
+        return "nitrites"
+    if "ammoonium" in n or "amiin" in n:
+        return "ammonium"
+    if "fluoriid" in n:
+        return "fluoride"
+    if "mangaan" in n:
+        return "manganese"
+    if "raud" in n and "kloriid" not in n:
+        return "iron"
+    if "hägusus" in n or "hagusus" in n:
+        return "turbidity"
+    if "värvus" in n and "pt" in n:
+        return "color"
+    if "kloriid" in n:
+        return "chlorides"
+    if "sulfaat" in n:
+        return "sulfates"
+    if re.match(r"^ph\b", n) or n.startswith("ph "):
+        return "ph"
+    return None
+
+
+def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
+    records = []
+    for pv in tree.findall(".//proovivott"):
+        loc = _text(pv, "veevark") or _text(pv.find("proovivotukoht"), "nimetus")
+        rec = {
+            "domain": "veevark",
+            "sample_id": _text(pv, "id"),
+            "location": loc,
+            "county": _text(pv, "maakond"),
+            "sample_date": _text(pv, "proovivotu_aeg"),
+        }
+        keys = (
+            "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+            "ammonium", "fluoride", "manganese", "iron", "chlorides",
+            "sulfates", "ph", "turbidity", "color",
+        )
+        for k in keys:
+            rec[k] = None
+
+        for n_el in pv.findall(".//naitaja"):
+            nm = _text(n_el, "nimetus")
+            if not nm:
+                continue
+            col = _veevark_naitaja_col(nm)
+            if not col:
+                continue
+            val = _parse_float_text(_text(n_el, "sisaldus"))
+            yhik = _text(n_el, "yhik")
+            if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
+                val = val / 1000.0 if val is not None else None
+            rec[col] = _merge_num(rec[col], val)
+
+        rec["compliant"] = _compliant_from_hinnang(pv)
+        records.append(rec)
+
+    df = pd.DataFrame(records)
+    if len(df) == 0:
+        return df
+    df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    return df
+
+
+# ── Парсинг: старый формат (uuring) ─────────────────────────────────────────
+
+def _parse_supluskoha_legacy(tree: etree._Element) -> pd.DataFrame:
+    records = []
     for uuring in tree.findall(".//uuring"):
         record = {
             "domain": "supluskoha",
             "sample_id": _text(uuring, "id"),
-            "location":  _text(uuring, "koht") or _text(uuring, "asukoht"),
-            "county":    _text(uuring, "maakond"),
+            "location": _text(uuring, "koht") or _text(uuring, "asukoht"),
+            "county": _text(uuring, "maakond"),
             "sample_date": _text(uuring, "kuupaev") or _text(uuring, "proovivotmise_kuupaev"),
+            "e_coli": _float(uuring, ".//naiturid_e_coli/vaartus"),
+            "enterococci": _float(uuring, ".//naiturid_enterokokid/vaartus"),
+            "ph": _float(uuring, ".//naiturid_ph/vaartus"),
+            "transparency": _float(uuring, ".//naiturid_labipaistvus/vaartus"),
         }
-
-        # Числовые параметры
-        record["e_coli"]       = _float(uuring, ".//naiturid_e_coli/vaartus")
-        record["enterococci"]  = _float(uuring, ".//naiturid_enterokokid/vaartus")
-        record["ph"]           = _float(uuring, ".//naiturid_ph/vaartus")
-        record["transparency"] = _float(uuring, ".//naiturid_labipaistvus/vaartus")
-
-        # Целевая переменная: vastavus = 'jah' → compliant=1, 'ei' → compliant=0
-        # Смотрим все vastavus в записи — если хоть один 'ei' → нарушение
-        vastavused = [v.text for v in uuring.findall(".//vastavus") if v.text]
-        if not vastavused:
-            record["compliant"] = None  # неизвестно
-        elif any(v.lower() == "ei" for v in vastavused):
-            record["compliant"] = 0
-        else:
-            record["compliant"] = 1
-
-        records.append(record)
-
-    df = pd.DataFrame(records)
-    df["sample_date"] = pd.to_datetime(df["sample_date"], errors="coerce")
-    return df
-
-
-# ── Парсинг: Veevärk (водопроводная вода) ────────────────────────────────────
-
-def parse_veevark(xml_bytes: bytes) -> pd.DataFrame:
-    """
-    Парсить XML для домена veevargi_uuringud.
-    Богатый набор параметров: микробиология + химия + физика.
-    """
-    tree = etree.fromstring(xml_bytes)
-    records = []
-
-    for uuring in tree.findall(".//uuring"):
-        record = {
-            "domain": "veevark",
-            "sample_id":   _text(uuring, "id"),
-            "location":    _text(uuring, "asukoht") or _text(uuring, "koht"),
-            "county":      _text(uuring, "maakond"),
-            "sample_date": _text(uuring, "kuupaev") or _text(uuring, "proovivotmise_kuupaev"),
-        }
-
-        # Микробиологические параметры
-        record["e_coli"]         = _float(uuring, ".//e_coli/vaartus")
-        record["coliforms"]      = _float(uuring, ".//koliformid/vaartus")
-        record["enterococci"]    = _float(uuring, ".//enterokokid/vaartus")
-
-        # Химические параметры
-        record["nitrates"]       = _float(uuring, ".//nitraadid/vaartus")
-        record["nitrites"]       = _float(uuring, ".//nitritid/vaartus")
-        record["ammonium"]       = _float(uuring, ".//ammoonium/vaartus")
-        record["fluoride"]       = _float(uuring, ".//fluoriid/vaartus")
-        record["manganese"]      = _float(uuring, ".//mangaan/vaartus")
-        record["iron"]           = _float(uuring, ".//raud/vaartus")
-        record["chlorides"]      = _float(uuring, ".//kloriidid/vaartus")
-        record["sulfates"]       = _float(uuring, ".//sulfaadid/vaartus")
-
-        # Физические параметры
-        record["ph"]             = _float(uuring, ".//ph/vaartus")
-        record["turbidity"]      = _float(uuring, ".//hägusus/vaartus")
-        record["color"]          = _float(uuring, ".//varvus/vaartus")
-
-        # Целевая переменная
         vastavused = [v.text for v in uuring.findall(".//vastavus") if v.text]
         if not vastavused:
             record["compliant"] = None
@@ -167,32 +327,93 @@ def parse_veevark(xml_bytes: bytes) -> pd.DataFrame:
             record["compliant"] = 0
         else:
             record["compliant"] = 1
-
         records.append(record)
-
     df = pd.DataFrame(records)
-    df["sample_date"] = pd.to_datetime(df["sample_date"], errors="coerce")
+    if len(df) and "sample_date" in df.columns:
+        df["sample_date"] = pd.to_datetime(df["sample_date"], errors="coerce")
     return df
 
 
-# ── Универсальная загрузка ────────────────────────────────────────────────────
+def _parse_veevark_legacy(tree: etree._Element) -> pd.DataFrame:
+    records = []
+    for uuring in tree.findall(".//uuring"):
+        record = {
+            "domain": "veevark",
+            "sample_id": _text(uuring, "id"),
+            "location": _text(uuring, "asukoht") or _text(uuring, "koht"),
+            "county": _text(uuring, "maakond"),
+            "sample_date": _text(uuring, "kuupaev") or _text(uuring, "proovivotmise_kuupaev"),
+            "e_coli": _float(uuring, ".//e_coli/vaartus"),
+            "coliforms": _float(uuring, ".//koliformid/vaartus"),
+            "enterococci": _float(uuring, ".//enterokokid/vaartus"),
+            "nitrates": _float(uuring, ".//nitraadid/vaartus"),
+            "nitrites": _float(uuring, ".//nitritid/vaartus"),
+            "ammonium": _float(uuring, ".//ammoonium/vaartus"),
+            "fluoride": _float(uuring, ".//fluoriid/vaartus"),
+            "manganese": _float(uuring, ".//mangaan/vaartus"),
+            "iron": _float(uuring, ".//raud/vaartus"),
+            "chlorides": _float(uuring, ".//kloriidid/vaartus"),
+            "sulfates": _float(uuring, ".//sulfaadid/vaartus"),
+            "ph": _float(uuring, ".//ph/vaartus"),
+            "turbidity": _float(uuring, ".//hägusus/vaartus"),
+            "color": _float(uuring, ".//varvus/vaartus"),
+        }
+        vastavused = [v.text for v in uuring.findall(".//vastavus") if v.text]
+        if not vastavused:
+            record["compliant"] = None
+        elif any(v.lower() == "ei" for v in vastavused):
+            record["compliant"] = 0
+        else:
+            record["compliant"] = 1
+        records.append(record)
+    df = pd.DataFrame(records)
+    if len(df) and "sample_date" in df.columns:
+        df["sample_date"] = pd.to_datetime(df["sample_date"], errors="coerce")
+    return df
+
+
+# ── Публичные parse_* (автоопределение схемы) ─────────────────────────────────
+
+def parse_supluskoha(xml_bytes: bytes) -> pd.DataFrame:
+    tree = etree.fromstring(xml_bytes)
+    root_tag = etree.QName(tree).localname
+    if root_tag == "supluskoha_veeproovid":
+        return _parse_supluskoha_opendata(tree)
+    if tree.findall(".//uuring"):
+        return _parse_supluskoha_legacy(tree)
+    return pd.DataFrame()
+
+
+def parse_veevark(xml_bytes: bytes) -> pd.DataFrame:
+    tree = etree.fromstring(xml_bytes)
+    root_tag = etree.QName(tree).localname
+    if root_tag == "veevargi_veeproovid":
+        return _parse_veevark_opendata(tree)
+    if tree.findall(".//uuring"):
+        return _parse_veevark_legacy(tree)
+    return pd.DataFrame()
+
+
+# ── Универсальная загрузка ───────────────────────────────────────────────────
 
 PARSERS = {
     "supluskoha": parse_supluskoha,
-    "veevark":    parse_veevark,
+    "veevark": parse_veevark,
 }
 
 
-def load_domain(domain_key: str, use_cache: bool = True) -> pd.DataFrame:
+def load_domain(
+    domain_key: str,
+    use_cache: bool = True,
+    years: Optional[List[int]] = None,
+) -> pd.DataFrame:
     """
-    Загрузить домен как DataFrame.
+    Загрузить домен: несколько годов opendata, объединить в один DataFrame.
 
     Параметры:
-        domain_key: ключ из DOMAINS
-        use_cache: использовать кэшированный XML если есть
-
-    Возвращает:
-        pd.DataFrame
+        domain_key: supluskoha | veevark
+        use_cache: читать data/raw/{domain}_{year}.xml
+        years: список лет (по умолчанию текущий и 5 предыдущих)
     """
     if domain_key not in PARSERS:
         raise NotImplementedError(
@@ -200,23 +421,24 @@ def load_domain(domain_key: str, use_cache: bool = True) -> pd.DataFrame:
             f"Реализовано: {list(PARSERS.keys())}"
         )
 
-    xml = load_xml(domain_key) if use_cache else download_xml(domain_key)
-    df = PARSERS[domain_key](xml)
-    print(f"[data_loader] {domain_key}: {len(df)} проб, "
-          f"{df['compliant'].notna().sum()} с известным статусом")
+    blobs = load_domain_xml_blobs(domain_key, years=years, use_cache=use_cache)
+    parts = [PARSERS[domain_key](b) for b in blobs]
+    parts = [p for p in parts if len(p) > 0]
+    if not parts:
+        df = pd.DataFrame()
+    else:
+        df = pd.concat(parts, ignore_index=True)
+
+    print(
+        f"[data_loader] {domain_key}: {len(df)} проб, "
+        f"{df['compliant'].notna().sum() if len(df) else 0} с известным статусом"
+    )
     return df
 
 
 def load_all(domains: Optional[list] = None, use_cache: bool = True) -> pd.DataFrame:
     """
     Загрузить несколько доменов и объединить в один DataFrame.
-
-    Параметры:
-        domains: список ключей (по умолчанию ['supluskoha', 'veevark'])
-        use_cache: использовать кэш
-
-    Возвращает:
-        pd.DataFrame — объединённый датасет
     """
     if domains is None:
         domains = ["supluskoha", "veevark"]
@@ -237,22 +459,31 @@ def load_all(domains: Optional[list] = None, use_cache: bool = True) -> pd.DataF
     return combined
 
 
+def save_combined_csv(df: pd.DataFrame, filename: str = "raw_combined.csv") -> Path:
+    """Сохранить объединённый DataFrame в data/processed/."""
+    out_dir = Path(__file__).parent.parent / "data" / "processed"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / filename
+    df.to_csv(path, index=False)
+    print(f"[data_loader] Сохранено: {path}")
+    return path
+
+
 # ── Вспомогательные функции ───────────────────────────────────────────────────
 
-def _text(element, path: str) -> Optional[str]:
-    """Безопасное извлечение текста по XPath."""
+def _text(element: Optional[etree._Element], path: str) -> Optional[str]:
+    if element is None:
+        return None
     found = element.find(path)
     if found is not None and found.text:
         return found.text.strip()
     return None
 
 
-def _float(element, path: str) -> Optional[float]:
-    """Безопасное извлечение числа по XPath."""
+def _float(element: etree._Element, path: str) -> Optional[float]:
     val = _text(element, path)
     if val is None:
         return None
-    # Заменить запятую на точку (эстонский формат чисел)
     val = val.replace(",", ".")
     try:
         return float(val)
@@ -263,7 +494,7 @@ def _float(element, path: str) -> Optional[float]:
 # ── Быстрая проверка ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("Тест загрузки: supluskohad")
+    print("Тест загрузки: supluskoha")
     df = load_domain("supluskoha")
     print(df.head())
     print(f"\nФормат: {df.shape}")

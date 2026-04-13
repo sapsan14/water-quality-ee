@@ -54,6 +54,7 @@ def evaluate_model(
         "report":      report,
         "y_pred":      y_pred,
         "y_prob":      y_prob,
+        "y_test":      y_test,
     }
 
 

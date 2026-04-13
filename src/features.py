@@ -182,11 +182,19 @@ def impute_and_scale(
     Возвращает:
         (X_train_scaled, X_test_scaled)
     """
-    imputer = SimpleImputer(strategy="median")
-    scaler  = StandardScaler()
+    X_train = X_train.copy()
+    X_test = X_test.copy()
+    # Столбцы без ни одного значения в train ломают SimpleImputer (срезают признаки).
+    for col in X_train.columns:
+        if X_train[col].notna().sum() == 0:
+            X_train[col] = 0.0
+            X_test[col] = X_test[col].fillna(0.0)
+
+    imputer = SimpleImputer(strategy="median", keep_empty_features=True)
+    scaler = StandardScaler()
 
     X_train_imp = imputer.fit_transform(X_train)
-    X_test_imp  = imputer.transform(X_test)
+    X_test_imp = imputer.transform(X_test)
 
     X_train_scaled = scaler.fit_transform(X_train_imp)
     X_test_scaled  = scaler.transform(X_test_imp)

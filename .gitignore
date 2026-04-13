@@ -12,6 +12,7 @@ env/
 
 # Jupyter
 .ipynb_checkpoints/
+notebooks/*_executed.ipynb
 
 # OS
 .DS_Store

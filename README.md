@@ -46,6 +46,22 @@
 
 ---
 
+## Google Colab
+
+Полный сценарий для облака — ноутбук **[notebooks/colab_quickstart.ipynb](notebooks/colab_quickstart.ipynb)**:
+
+1. Загрузите репозиторий на **GitHub** (или используйте zip: *File → Upload* в Colab).
+2. В `colab_quickstart.ipynb` укажите свой `REPO_URL` и выполните ячейки: клонирование в `/content/water-quality-ee`, `pip install -r requirements.txt`, `pip install -e .`, проверка `load_domain`.
+3. Остальные ноутбуки **01→05** открывайте из файлового браузера Colab; в начале сессии в них выполните `%cd /content/water-quality-ee` (если kernel стартовал в другой папке).
+
+**GPU:** модели в `04_models.ipynb` — *scikit-learn*; они **не используют GPU**. Colab с T4 не ускорит LR/Random Forest. GPU имело бы смысл при отдельных GPU-библиотеках (XGBoost-GPU, PyTorch и т.д.).
+
+После публикации на GitHub можно добавить в свой форк кнопку «Open in Colab» (замените `YOUR_USER`):
+
+`https://colab.research.google.com/github/YOUR_USER/water-quality-ee/blob/main/notebooks/colab_quickstart.ipynb`
+
+---
+
 ## Структура проекта
 
 ```
@@ -55,6 +71,7 @@ water-quality-ee/
 ├── PLAN.md                # пошаговый план (8 этапов)
 │
 ├── notebooks/
+│   ├── colab_quickstart.ipynb    # старт в Google Colab (клон + pip + проверка)
 │   ├── 01_eda_supluskoha.ipynb    # разведочный анализ: места купания
 │   ├── 02_eda_full.ipynb          # полный EDA по всем доменам
 │   ├── 03_preprocessing.ipynb     # предобработка, feature engineering
