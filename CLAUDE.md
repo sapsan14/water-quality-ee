@@ -84,6 +84,7 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 - See `docs/glosarij.md` for RU/ET/EN terminology glossary
 - See `docs/parametry.md` for detailed descriptions of every water parameter (what it measures, health effects, typical sources, norms across domains)
 - See `docs/report.md` for the final project report (EDA insights, methodology, model results, interpretation, limitations)
+- See `docs/ml_metrics_guide.md` for the ML metrics guide: ROC-AUC, Precision/Recall, Calibration, SHAP — 4 levels of model understanding with intuition, formulas, and project-specific examples
 - `features.NORMS` encodes the key thresholds used for ratio features
 
 ## Tests

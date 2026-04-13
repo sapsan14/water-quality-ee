@@ -23,6 +23,16 @@ streamlit run citizen-service/app/streamlit_app.py
 - `artifacts/citizen_model.joblib` — imputer + RF (только после полного прогона, не перезаписывается в режиме `--map-only`)
 - `data/geocode_cache.json` — кэш Nominatim (создаётся при `--geocode-limit > 0`)
 
+## Объяснение модели
+
+В приложении есть вкладка **«О модели»** с понятным объяснением:
+- Как модель принимает решения
+- 4 уровня оценки: ROC-AUC, Precision/Recall, калибровка, SHAP
+- Главные предикторы нарушений (SHAP-анализ)
+- Как читать цвета маркеров на карте
+
+Подробнее: [`docs/ml_metrics_guide.md`](../docs/ml_metrics_guide.md)
+
 ## Деплой и доступ
 
 - Пошагово: **[DEPLOY.md](DEPLOY.md)** (создание приложения на [share.streamlit.io](https://share.streamlit.io), `requirements.streamlit.txt`, путь к `streamlit_app.py`).

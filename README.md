@@ -109,8 +109,11 @@ water-quality-ee/
 │   └── reference/        # справочники (напр. location → county)
 │
 └── docs/
-    ├── normy.md          # нормативы по каждому параметру
-    └── glosarij.md       # словарь терминов RU/ET/EN
+    ├── normy.md              # нормативы по каждому параметру
+    ├── glosarij.md           # словарь терминов RU/ET/EN
+    ├── parametry.md          # параметры воды: описание, нормы, значение для модели
+    ├── ml_metrics_guide.md   # руководство: ROC-AUC, Precision/Recall, калибровка, SHAP
+    └── report.md             # финальный отчёт курса
 ```
 
 ---
@@ -147,8 +150,12 @@ water-quality-ee/
 | ROC-AUC | Общая разделяющая способность |
 | Precision / Recall | Отдельно для интерпретации |
 | Confusion Matrix | Наглядность ошибок |
+| Calibration | Соответствие вероятностей реальности |
+| SHAP | Объяснение решений модели (вклад каждого признака) |
 
 **Приоритет:** минимизировать False Negatives (опасная вода, которую модель пропустила).
+
+> 📖 Подробное руководство по всем метрикам: [docs/ml_metrics_guide.md](docs/ml_metrics_guide.md)
 
 ---
 
