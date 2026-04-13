@@ -247,7 +247,16 @@ NUMERIC_PARAMS = [
     "oxidizability", "colonies_37c",
 ]
 
-RATIO_COLS = [f"{p}_ratio" for p in NUMERIC_PARAMS if p not in ("ph", "staphylococci", "pseudomonas", "free_chlorine", "combined_chlorine")]
+# Параметры с ratio-признаками в NORMS (универсальные, не pH и не pool-специфичные)
+_NORMS_RATIO_PARAMS = [
+    "e_coli", "enterococci",                              # supluskoha + veevark
+    "nitrates", "nitrites", "ammonium", "fluoride",       # veevark/joogivesi
+    "manganese", "iron", "turbidity", "color",            # veevark/joogivesi
+    "chlorides", "sulfates",                              # veevark
+]
+# Параметры без ratio в NORMS: transparency (нет нормы), coliforms (норма 0 для веды,
+# нет смысла делить), oxidizability, colonies_37c (бассейновые, без стандартной нормы)
+RATIO_COLS = [f"{p}_ratio" for p in _NORMS_RATIO_PARAMS]
 RATIO_COLS += [
     "ph_deviation",
     # Бассейновые ratio/deviation (только для domain=basseinid, иначе NaN)
