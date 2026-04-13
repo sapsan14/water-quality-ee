@@ -186,7 +186,8 @@ def _supluskoha_naitaja_col(nimetus: str) -> Optional[str]:
         return "e_coli"
     if "coli-laadsed" in n:
         return None
-    if "enterokokk" in n or "enterococc" in n:
+    # "Soole enterokokid" / "Enterokokid" / "Enterokokkid" / "intestinal enterococci"
+    if "enterokoki" in n or "enterokokk" in n or "enterococc" in n or "enterokokid" in n:
         return "enterococci"
     if re.match(r"^ph\b", n) or n.startswith("ph "):
         return "ph"
@@ -226,6 +227,8 @@ def _parse_supluskoha_opendata(tree: etree._Element) -> pd.DataFrame:
     if len(df) == 0:
         return df
     df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    for col in ("e_coli", "enterococci", "ph", "transparency"):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
 
@@ -235,7 +238,8 @@ def _veevark_naitaja_col(nimetus: str) -> Optional[str]:
         return "e_coli"
     if "coli-laadsed" in n:
         return "coliforms"
-    if "enterokokk" in n or "enterococc" in n:
+    # "Soole enterokokid" / "Enterokokid" / "Enterokokkid"
+    if "enterokoki" in n or "enterokokk" in n or "enterococc" in n or "enterokokid" in n:
         return "enterococci"
     if "nitraat" in n and "nitrit" not in n:
         return "nitrates"
@@ -247,13 +251,14 @@ def _veevark_naitaja_col(nimetus: str) -> Optional[str]:
         return "fluoride"
     if "mangaan" in n:
         return "manganese"
+    # "Raud" / "Üldraud" — exclude "kloriid" to avoid "raudkloriid" false match
     if "raud" in n and "kloriid" not in n:
         return "iron"
     if "hägusus" in n or "hagusus" in n:
         return "turbidity"
-    if "värvus" in n and "pt" in n:
+    if "värvus" in n and ("pt" in n or "kraadid" in n):
         return "color"
-    if "kloriid" in n:
+    if "kloriid" in n and "sulfaat" not in n:
         return "chlorides"
     if "sulfaat" in n:
         return "sulfates"
@@ -301,6 +306,14 @@ def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
     if len(df) == 0:
         return df
     df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    num_cols = [
+        "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+        "ammonium", "fluoride", "manganese", "iron", "chlorides",
+        "sulfates", "ph", "turbidity", "color",
+    ]
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
 

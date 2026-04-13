@@ -46,14 +46,17 @@ NORMS = {
     "ph_min":       6.0,
     "ph_max":       9.0,
 
-    # Veevärk (питьевая вода)
+    # Veevärk (питьевая вода, EU DWD 2020/2184)
     "nitrates":     50.0,    # мг/л
-    "nitrites":     0.5,
-    "ammonium":     0.5,
-    "fluoride":     1.5,
-    "manganese":    0.05,
-    "iron":         0.2,
+    "nitrites":     0.5,     # мг/л
+    "ammonium":     0.5,     # мг/л
+    "fluoride":     1.5,     # мг/л
+    "manganese":    0.05,    # мг/л
+    "iron":         0.2,     # мг/л
     "turbidity":    4.0,     # NTU
+    "color":        20.0,    # мг Pt/л
+    "chlorides":    250.0,   # мг/л
+    "sulfates":     250.0,   # мг/л
 }
 
 

@@ -52,12 +52,15 @@ Five water domains defined in `src/data_loader.DOMAINS`. Only `supluskoha` and `
 **Data flow:**
 1. `src/data_loader.py` — downloads XML from vtiav.sm.ee, caches to `data/raw/`, parses to DataFrame. Each domain has a dedicated `parse_<domain>()` function. Target variable: `vastavus` field (`jah`→1, `ei`→0); any `ei` in a sample → `compliant=0`.
 2. `src/features.py` — takes raw DataFrame, adds time features, ratio-to-norm features, missing indicators, encodes categoricals. `build_dataset()` is the main entry point → returns `(X, y)`. Norms are defined in the `NORMS` dict.
-3. `src/evaluate.py` — model evaluation utilities: `evaluate_model()`, `compare_models()`, and plot functions for confusion matrix, ROC curves, feature importance. Note: `plot_roc_curve()` expects `y_test` inside each result dict but `evaluate_model()` doesn't store it — pass it manually.
+3. `src/evaluate.py` — model evaluation utilities: `evaluate_model()`, `compare_models()`, and plot functions for confusion matrix, ROC curves, feature importance. `evaluate_model()` returns `y_test` inside the result dict, so `plot_roc_curve()` works directly with the returned list.
 
 **Key conventions:**
 - Estonian number format: commas as decimal separators (handled by `_float()` in data_loader)
-- `compliant=None` for samples with no `vastavus` field — these are dropped in `build_dataset()`
+- Target variable comes from `hinnang` field in opendata XML (`"ei vasta"` → 0, `"vastab"` → 1)
+- `compliant=None` for samples with no `hinnang` field — these are dropped in `build_dataset()`
 - Imputation and scaling in `features.impute_and_scale()` — always `fit` on train only
+- `county` field is absent in opendata XML (all None) — not usable as a feature currently
+- `enterococci` and `transparency` only present in `supluskoha` domain (~4k samples)
 
 ## Notebooks plan
 
@@ -66,12 +69,14 @@ Five water domains defined in `src/data_loader.DOMAINS`. Only `supluskoha` and `
 | `01_eda_supluskoha.ipynb` | EDA for swimming locations |
 | `02_eda_full.ipynb` | Full EDA: supluskoha + veevark, save `raw_combined.csv` |
 | `03_preprocessing.ipynb` | `build_dataset`, train/test split, impute/scale → `ml_ready.joblib` |
-| `04_models.ipynb` | Logistic Regression + Random Forest → `trained_models.joblib` |
+| `04_models.ipynb` | Logistic Regression + Random Forest + GradientBoosting + GridSearchCV RF → `trained_models.joblib` |
 | `05_evaluation.ipynb` | Confusion matrix, ROC, feature importance |
+| `06_advanced_models.ipynb` | LightGBM + темпоральная валидация + калибровка + SHAP → `best_model.joblib` |
 
 ## Domain knowledge
 
 - See `docs/normy.md` for regulatory thresholds by parameter
 - See `docs/glosarij.md` for RU/ET/EN terminology glossary
 - See `docs/parametry.md` for detailed descriptions of every water parameter (what it measures, health effects, typical sources, norms across domains)
+- See `docs/report.md` for the final project report (EDA insights, methodology, model results, interpretation, limitations)
 - `features.NORMS` encodes the key thresholds used for ratio features
