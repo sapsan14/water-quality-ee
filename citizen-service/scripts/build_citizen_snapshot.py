@@ -36,7 +36,7 @@ import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 
 # корень репозитория: .../water-quality-ee
 ROOT = Path(__file__).resolve().parents[2]
@@ -260,9 +260,9 @@ def main() -> None:
         # Импутация + скейлинг (LR и GB требуют, RF и LGBM — нет, но используют одни данные для честного сравнения)
         imputer = SimpleImputer(strategy="median")
         X_imp = imputer.fit_transform(X)
-        scaler = StandardScaler()
+        scaler = RobustScaler()
         X_scaled = scaler.fit_transform(X_imp)
-        _timer_print("3) SimpleImputer(median) + StandardScaler fit_transform", t_run, last)
+        _timer_print("3) SimpleImputer(median) + RobustScaler fit_transform", t_run, last)
 
         # Логистическая регрессия
         lr = LogisticRegression(

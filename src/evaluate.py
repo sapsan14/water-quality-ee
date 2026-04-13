@@ -179,7 +179,6 @@ def plot_feature_importance(model, feature_names: list, top_n: int = 15):
 def plot_class_distribution(y: pd.Series, title: str = "Распределение классов"):
     """Гистограмма распределения целевой переменной."""
     counts = y.value_counts()
-    labels = ["Норма (1)", "Нарушение (0)"]
     colors = ["steelblue", "salmon"]
 
     fig, ax = plt.subplots(figsize=(5, 4))
