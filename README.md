@@ -168,7 +168,10 @@ water-quality-ee/
 
 ## Гражданский сервис (карта + прогноз)
 
-Отдельная папка **[citizen-service/](citizen-service/)**: Streamlit-приложение с картой точек (открытые места купания и бассейны/СПА), официальным статусом и слоем прогноза модели. Сбор снимка данных и план деплоя (GitHub Actions + Streamlit Cloud) описаны в `citizen-service/README.md` и `citizen-service/PLAN.md`.
+Отдельная папка **[citizen-service/](citizen-service/)**: Streamlit-приложение с картой точек (открытые места купания и бассейны/СПА), официальным статусом и слоем прогноза модели.
+
+- **Веб (Streamlit Cloud):** после деплоя вставьте ссылку в [citizen-service/STREAMLIT_ACCESS.md](citizen-service/STREAMLIT_ACCESS.md) (формат `https://<subdomain>.streamlit.app`). Инструкция по публикации: [citizen-service/DEPLOY.md](citizen-service/DEPLOY.md).
+- Сбор снимка и план CI: [citizen-service/README.md](citizen-service/README.md), [citizen-service/PLAN.md](citizen-service/PLAN.md).
 
 ---
 

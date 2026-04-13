@@ -23,6 +23,8 @@ streamlit run citizen-service/app/streamlit_app.py
 - `artifacts/citizen_model.joblib` — imputer + RF (только после полного прогона, не перезаписывается в режиме `--map-only`)
 - `data/geocode_cache.json` — кэш Nominatim (создаётся при `--geocode-limit > 0`)
 
-## Деплой
+## Деплой и доступ
 
-Кратко: **Streamlit Community Cloud** с корнем приложения `citizen-service/app/streamlit_app.py`, зависимости из двух `requirements.txt` или один объединённый. В репозиторий можно коммитить только `snapshot.json` (не сырой XML). Подробности — [PLAN.md](PLAN.md).
+- Пошагово: **[DEPLOY.md](DEPLOY.md)** (создание приложения на [share.streamlit.io](https://share.streamlit.io), `requirements.streamlit.txt`, путь к `streamlit_app.py`).
+- Публичный URL после публикации и заметки про токены: **[STREAMLIT_ACCESS.md](STREAMLIT_ACCESS.md)** — *вставьте туда ссылку вида `https://<subdomain>.streamlit.app` после первого деплоя*.
+- В репозиторий можно коммитить `snapshot.json` (не сырой XML). Общий план — [PLAN.md](PLAN.md).
