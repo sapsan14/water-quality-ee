@@ -220,6 +220,41 @@ META_EXTRA_NUMERIC = NUMERIC_PARAMS + [
 ]
 
 
+def _encode_for_citizen_snapshot(df: pd.DataFrame) -> pd.DataFrame:
+    """Инженерия + кодирование категорий для citizen-снимка (уезд на всём df)."""
+    df_clean = engineer_features(df)
+    return encode_categoricals(df_clean, county_mapping=None)
+
+
+def _citizen_meta_columns(df_clean: pd.DataFrame) -> List[str]:
+    base_meta = ["location", "domain", "sample_date", "compliant"]
+    meta_cols = [c for c in base_meta if c in df_clean.columns]
+    if "sample_id" in df_clean.columns:
+        meta_cols.append("sample_id")
+    if "county" in df_clean.columns:
+        meta_cols.append("county")
+    for _geo in ("geocode_site", "geocode_facility"):
+        if _geo in df_clean.columns and _geo not in meta_cols:
+            meta_cols.append(_geo)
+    for c in META_EXTRA_NUMERIC:
+        if c in df_clean.columns and c not in meta_cols:
+            meta_cols.append(c)
+    return meta_cols
+
+
+def build_citizen_meta_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Только строки meta для карты (--map-only): без матрицы признаков X и без обучения модели.
+    Совпадает по строкам и столбцам meta-части с build_dataset_with_meta.
+    """
+    df_clean = _encode_for_citizen_snapshot(df)
+    meta = df_clean[_citizen_meta_columns(df_clean)].copy()
+    y = df_clean["compliant"].astype(int)
+    print(f"[features] citizen meta (без X): {len(meta)} строк")
+    print(f"[features] Распределение классов:\n{y.value_counts()}")
+    return meta
+
+
 def build_dataset_with_meta(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame]:
     """
     Как build_dataset, но дополнительно возвращает meta со столбцами места, даты и измерений
@@ -227,24 +262,13 @@ def build_dataset_with_meta(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series, 
 
     Уезд кодируется по всей выборке (офлайн-снимок / полное обучение citizen-модели).
     """
-    df_clean = engineer_features(df)
-    df_clean = encode_categoricals(df_clean, county_mapping=None)
+    df_clean = _encode_for_citizen_snapshot(df)
 
     y = df_clean["compliant"].astype(int)
     available_features = [c for c in FEATURE_COLS if c in df_clean.columns]
     X = df_clean[available_features].copy()
 
-    base_meta = ["location", "domain", "sample_date", "compliant"]
-    meta_cols = [c for c in base_meta if c in df_clean.columns]
-    if "sample_id" in df_clean.columns:
-        meta_cols.append("sample_id")
-    if "county" in df_clean.columns:
-        meta_cols.append("county")
-    for c in META_EXTRA_NUMERIC:
-        if c in df_clean.columns and c not in meta_cols:
-            meta_cols.append(c)
-
-    meta = df_clean[meta_cols].copy()
+    meta = df_clean[_citizen_meta_columns(df_clean)].copy()
 
     print(f"[features] Итого признаков: {X.shape[1]}")
     print(f"[features] Распределение классов:\n{y.value_counts()}")

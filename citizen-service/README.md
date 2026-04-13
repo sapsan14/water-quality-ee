@@ -8,6 +8,9 @@
 
 ```bash
 pip install -r requirements.txt -r citizen-service/requirements.txt
+# быстро: карта и официальные статусы без обучения RF
+python citizen-service/scripts/build_citizen_snapshot.py --map-only
+# полный снимок: то же + прогноз Random Forest и citizen_model.joblib
 python citizen-service/scripts/build_citizen_snapshot.py
 # опционально: точные координаты (медленно)
 python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 150
@@ -16,8 +19,8 @@ streamlit run citizen-service/app/streamlit_app.py
 
 Артефакты:
 
-- `artifacts/snapshot.json` — последняя проба по каждому месту, координаты, официальный статус, `model_violation_prob`
-- `artifacts/citizen_model.joblib` — imputer + RF (для будущего онлайн-пересчёта)
+- `artifacts/snapshot.json` — последняя проба по каждому месту, координаты, официальный статус; при полном прогоне — ещё `model_violation_prob` и поле `has_model_predictions: true` (`--map-only` оставляет `has_model_predictions: false` и без вероятностей по точкам)
+- `artifacts/citizen_model.joblib` — imputer + RF (только после полного прогона, не перезаписывается в режиме `--map-only`)
 - `data/geocode_cache.json` — кэш Nominatim (создаётся при `--geocode-limit > 0`)
 
 ## Деплой

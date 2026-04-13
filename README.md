@@ -1,5 +1,19 @@
 # Качество воды в Эстонии — ML-проект курса Masinõpe
 
+<div align="center">
+
+[![Tests](https://img.shields.io/github/actions/workflow/status/sapsan14/water-quality-ee/tests.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=tests)](https://github.com/sapsan14/water-quality-ee/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Colab](https://img.shields.io/badge/Open_in_Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/sapsan14/water-quality-ee/blob/main/notebooks/colab_quickstart.ipynb)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white)](https://jupyter.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+
+[![Data source](https://img.shields.io/badge/Data-Terviseamet-0063AF?style=for-the-badge)](https://vtiav.sm.ee/index.php/?active_tab_id=A)
+[![Estonia](https://img.shields.io/badge/Estonia-opendata-0072CE?style=for-the-badge)](https://en.wikipedia.org/wiki/Estonia)
+
+</div>
+
 **Автор:** Anton Sokolov  
 **Курс:** Masinõpe (TalTech, весна 2026)  
 **Дата старта:** 2026-04-13  

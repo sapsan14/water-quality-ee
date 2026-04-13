@@ -25,5 +25,11 @@ COUNTY_CENTROIDS: dict[str, tuple[float, float]] = {
 def county_to_latlon(county: str | None) -> tuple[float, float] | None:
     if not county or not isinstance(county, str):
         return None
-    key = county.strip().lower()
-    return COUNTY_CENTROIDS.get(key)
+    key = " ".join(county.strip().lower().split())
+    if key in COUNTY_CENTROIDS:
+        return COUNTY_CENTROIDS[key]
+    if "maakond" not in key:
+        trial = f"{key} maakond"
+        if trial in COUNTY_CENTROIDS:
+            return COUNTY_CENTROIDS[trial]
+    return None

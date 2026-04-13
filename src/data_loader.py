@@ -237,11 +237,15 @@ def _supluskoha_naitaja_col(nimetus: str) -> Optional[str]:
 def _parse_supluskoha_opendata(tree: etree._Element) -> pd.DataFrame:
     records = []
     for pv in tree.findall(".//proovivott"):
-        loc = _text(pv, "supluskoht") or _text(pv.find("proovivotukoht"), "nimetus")
+        facility = (_text(pv, "supluskoht") or "").strip()
+        site = _proovivotukoht_nimetus(pv)
+        loc = facility or site
         rec = {
             "domain": "supluskoha",
             "sample_id": _text(pv, "id"),
             "location": loc,
+            "geocode_facility": facility,
+            "geocode_site": site,
             "county": _text(pv, "maakond"),
             "sample_date": _text(pv, "proovivotu_aeg"),
         }
@@ -308,11 +312,15 @@ def _veevark_naitaja_col(nimetus: str) -> Optional[str]:
 def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
     records = []
     for pv in tree.findall(".//proovivott"):
-        loc = _text(pv, "veevark") or _text(pv.find("proovivotukoht"), "nimetus")
+        facility = (_text(pv, "veevark") or "").strip()
+        site = _proovivotukoht_nimetus(pv)
+        loc = facility or site or ""
         rec = {
             "domain": "veevark",
             "sample_id": _text(pv, "id"),
             "location": loc,
+            "geocode_facility": facility,
+            "geocode_site": site,
             "county": _text(pv, "maakond"),
             "sample_date": _text(pv, "proovivotu_aeg"),
         }
@@ -393,11 +401,15 @@ def _parse_basseinid_opendata(tree: etree._Element) -> pd.DataFrame:
     """Opendata: корень basseini_veeproovid, записи proovivott (бассейны, SPA)."""
     records = []
     for pv in tree.findall(".//proovivott"):
-        loc = _text(pv, "bassein") or _text(pv.find("proovivotukoht"), "nimetus")
+        facility = (_text(pv, "bassein") or "").strip()
+        site = _proovivotukoht_nimetus(pv)
+        loc = facility or site or _text(pv.find("proovivotukoht"), "nimetus")
         rec = {
             "domain": "basseinid",
             "sample_id": _text(pv, "id"),
             "location": loc,
+            "geocode_facility": facility,
+            "geocode_site": site,
             "county": _text(pv, "maakond"),
             "sample_date": _text(pv, "proovivotu_aeg"),
         }
@@ -444,8 +456,8 @@ def _parse_joogiveeallika_opendata(tree: etree._Element) -> pd.DataFrame:
     """Opendata: корень joogiveeallika_veeproovid — структура как у veevärk (proovivott + naitaja)."""
     records = []
     for pv in tree.findall(".//proovivott"):
-        src = _text(pv, "veeallikas")
-        spot = _text(pv.find("proovivotukoht"), "nimetus")
+        src = (_text(pv, "veeallikas") or "").strip()
+        spot = _proovivotukoht_nimetus(pv)
         if src and spot:
             loc = f"{src} — {spot}"
         else:
@@ -454,6 +466,8 @@ def _parse_joogiveeallika_opendata(tree: etree._Element) -> pd.DataFrame:
             "domain": "joogivesi",
             "sample_id": _text(pv, "id"),
             "location": loc,
+            "geocode_facility": src,
+            "geocode_site": spot,
             "county": _text(pv, "maakond"),
             "sample_date": _text(pv, "proovivotu_aeg"),
         }
@@ -733,6 +747,15 @@ def _float(element: etree._Element, path: str) -> Optional[float]:
         return float(val)
     except ValueError:
         return None
+
+
+def _proovivotukoht_nimetus(pv: etree._Element) -> str:
+    """Название места отбора пробы (proovivotukoht/nimetus), если есть в XML."""
+    pk = pv.find("proovivotukoht")
+    if pk is None:
+        return ""
+    t = _text(pk, "nimetus")
+    return (t or "").strip()
 
 
 # ── Быстрая проверка ──────────────────────────────────────────────────────────

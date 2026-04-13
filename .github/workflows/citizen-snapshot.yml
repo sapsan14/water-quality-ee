@@ -1,14 +1,27 @@
-# Черновик: обновление снимка для citizen-service (раскомментируйте push при необходимости)
+# Снимок для citizen-service: по умолчанию --map-only (быстро, карта в Streamlit без RF).
+# Полный прогон (RF + citizen_model.joblib) — через inputs.mode: full.
 name: Citizen snapshot
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "map-only — только snapshot.json (карта не зависит от модели). full — + RF и joblib."
+        type: choice
+        required: true
+        default: map-only
+        options:
+          - map-only
+          - full
   # schedule:
   #   - cron: "0 5 * * *"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # При schedule без inputs подставится map-only (карта без долгого RF).
+      SNAPSHOT_MODE: ${{ github.event.inputs.mode || 'map-only' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +37,12 @@ jobs:
         run: python src/data_loader.py || true
         continue-on-error: true
 
-      - name: Build snapshot
+      - name: Build snapshot (map-only)
+        if: env.SNAPSHOT_MODE != 'full'
+        run: python citizen-service/scripts/build_citizen_snapshot.py --map-only --geocode-limit 0
+
+      - name: Build snapshot (full + model)
+        if: env.SNAPSHOT_MODE == 'full'
         run: python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 0
 
       # Раскомментируйте для автокоммита артефактов:
@@ -33,10 +51,18 @@ jobs:
       #     commit_message: "chore(citizen): refresh snapshot"
       #     file_pattern: citizen-service/artifacts/snapshot.json citizen-service/artifacts/citizen_model.joblib
 
-      - name: Upload snapshot artifact
+      - name: Upload snapshot artifact (map-only)
+        if: env.SNAPSHOT_MODE != 'full'
         uses: actions/upload-artifact@v4
         with:
           name: citizen-snapshot
+          path: citizen-service/artifacts/snapshot.json
+
+      - name: Upload snapshot artifact (full)
+        if: env.SNAPSHOT_MODE == 'full'
+        uses: actions/upload-artifact@v4
+        with:
+          name: citizen-snapshot-full
           path: |
             citizen-service/artifacts/snapshot.json
             citizen-service/artifacts/citizen_model.joblib

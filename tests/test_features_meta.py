@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from features import build_dataset, build_dataset_with_meta
+from features import build_citizen_meta_frame, build_dataset, build_dataset_with_meta
 
 
 def _tiny_frame():
@@ -26,3 +26,16 @@ def test_build_dataset_with_meta_aligns_xy():
     assert list(y1) == list(y2)
     assert "location" in meta.columns
     assert "domain" in meta.columns
+
+
+def test_build_citizen_meta_frame_matches_meta_part():
+    df = _tiny_frame()
+    _, _, meta = build_dataset_with_meta(df)
+    meta_only = build_citizen_meta_frame(df)
+    assert len(meta_only) == len(meta)
+    assert list(meta_only.columns) == list(meta.columns)
+    pd.testing.assert_frame_equal(
+        meta_only.reset_index(drop=True),
+        meta.reset_index(drop=True),
+        check_dtype=False,
+    )

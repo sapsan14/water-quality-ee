@@ -65,7 +65,7 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 
 ## Citizen service
 
-`citizen-service/` — Streamlit map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`). Build: `python citizen-service/scripts/build_citizen_snapshot.py`. See `citizen-service/README.md`.
+`citizen-service/` — Streamlit map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`). Build: `python citizen-service/scripts/build_citizen_snapshot.py` (full RF layer) or `... --map-only` (official data + map only, no model). See `citizen-service/README.md`.
 
 ## Notebooks plan
 
