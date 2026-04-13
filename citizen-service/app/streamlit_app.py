@@ -1,10 +1,11 @@
 """
 Гражданский интерфейс: карта по точкам (купание, бассейны/СПА, водопровод, источники питьевой воды),
-таблица, официальные данные vs прогноз модели.
+таблица, официальные данные vs прогнозы 4 моделей (LR, RF, GradBoost, LightGBM).
 Запуск из корня репозитория:
   pip install -r requirements.streamlit.txt
   streamlit run citizen-service/app/streamlit_app.py
-Снимок: `build_citizen_snapshot.py --map-only` — карта без обучения RF; полный прогон добавляет model_violation_prob.
+Снимок: `build_citizen_snapshot.py --map-only` — карта без обучения; полный прогон добавляет
+  lr_violation_prob / rf_violation_prob / gb_violation_prob / lgbm_violation_prob.
 """
 
 from __future__ import annotations
@@ -29,7 +30,6 @@ DOMAIN_LABELS = {
     "joogivesi": "Питьевая вода — источник (joogiveeallikas)",
 }
 
-# Короткие ярлыки типа места (если в snapshot нет place_kinds — только ключи)
 DEFAULT_PLACE_KIND_LABELS = {
     "swimming": "Купание (открытая вода)",
     "pool_spa": "Бассейн / СПА",
@@ -38,7 +38,6 @@ DEFAULT_PLACE_KIND_LABELS = {
     "other": "Прочее",
 }
 
-# Обводка маркера по типу места (заливка — по официальному статусу или модели)
 KIND_OUTLINE = {
     "swimming": "#0369a1",
     "pool_spa": "#7c3aed",
@@ -71,6 +70,21 @@ MEASUREMENT_LABELS_RU = {
     "colonies_37c": "Колонии при 37 °C",
 }
 
+MODEL_KEYS = ["lr", "rf", "gb", "lgbm"]
+MODEL_PROB_COLS = {k: f"{k}_violation_prob" for k in MODEL_KEYS}
+MODEL_LABELS_DEFAULT = {
+    "lr": "Logistic Regression",
+    "rf": "Random Forest",
+    "gb": "Gradient Boosting",
+    "lgbm": "LightGBM",
+}
+MODEL_COLORS = {
+    "lr": "#6366f1",
+    "rf": "#0369a1",
+    "gb": "#b45309",
+    "lgbm": "#15803d",
+}
+
 
 @st.cache_data(show_spinner=False)
 def load_snapshot() -> dict | None:
@@ -80,26 +94,29 @@ def load_snapshot() -> dict | None:
         return json.load(f)
 
 
+def _available_models(snap: dict) -> list[str]:
+    """Список моделей, которые реально присутствуют в снимке."""
+    declared = snap.get("available_models") or []
+    if declared:
+        return [m for m in MODEL_KEYS if m in declared]
+    places = snap.get("places") or []
+    if not places:
+        return []
+    found = []
+    for m in MODEL_KEYS:
+        col = MODEL_PROB_COLS[m]
+        if any(isinstance(p.get(col), (int, float)) for p in places):
+            found.append(m)
+    return found
+
+
 def snapshot_has_model_predictions(snap: dict) -> bool:
-    """True, если в снимке есть прогноз модели по точкам (полный прогон build_citizen_snapshot)."""
     hmp = snap.get("has_model_predictions")
     if hmp is True:
         return True
     if hmp is False:
         return False
-    places = snap.get("places") or []
-    if not places:
-        return False
-    return any(isinstance(p.get("model_violation_prob"), (int, float)) for p in places)
-
-
-def _model_prob_popup_line(p: dict, has_model_predictions: bool) -> str:
-    if not has_model_predictions:
-        return "<i>Прогноз модели не включён в снимок (пересоберите без --map-only)</i>"
-    prob = p.get("model_violation_prob")
-    if isinstance(prob, (int, float)):
-        return f"Вероятность нарушения (модель): {float(prob):.2f}"
-    return "<i>Нет model_violation_prob в точке</i>"
+    return bool(_available_models(snap))
 
 
 def official_color(compliant: int) -> str:
@@ -107,7 +124,6 @@ def official_color(compliant: int) -> str:
 
 
 def model_color(prob_violation: float) -> str:
-    """Градиент: низкий риск → зелёный, высокий → красный."""
     p = max(0.0, min(1.0, prob_violation))
     r = int(255 * p)
     g = int(255 * (1 - p))
@@ -137,7 +153,10 @@ def _measurements_html(m: dict) -> str:
     for key in sorted(m.keys()):
         label = MEASUREMENT_LABELS_RU.get(key, key)
         val = html.escape(str(m[key]))
-        lines.append(f"<tr><td style='padding:2px 8px 2px 0'>{html.escape(label)}</td><td><b>{val}</b></td></tr>")
+        lines.append(
+            f"<tr><td style='padding:2px 8px 2px 0'>{html.escape(label)}</td>"
+            f"<td><b>{val}</b></td></tr>"
+        )
     return "<table style='font-size:12px;border-collapse:collapse'>" + "".join(lines) + "</table>"
 
 
@@ -145,9 +164,52 @@ def _matched_addr_html(p: dict) -> str:
     m = p.get("geocode_matched_address")
     if not m:
         return ""
+    return f"<small>Найденный адрес (геокодер): {html.escape(str(m))}</small><br/>"
+
+
+def _model_comparison_html(p: dict, available_models: list[str], model_labels: dict[str, str]) -> str:
+    """HTML-таблица с прогнозами всех моделей для popup."""
+    if not available_models:
+        return "<i>Прогнозы моделей недоступны (снимок собран с --map-only)</i>"
+    rows = []
+    for m in available_models:
+        col = MODEL_PROB_COLS[m]
+        prob = p.get(col)
+        label = model_labels.get(m, m)
+        color = MODEL_COLORS.get(m, "#64748b")
+        if isinstance(prob, (int, float)):
+            bar_w = int(float(prob) * 80)
+            risk = "высокий" if float(prob) > 0.5 else "низкий"
+            risk_color = "#ef4444" if float(prob) > 0.5 else "#22c55e"
+            rows.append(
+                f"<tr>"
+                f"<td style='padding:2px 6px 2px 0;font-size:11px;color:{color}'><b>{html.escape(label)}</b></td>"
+                f"<td style='padding:2px 4px;font-size:11px'>{float(prob):.2f}</td>"
+                f"<td style='padding:2px 4px'>"
+                f"<div style='width:{bar_w}px;height:8px;background:{color};border-radius:3px;display:inline-block'></div>"
+                f"</td>"
+                f"<td style='padding:2px 4px;font-size:11px;color:{risk_color}'>{risk}</td>"
+                f"</tr>"
+            )
+        else:
+            rows.append(
+                f"<tr><td style='color:{color};font-size:11px'><b>{html.escape(label)}</b></td>"
+                f"<td colspan='3'><i style='font-size:11px'>нет данных</i></td></tr>"
+            )
+    if not rows:
+        return "<i>Нет данных моделей</i>"
+    header = (
+        "<tr><th style='text-align:left;font-size:11px;padding:0 6px 4px 0'>Модель</th>"
+        "<th style='font-size:11px;padding:0 4px 4px'>P(нарушение)</th>"
+        "<th></th><th style='font-size:11px'>Риск</th></tr>"
+    )
     return (
-        "<small>Найденный адрес (геокодер): "
-        f"{html.escape(str(m))}</small><br/>"
+        "<b style='font-size:12px'>Прогнозы моделей (риск нарушения):</b><br/>"
+        "<table style='border-collapse:collapse;margin-top:4px'>"
+        + header
+        + "".join(rows)
+        + "</table>"
+        + "<small style='color:#666'>Не официальная оценка Terviseamet.</small>"
     )
 
 
@@ -176,8 +238,14 @@ def build_map(
     counties_filter: set[str] | None = None,
     *,
     has_model_predictions: bool = True,
+    available_models: list[str] | None = None,
+    model_labels: dict[str, str] | None = None,
+    selected_model: str = "rf",
     data_catalog_url: str | None = None,
 ) -> folium.Map:
+    available_models = available_models or []
+    model_labels = model_labels or MODEL_LABELS_DEFAULT
+
     m = folium.Map(location=[58.65, 25.5], zoom_start=7, tiles=None)
     folium.TileLayer("CartoDB Positron", name="Карта (светлая)", control=True).add_to(m)
     folium.TileLayer("OpenStreetMap", name="OpenStreetMap", control=True).add_to(m)
@@ -192,8 +260,7 @@ def build_map(
         "other": 7,
     }
 
-    catalog_href = data_catalog_url or "https://vtiav.sm.ee/index.php/opendata/"
-    catalog_href = html.escape(catalog_href, quote=True)
+    catalog_href = html.escape(data_catalog_url or "https://vtiav.sm.ee/index.php/opendata/", quote=True)
 
     plotted = 0
     for p in _filtered_places(places, kinds_filter, counties_filter):
@@ -202,13 +269,17 @@ def build_map(
             continue
         kind = _place_kind(p)
         border = KIND_OUTLINE.get(kind, "#64748b")
+
         if color_mode == "official" or not has_model_predictions:
             fill = official_color(int(p["official_compliant"]))
-            title = "Официальный статус"
+            color_title = "Официальный статус"
         else:
-            prob = p.get("model_violation_prob")
+            prob_col = MODEL_PROB_COLS.get(selected_model, "model_violation_prob")
+            prob = p.get(prob_col)
+            if prob is None:
+                prob = p.get("model_violation_prob")
             fill = model_color(float(prob) if isinstance(prob, (int, float)) else 0.0)
-            title = "Прогноз модели (риск нарушения)"
+            color_title = f"Прогноз: {model_labels.get(selected_model, selected_model)}"
 
         dom_label = DOMAIN_LABELS.get(p["domain"], p.get("domain", "—"))
         kind_label = DEFAULT_PLACE_KIND_LABELS.get(kind, kind)
@@ -216,8 +287,10 @@ def build_map(
         sid = p.get("sample_id")
         sid_line = f"ID пробы: {html.escape(str(sid))}<br/>" if sid else ""
 
+        models_html = _model_comparison_html(p, available_models, model_labels)
+
         popup_html = f"""
-        <div style="max-width:320px;font-size:13px">
+        <div style="max-width:340px;font-size:13px">
         <b>{html.escape(str(p.get("location") or "—"))}</b><br/>
         <span style="color:#444">{html.escape(kind_label)}</span><br/>
         <i style="font-size:12px">{html.escape(dom_label)}</i><br/>
@@ -225,11 +298,12 @@ def build_map(
         {sid_line}
         Дата пробы: {html.escape(str(p.get("sample_date") or "—"))}<br/>
         Уезд: {html.escape(str(p.get("county") or "не указан"))}<br/>
-        Официально: {"соответствует" if p.get("official_compliant") == 1 else "нарушение"}<br/>
-        {_model_prob_popup_line(p, has_model_predictions)}<br/>
+        Официально: {"соответствует" if p.get("official_compliant") == 1 else "<b style='color:#ef4444'>нарушение</b>"}<br/>
         <small>Источник координат: {html.escape(str(p.get("coord_source", "?")))}</small><br/>
         {_matched_addr_html(p)}
         <small><a href="{catalog_href}" target="_blank" rel="noopener">Каталог opendata Terviseamet</a></small>
+        <hr style="margin:6px 0"/>
+        {models_html}
         <hr style="margin:6px 0"/>
         <b>Параметры пробы (последняя)</b><br/>
         {_measurements_html(meas)}
@@ -245,8 +319,8 @@ def build_map(
             fill=True,
             fill_color=fill,
             fill_opacity=0.88,
-            popup=folium.Popup(popup_html, max_width=340),
-            tooltip=f"{str(p.get('location', ''))[:42]} · {title}",
+            popup=folium.Popup(popup_html, max_width=360),
+            tooltip=f"{str(p.get('location', ''))[:42]} · {color_title}",
         )
         if cluster is not None:
             marker.add_to(cluster)
@@ -258,13 +332,57 @@ def build_map(
         cluster.add_to(m)
 
     if plotted == 0:
-        folium.Marker(
-            [58.65, 25.5],
-            popup="Нет точек для выбранных фильтров",
-        ).add_to(m)
+        folium.Marker([58.65, 25.5], popup="Нет точек для выбранных фильтров").add_to(m)
 
     folium.LayerControl(collapsed=False).add_to(m)
     return m
+
+
+def _render_model_comparison_tab(places: list[dict], available_models: list[str], model_labels: dict) -> None:
+    """Таб со сравнением прогнозов всех моделей в виде таблицы."""
+    if not available_models:
+        st.warning("Прогнозы моделей отсутствуют в снимке. Пересоберите без флага `--map-only`.")
+        return
+
+    rows = []
+    for p in places:
+        row: dict = {
+            "location": p.get("location", ""),
+            "domain": p.get("domain", ""),
+            "county": p.get("county", ""),
+            "sample_date": p.get("sample_date", ""),
+            "official_compliant": p.get("official_compliant"),
+        }
+        for m in available_models:
+            col = MODEL_PROB_COLS[m]
+            prob = p.get(col)
+            row[f"{model_labels.get(m, m)} P(нарушение)"] = (
+                round(float(prob), 3) if isinstance(prob, (int, float)) else None
+            )
+        # Согласие/несогласие моделей
+        probs = [p.get(MODEL_PROB_COLS[m]) for m in available_models if isinstance(p.get(MODEL_PROB_COLS[m]), (int, float))]
+        if len(probs) >= 2:
+            preds = [1 if pr > 0.5 else 0 for pr in probs]
+            row["Согласие моделей"] = "да" if len(set(preds)) == 1 else "расхождение"
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    st.subheader("Сравнение прогнозов всех моделей")
+    search = st.text_input("Поиск по названию места", key="compare_search")
+    if search.strip():
+        df = df[df["location"].astype(str).str.contains(search.strip(), case=False, na=False)]
+
+    disagreement_only = st.checkbox("Показать только точки с расхождением моделей", value=False)
+    if disagreement_only and "Согласие моделей" in df.columns:
+        df = df[df["Согласие моделей"] == "расхождение"]
+
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.caption(
+        f"Прогнозы по {len(available_models)} моделям: "
+        + ", ".join(model_labels.get(m, m) for m in available_models)
+        + ". Значение — вероятность нарушения (0 = безопасно, 1 = нарушение)."
+    )
 
 
 def main() -> None:
@@ -276,23 +394,25 @@ def main() -> None:
     if snap is None:
         st.error(
             "Нет файла снимка данных. Соберите его из корня репозитория:\n\n"
-            "`python citizen-service/scripts/build_citizen_snapshot.py --map-only` — только карта и официальные статусы (быстро).\n\n"
-            "`python citizen-service/scripts/build_citizen_snapshot.py` — полный снимок + прогноз RF.\n\n"
-            "Точнее координаты: `--infer-county` (maakond из кэша/Nominatim) и/или `--geocode-limit 200` "
-            "(медленно, уважайте Nominatim)."
+            "`python citizen-service/scripts/build_citizen_snapshot.py --map-only` — только карта (быстро).\n\n"
+            "`python citizen-service/scripts/build_citizen_snapshot.py` — полный снимок + 4 модели (LR, RF, GB, LightGBM)."
         )
         return
 
     has_model = snapshot_has_model_predictions(snap)
+    avail_models = _available_models(snap) if has_model else []
+    model_labels: dict[str, str] = {**MODEL_LABELS_DEFAULT, **(snap.get("model_labels") or {})}
+
     if has_model:
+        models_str = ", ".join(model_labels.get(m, m) for m in avail_models)
         st.caption(
-            "Данные Terviseamet (открытый XML). Прогноз — отдельная модель машинного обучения; "
+            f"Данные Terviseamet (открытый XML). Прогнозы — отдельные ML-модели ({models_str}); "
             "это не официальное заключение Terviseamet."
         )
     else:
         st.caption(
-            "Данные Terviseamet (открытый XML). Карта и официальные статусы доступны сразу; "
-            "слой прогноза модели появится после полной сборки снимка (без флага --map-only)."
+            "Данные Terviseamet (открытый XML). Карта и официальные статусы; "
+            "прогнозы моделей появятся после полной сборки снимка (без флага --map-only)."
         )
 
     st.info(snap.get("disclaimer", ""))
@@ -302,10 +422,8 @@ def main() -> None:
     n_approx = sum(1 for p in places if p.get("coord_source") == "approximate_ee")
     if n_places and n_approx / n_places >= 0.2:
         st.warning(
-            f"У **{n_approx}** из **{n_places}** точек координаты **не привязаны к реальному месту на местности** "
-            f"(`coord_source: approximate_ee`): в данных часто нет maakond/геокода, а снимок собран без Nominatim. "
-            "Точки разбросаны по Эстонии только для обзора. Для реальных координат пересоберите: "
-            "`python citizen-service/scripts/build_citizen_snapshot.py --infer-county` и/или `--geocode-limit …`."
+            f"У **{n_approx}** из **{n_places}** точек координаты **приблизительные** "
+            f"(`coord_source: approximate_ee`). Пересоберите с `--infer-county` и/или `--geocode-limit …`."
         )
 
     kind_labels = {**DEFAULT_PLACE_KIND_LABELS, **(snap.get("place_kinds") or {})}
@@ -317,31 +435,33 @@ def main() -> None:
         d["place_kind"] = pk
         d["Тип места"] = kind_labels.get(pk, pk)
         rows_for_df.append(d)
-    df = pd.json_normalize(rows_for_df, sep="_")
+    df_full = pd.json_normalize(rows_for_df, sep="_")
 
-    tab_map, tab_table, tab_about = st.tabs(["Карта", "Таблица", "О сервисе"])
+    tabs_list = ["Карта", "Таблица", "Сравнение моделей", "О сервисе"]
+    tab_map, tab_table, tab_compare, tab_about = st.tabs(tabs_list)
 
     with tab_map:
-        c1, c2, c3 = st.columns([1, 1, 1])
+        c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
-            if has_model:
+            if has_model and avail_models:
+                color_options = ["official"] + avail_models
+                color_format = {
+                    "official": "Официальный статус",
+                    **{m: f"Прогноз: {model_labels.get(m, m)}" for m in avail_models},
+                }
                 color_mode = st.radio(
                     "Раскраска точек",
-                    options=["official", "model"],
-                    format_func=lambda x: "По официальному статусу" if x == "official" else "По прогнозу модели (риск)",
+                    options=color_options,
+                    format_func=lambda x: color_format.get(x, x),
                     horizontal=True,
                 )
             else:
                 color_mode = "official"
-                st.markdown("**Раскраска:** только по официальному статусу (в снимке нет прогноза модели).")
-                st.caption("Быстрый снимок: `build_citizen_snapshot.py --map-only`. Полный прогон без флага добавит слой модели.")
+                st.markdown("**Раскраска:** только по официальному статусу.")
         with c2:
-            use_cluster = st.checkbox(
-                "Кластеризация маркеров (удобно при тысячах точек водопровода)",
-                value=True,
-            )
+            use_cluster = st.checkbox("Кластеризация маркеров", value=True)
         with c3:
-            st.caption("Каждая точка — отдельное место; нажмите маркер для параметров пробы и статуса.")
+            st.caption("Нажмите маркер для параметров пробы и прогнозов всех моделей.")
 
         st.subheader("Типы объектов")
         fc1, fc2, fc3, fc4 = st.columns(4)
@@ -365,15 +485,20 @@ def main() -> None:
             st.warning("Выберите хотя бы один тип объектов.")
             kinds_filter.add("swimming")
 
-        m = build_map(
+        selected_model = color_mode if color_mode != "official" else "rf"
+
+        m_map = build_map(
             places,
             color_mode,
             kinds_filter,
             use_cluster=use_cluster,
             has_model_predictions=has_model,
+            available_models=avail_models,
+            model_labels=model_labels,
+            selected_model=selected_model,
             data_catalog_url=snap.get("data_catalog_url"),
         )
-        st_folium(m, width=None, height=560, returned_objects=[])
+        st_folium(m_map, width=None, height=560, returned_objects=[])
 
         n_on_map = sum(
             1
@@ -386,16 +511,17 @@ def main() -> None:
             f"**Точек на карте:** {n_on_map} (всего в снимке: {len(places)}). "
             f"Снимок: `{snap.get('generated_at', '?')}`."
         )
-        if color_mode == "model" and has_model:
+        if color_mode != "official" and has_model:
             st.markdown(
-                "Легенда прогноза: **зелёный** — модель считает риск нарушения низким, **красный** — высоким."
+                f"Легенда прогноза **{model_labels.get(selected_model, selected_model)}**: "
+                "**зелёный** — риск нарушения низкий, **красный** — высокий."
             )
         else:
             st.markdown("Легенда: **зелёный** — официально соответствует, **красный** — зафиксировано нарушение.")
 
     with tab_table:
-        search = st.text_input("Поиск по названию места")
-        view = df.copy()
+        search = st.text_input("Поиск по названию места", key="table_search")
+        view = df_full.copy()
         if search.strip() and "location" in view.columns:
             view = view[view["location"].astype(str).str.contains(search.strip(), case=False, na=False)]
         pref = [
@@ -405,42 +531,53 @@ def main() -> None:
             "county",
             "sample_date",
             "official_compliant",
-            "model_violation_prob",
+            "lr_violation_prob",
+            "rf_violation_prob",
+            "gb_violation_prob",
+            "lgbm_violation_prob",
             "coord_source",
         ]
         if not has_model:
-            pref = [c for c in pref if c != "model_violation_prob"]
+            pref = [c for c in pref if "violation_prob" not in c]
         cols = [c for c in pref if c in view.columns]
         st.dataframe(view[cols], use_container_width=True, hide_index=True)
-        st.caption("Полные измерения смотрите во всплывающем окне маркера на карте.")
+        st.caption("Полные измерения и сравнение моделей — во всплывающем окне маркера на карте.")
+
+    with tab_compare:
+        _render_model_comparison_tab(places, avail_models, model_labels)
 
     with tab_about:
         st.markdown(
             """
 ### Зачем это
 
-На карте — **отдельные точки**: купальные места, **бассейны / СПА / ujula**, **водопровод** (`veevärk`),
-**источники питьевой воды** (`joogiveeallikas`, opendata). У каждой точки — дата пробы, статус, оценка модели и
-**параметры** последней пробы (если были в XML).
+На карте — **отдельные точки**: купальные места, **бассейны / СПА**, **водопровод** (`veevärk`),
+**источники питьевой воды** (`joogiveeallikas`). У каждой точки — дата пробы, статус,
+прогнозы **четырёх моделей** и **параметры** последней пробы.
 
-**Минеральная вода** (`mineraalvesi`): годовых XML в каталоге opendata у Terviseamet сейчас нет (только HTML-страница
-каталога) — в снимок не попадает.
+**Минеральная вода** (`mineraalvesi`): годовых XML в opendata Terviseamet нет — в снимок не попадает.
 
-### Два слоя информации
+### Четыре модели
 
-1. **Официальный статус** — как в исходных данных (`compliant` из оценки соответствия нормам).
-2. **Прогноз модели** — вероятность класса «нарушение» по Random Forest на признаках учебного пайплайна
-   (только если снимок собран **без** `--map-only`). Это **ориентир**, а не решение инспекции.
+| Модель | Описание |
+|--------|----------|
+| **Logistic Regression** | Линейный базовый классификатор. Интерпретируемый, быстрый. |
+| **Random Forest** | Ансамбль деревьев. Устойчивый к выбросам и пропускам. |
+| **Gradient Boosting** | Последовательный бустинг. Обычно точнее на несбалансированных данных. |
+| **LightGBM** | Градиентный бустинг Microsoft. Быстрее, нативная обработка NaN. |
+
+Все модели обучены на **одних данных** (все годы). Значение `P(нарушение)` — вероятность класса "нарушение" (0 = безопасно, 1 = точно нарушение). Порог по умолчанию: 0.5.
+
+Расхождение между моделями — признак **пограничного случая**: одни параметры сигнализируют о нарушении, другие — нет.
 
 ### Координаты
 
-Без платных API: **Nominatim** (кэш), **центроид уезда** и при отсутствии данных — **приблизительная** точка
-(`approximate_ee`). Для водопровода название точки часто геокодируется грубо; накапливайте кэш с `--geocode-limit`.
+Без платных API: **Nominatim** (кэш), **центроид уезда** и **приблизительная точка**
+(`approximate_ee`). Водопроводные точки часто геокодируются грубо.
 
 ### Обновление данных
 
-Рекомендуется **GitHub Actions** по расписанию: скачать XML, выполнить `build_citizen_snapshot.py`, публиковать
-`citizen-service/artifacts/snapshot.json`. Подробности — `citizen-service/PLAN.md`.
+GitHub Actions по расписанию: `citizen-snapshot.yml` (еженедельно по понедельникам 05:00 UTC).
 """
         )
 
