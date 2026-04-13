@@ -318,14 +318,28 @@ importances.head(10).plot(kind='barh', title='Топ-10 признаков')
 
 | Этап | Статус | Ноутбук/файл |
 |------|--------|--------------|
-| 0. Окружение | [ ] | `requirements.txt` |
-| 1. Постановка задачи | [ ] | (текст) |
-| 2. Загрузка данных | [ ] | `01_eda_supluskoha.ipynb` |
-| 3. EDA | [ ] | `02_eda_full.ipynb` |
-| 4. Препроцессинг | [ ] | `03_preprocessing.ipynb` |
-| 5. Модели | [ ] | `04_models.ipynb` |
-| 6. Оценка | [ ] | `05_evaluation.ipynb` |
-| 7. Отчёт | [ ] | `docs/report.md` |
+| 0. Окружение | [x] | `requirements.txt` — зависимости установлены, `pip install -e .` работает |
+| 1. Постановка задачи | [x] | `PLAN.md`, `CLAUDE.md` — задача описана, метрика: Recall класса 0 |
+| 2. Загрузка данных | [x] | `src/data_loader.py` — opendata XML скачивается и парсится, 38 594 проб |
+| 3. EDA | [x] | `01_eda_supluskoha.ipynb`, `02_eda_full.ipynb` — выполнены с выводами |
+| 4. Препроцессинг | [x] | `03_preprocessing.ipynb`, `src/features.py` — 53 признака, `ml_ready.joblib` |
+| 5. Модели | [x] | `04_models.ipynb` — LR, RF, GradientBoosting, GridSearchCV RF |
+| 6. Оценка | [x] | `05_evaluation.ipynb`, `src/evaluate.py` — матрица, ROC, feature importance |
+| 7. Отчёт | [ ] | `docs/report.md` — **следующий шаг** |
+
+### Ключевые результаты (данные: 38 594 проб, 2021–2026)
+
+| Модель | Recall (нарушение) | ROC-AUC |
+|--------|--------------------|---------|
+| Logistic Regression | 0.81 | 0.924 |
+| Random Forest | 0.91 | 0.985 |
+| Gradient Boosting | ~0.89 | ~0.975 |
+
+### Известные ограничения данных
+
+- **county (maakond)** отсутствует в opendata XML — нет географического разреза
+- **enterococci** и **transparency** есть только в supluskoha (4 031 проб)
+- **nitrates/nitrites/ammonium/fluoride** заполнены лишь в ~5–13% случаев veevark
 
 ---
 
