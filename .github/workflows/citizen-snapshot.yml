@@ -1,12 +1,22 @@
-# Снимок для citizen-service: по умолчанию --map-only (быстро, карта в Streamlit без RF).
-# Полный прогон (RF + citizen_model.joblib) — через inputs.mode: full.
+# Обновление данных и модели для citizen-service.
+#
+# Расписание:
+#   Понедельник  05:00 UTC — map-only (быстро: свежие данные + координаты; без обучения модели)
+#   1-е число    04:00 UTC — full (данные + обучение 4 моделей + координаты; ~10–15 мин)
+#
+# Ручной запуск: Actions → Citizen snapshot → Run workflow → выбрать mode.
+#
+# Координаты: In-ADS (Maa-amet) — бесплатный официальный геокодер Эстонии.
+# --geocode-limit 300 при каждом запуске: новые места получают координаты постепенно.
+# Кэш coordinate_resolve_cache.json коммитится обратно в репо → накапливается.
+
 name: Citizen snapshot
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "map-only — только snapshot.json (карта не зависит от модели). full — + RF и joblib."
+        description: "map-only — карта без модели (быстро). full — + обучение 4 моделей."
         type: choice
         required: true
         default: map-only
@@ -14,8 +24,10 @@ on:
           - map-only
           - full
   schedule:
-    # Еженедельно по понедельникам в 05:00 UTC (map-only — быстро).
+    # Еженедельно: данные + координаты (без модели)
     - cron: "0 5 * * 1"
+    # Ежемесячно: данные + модель + координаты
+    - cron: "0 4 1 * *"
 
 jobs:
   build:
@@ -23,49 +35,71 @@ jobs:
     permissions:
       contents: write
     env:
-      # При schedule без inputs подставится map-only (карта без долгого RF).
-      SNAPSHOT_MODE: ${{ github.event.inputs.mode || 'map-only' }}
+      # Ежемесячный cron → full; еженедельный → map-only; ручной → из inputs
+      SNAPSHOT_MODE: ${{ github.event.inputs.mode || (github.event.schedule == '0 4 1 * *' && 'full') || 'map-only' }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Нужен push обратно в репо; токен по умолчанию достаточен
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt -r citizen-service/requirements.txt
+      # Кэшируем pip — ускоряет повторные запуски
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt', 'citizen-service/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
 
-      - name: Download open data (uses cache if XML committed — prefer secrets/cache in production)
-        run: python src/data_loader.py || true
-        continue-on-error: true
-
-      - name: Build snapshot (map-only)
+      - name: Install dependencies (map-only — slim)
         if: env.SNAPSHOT_MODE != 'full'
-        run: python citizen-service/scripts/build_citizen_snapshot.py --map-only --geocode-limit 0
+        run: |
+          pip install -e .
+          pip install -r citizen-service/requirements.txt
 
-      - name: Build snapshot (full + model)
+      - name: Install dependencies (full — все ML-зависимости)
         if: env.SNAPSHOT_MODE == 'full'
-        run: python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 0
+        run: |
+          pip install -e .
+          pip install -r requirements.txt
+          pip install -r citizen-service/requirements.txt
 
-      - name: Commit refreshed snapshot
+      - name: Download open data from vtiav.sm.ee
+        run: python src/data_loader.py
+        continue-on-error: true   # не прерываем если сайт недоступен; используем кэш XML
+
+      - name: Build snapshot — map-only (данные + координаты, без модели)
+        if: env.SNAPSHOT_MODE != 'full'
+        run: |
+          python citizen-service/scripts/build_citizen_snapshot.py \
+            --map-only \
+            --infer-county \
+            --resolve-coordinates \
+            --geocode-limit 300
+
+      - name: Build snapshot — full (данные + 4 модели + координаты)
+        if: env.SNAPSHOT_MODE == 'full'
+        run: |
+          python citizen-service/scripts/build_citizen_snapshot.py \
+            --infer-county \
+            --resolve-coordinates \
+            --geocode-limit 300
+
+      - name: Commit refreshed snapshot + geocode cache
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(citizen): refresh snapshot [skip ci]"
-          file_pattern: citizen-service/artifacts/snapshot.json citizen-service/artifacts/citizen_model.joblib
-
-      - name: Upload snapshot artifact (map-only)
-        if: env.SNAPSHOT_MODE != 'full'
-        uses: actions/upload-artifact@v4
-        with:
-          name: citizen-snapshot
-          path: citizen-service/artifacts/snapshot.json
-
-      - name: Upload snapshot artifact (full)
-        if: env.SNAPSHOT_MODE == 'full'
-        uses: actions/upload-artifact@v4
-        with:
-          name: citizen-snapshot-full
-          path: |
+          commit_message: "chore(citizen): refresh snapshot [${{ env.SNAPSHOT_MODE }}] [skip ci]"
+          file_pattern: |
             citizen-service/artifacts/snapshot.json
-            citizen-service/artifacts/citizen_model.joblib
+            citizen-service/data/coordinate_resolve_cache.json
+            citizen-service/data/geocode_cache.json
+
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citizen-snapshot-${{ env.SNAPSHOT_MODE }}
+          path: citizen-service/artifacts/snapshot.json
