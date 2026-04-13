@@ -65,6 +65,8 @@
 
 Полный стек — в **`06_advanced_models.ipynb`** (после `pip install -r requirements.txt`). Там же **TimeSeriesSplit (5 фолдов)** и подбор **порога** под заданный precision (`evaluate.best_threshold_max_recall_at_precision`).
 
+> 📖 **Подробное руководство по метрикам:** [`docs/ml_metrics_guide.md`](../docs/ml_metrics_guide.md) — что такое ROC-AUC, Precision/Recall, калибровка и SHAP, как их читать и где они в проекте. Рекомендуется для понимания всех числовых результатов ниже.
+
 ---
 
 ## Мини-глоссарий
@@ -85,6 +87,8 @@
 - **ROC-AUC** — насколько хорошо модель ранжирует «нарушение выше нормы» без привязки к одному порогу; 1.0 — идеально, 0.5 — случайный уровень.
 - **Confusion matrix** — таблица «факт vs предсказание» (TP, TN, FP, FN). **False Negative** по нарушению — сказали «норма», а вода опасна.
 - **Feature importance (Random Forest)** — насколько в среднем деревья использовали признак для уменьшения ошибки; ориентир, не «физическая причина».
+- **SHAP** — SHapley Additive exPlanations: честное распределение вклада каждого признака в конкретное предсказание (основано на значениях Шепли). Подробнее: [`docs/ml_metrics_guide.md`](../docs/ml_metrics_guide.md).
+- **Calibration** — соответствие предсказанных вероятностей реальным долям; исправляется isotonic regression или Platt scaling. Подробнее: [`docs/ml_metrics_guide.md`](../docs/ml_metrics_guide.md).
 - **Уезд (`county`) и `county_source`** — после `load_all()` колонка `county` может быть заполнена не только из XML: см. `src/county_infer.py` и справочник `data/reference/location_county_overrides.csv`. Столбец `county_source` показывает, откуда взялось значение (`xml`, `override`, `geocode`, `unknown`). В матрицу признаков для модели попадает закодированный уезд (`county_encoded`), а не `county_source`.
 
 ---
