@@ -42,45 +42,125 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
 # ── Признаки нарушения нормативов ────────────────────────────────────────────
 
 NORMS = {
-    # Supluskohad (внутренние воды)
+    # Supluskohad (EU Bathing Water Directive 2006/7/EC, внутренние воды)
     "e_coli":       500.0,   # КОЕ/100 мл
     "enterococci":  200.0,   # КОЕ/100 мл
     "ph_min":       6.0,
     "ph_max":       9.0,
 
-    # Veevärk (питьевая вода, EU DWD 2020/2184)
+    # Veevärk / joogivesi (питьевая вода, EU DWD 2020/2184)
     "nitrates":     50.0,    # мг/л
     "nitrites":     0.5,     # мг/л
     "ammonium":     0.5,     # мг/л
     "fluoride":     1.5,     # мг/л
     "manganese":    0.05,    # мг/л
     "iron":         0.2,     # мг/л
-    "turbidity":    4.0,     # NTU
+    "turbidity":    4.0,     # NTU (veevark/joogivesi; для бассейнов — 0.5 NTU, см. NORMS_POOL)
     "color":        20.0,    # мг Pt/л
     "chlorides":    250.0,   # мг/л
     "sulfates":     250.0,   # мг/л
+}
+
+# Нормы специфичные для бассейнов/ujula/СПА (Estonian pool regulations / Terviseamet)
+# Отличаются от питьевой воды и от открытых водоёмов.
+# Используются в add_ratio_features при domain == 'basseinid'.
+NORMS_POOL = {
+    "e_coli":              0.0,   # КОЕ/100 мл — норма строже: должно быть 0
+    "coliforms":           0.0,   # КОЕ/100 мл
+    "pseudomonas":         0.0,   # КОЕ/100 мл (P. aeruginosa)
+    "staphylococci":      20.0,   # КОЕ/100 мл
+    "ph_min":              6.5,
+    "ph_max":              8.5,   # уже, чем veevark (6.5–9.5)
+    "free_chlorine_min":   0.2,   # мг/л — нижняя граница (мало хлора → риск)
+    "free_chlorine_max":   0.6,   # мг/л — верхняя граница (много хлора → раздражение)
+    "combined_chlorine":   0.4,   # мг/л — верхний предел
+    "turbidity":           0.5,   # NTU — в 8× строже, чем для питьевой воды
 }
 
 
 def add_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Добавить отношение измеренного значения к нормативу.
-    ratio > 1.0 = нарушение.
+    ratio > 1.0 = нарушение нормы (или выход за допустимый диапазон).
+
+    Для домена basseinid применяются NORMS_POOL вместо NORMS там,
+    где нормы отличаются:
+    - turbidity: 0.5 NTU (бассейн) вместо 4.0 NTU (veevark)
+    - staphylococci, pseudomonas: только в бассейнах
+    - free_chlorine, combined_chlorine: диапазонные нормы бассейна
+    - pH: диапазон 6.5–8.5 для бассейна вместо 6.0–9.0
     """
     df = df.copy()
+
+    is_pool = (df.get("domain") == "basseinid") if "domain" in df.columns else pd.Series(False, index=df.index)
 
     for param, norm in NORMS.items():
         if param in ("ph_min", "ph_max"):
             continue
-        if param in df.columns:
+        if param not in df.columns:
+            continue
+        if param == "turbidity":
+            # Бассейн: 0.5 NTU; остальные: 4.0 NTU
+            pool_norm = NORMS_POOL["turbidity"]
+            ratio = np.where(is_pool, df[param] / pool_norm, df[param] / norm)
+            df["turbidity_ratio"] = np.where(df[param].isna(), np.nan, ratio)
+        else:
             df[f"{param}_ratio"] = df[param] / norm
 
-    # pH: расстояние от нормального диапазона
-    if "ph" in df.columns:
-        df["ph_deviation"] = df["ph"].apply(
-            lambda x: max(0, NORMS["ph_min"] - x, x - NORMS["ph_max"])
-            if pd.notna(x) else np.nan
+    # Бассейновые параметры: staphylococci, pseudomonas
+    if "staphylococci" in df.columns:
+        pool_norm = NORMS_POOL["staphylococci"]
+        df["staphylococci_ratio"] = np.where(
+            is_pool & df["staphylococci"].notna(),
+            df["staphylococci"] / pool_norm,
+            np.nan,
         )
+    if "pseudomonas" in df.columns:
+        # норма = 0: ratio не применима напрямую; используем бинарный признак
+        df["pseudomonas_detected"] = np.where(
+            is_pool & df["pseudomonas"].notna(),
+            (df["pseudomonas"] > 0).astype(float),
+            np.nan,
+        )
+
+    # Свободный хлор: нарушение если < min (мало) или > max (много)
+    if "free_chlorine" in df.columns:
+        fc = df["free_chlorine"]
+        fc_min = NORMS_POOL["free_chlorine_min"]
+        fc_max = NORMS_POOL["free_chlorine_max"]
+        # deviation: 0 = в норме, >0 = отклонение от диапазона
+        deviation = np.maximum(0, fc_min - fc, fc - fc_max)
+        df["free_chlorine_deviation"] = np.where(
+            is_pool & fc.notna(), deviation, np.nan
+        )
+
+    # Связанный хлор: верхний предел
+    if "combined_chlorine" in df.columns:
+        pool_norm = NORMS_POOL["combined_chlorine"]
+        df["combined_chlorine_ratio"] = np.where(
+            is_pool & df["combined_chlorine"].notna(),
+            df["combined_chlorine"] / pool_norm,
+            np.nan,
+        )
+
+    # pH: расстояние от нормального диапазона (домен-зависимые границы)
+    if "ph" in df.columns:
+        ph_min_pool = NORMS_POOL["ph_min"]
+        ph_max_pool = NORMS_POOL["ph_max"]
+        ph_min_def  = NORMS["ph_min"]
+        ph_max_def  = NORMS["ph_max"]
+
+        def _ph_deviation(row_ph, is_pool_row):
+            if pd.isna(row_ph):
+                return np.nan
+            if is_pool_row:
+                return max(0, ph_min_pool - row_ph, row_ph - ph_max_pool)
+            return max(0, ph_min_def - row_ph, row_ph - ph_max_def)
+
+        df["ph_deviation"] = [
+            _ph_deviation(ph, pool)
+            for ph, pool in zip(df["ph"], is_pool)
+        ]
 
     return df
 
@@ -162,10 +242,20 @@ NUMERIC_PARAMS = [
     "nitrates", "nitrites", "ammonium", "fluoride",
     "manganese", "iron", "turbidity", "color",
     "coliforms", "chlorides", "sulfates",
+    # Параметры бассейнов/ujula/СПА (domain=basseinid)
+    "staphylococci", "pseudomonas", "free_chlorine", "combined_chlorine",
+    "oxidizability", "colonies_37c",
 ]
 
-RATIO_COLS = [f"{p}_ratio" for p in NUMERIC_PARAMS if p not in ("ph",)]
-RATIO_COLS += ["ph_deviation"]
+RATIO_COLS = [f"{p}_ratio" for p in NUMERIC_PARAMS if p not in ("ph", "staphylococci", "pseudomonas", "free_chlorine", "combined_chlorine")]
+RATIO_COLS += [
+    "ph_deviation",
+    # Бассейновые ratio/deviation (только для domain=basseinid, иначе NaN)
+    "staphylococci_ratio",
+    "pseudomonas_detected",
+    "free_chlorine_deviation",
+    "combined_chlorine_ratio",
+]
 
 FEATURE_COLS = (
     NUMERIC_PARAMS +
@@ -209,15 +299,9 @@ def build_dataset(
     return X, y
 
 
-# Дополнительные столбцы в meta для citizen-service / отчётов по пробам
-META_EXTRA_NUMERIC = NUMERIC_PARAMS + [
-    "free_chlorine",
-    "combined_chlorine",
-    "pseudomonas",
-    "staphylococci",
-    "oxidizability",
-    "colonies_37c",
-]
+# Дополнительные столбцы в meta для citizen-service / отчётов по пробам.
+# Pool-параметры (free_chlorine, pseudomonas и др.) уже включены в NUMERIC_PARAMS.
+META_EXTRA_NUMERIC = list(NUMERIC_PARAMS)
 
 
 def _encode_for_citizen_snapshot(df: pd.DataFrame) -> pd.DataFrame:
