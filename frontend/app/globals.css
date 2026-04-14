@@ -1105,6 +1105,9 @@ body.mapFullscreenActive {
     --text: #e6eef9;
     --muted: #9fb0c8;
     --brand: #63a4ff;
+    --good: #34d399;
+    --bad: #f87171;
+    --warn: #fbbf24;
   }
 
   html,
@@ -1210,19 +1213,104 @@ body.mapFullscreenActive {
     border-color: #2b3f5f;
   }
 
+  /* Badge backgrounds — text color comes from --good/bad/warn vars above */
   .badge.good {
-    background: rgba(19, 155, 85, 0.25);
-    color: #34d399;
+    background: rgba(52, 211, 153, 0.18);
   }
 
   .badge.bad {
-    background: rgba(220, 53, 69, 0.25);
-    color: #f87171;
+    background: rgba(248, 113, 113, 0.18);
   }
 
   .badge.warn {
-    background: rgba(245, 158, 11, 0.22);
-    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.16);
+  }
+
+  /* Sticky top navigation bar */
+  .unifiedTopBar {
+    background: rgba(11, 18, 32, 0.93);
+    border-color: rgba(55, 82, 128, 0.55);
+  }
+
+  /* Slide-in filter drawer (non-pinned) */
+  .drawer {
+    background: linear-gradient(180deg, #0e1b2e 0%, #0b1521 100%);
+    border-color: #2b3f5f;
+  }
+
+  /* Map overlay title pill in fullscreen mode */
+  .mapPanelFullscreen .sectionTitle {
+    background: rgba(11, 18, 32, 0.88);
+    color: #e6eef9;
+  }
+
+  /* Floating map control buttons */
+  .mapFloatingBtn {
+    background: rgba(17, 27, 45, 0.93);
+    border-color: #314a70;
+    color: #e6eef9;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  }
+
+  .mobileMapQuickActions .btn {
+    background: rgba(17, 27, 45, 0.93);
+    border-color: #314a70;
+  }
+
+  .nearMeFabBtn {
+    background: linear-gradient(180deg, #162d56 0%, #102244 100%) !important;
+    border-color: #3d6ab0 !important;
+    color: #93c5fd !important;
+  }
+
+  /* Action buttons with hardcoded light backgrounds */
+  .clearFiltersBtn {
+    background: #131f33;
+    border-color: #2b3f5f;
+  }
+
+  .alertFocusBtn {
+    background: linear-gradient(180deg, #2d1520 0%, #25101a 100%);
+    border-color: #7f3545;
+    color: #fca5a5;
+  }
+
+  .alertFocusBtnActive {
+    background: linear-gradient(180deg, #3d1825 0%, #30121e 100%);
+    border-color: #dc3545;
+    color: #fca5a5;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.22);
+  }
+
+  .openFiltersBtn {
+    background: linear-gradient(180deg, #162d52 0%, #102244 100%);
+    border-color: #3d6ab0;
+    color: #93c5fd;
+  }
+
+  /* Borders that don't adapt via CSS vars */
+  .footerNote {
+    border-top-color: #2b3f5f;
+  }
+
+  .drawerHeader {
+    border-bottom-color: #2b3f5f;
+  }
+
+  .modalFooter {
+    border-top-color: #2b3f5f;
+  }
+
+  /* Map zone label chip */
+  .zoneTag {
+    background: rgba(17, 27, 45, 0.93);
+    border-color: #2b3f5f;
+    color: #c8daf0;
+  }
+
+  /* Sheet drag handle — needs to be visible on dark sheet */
+  .mobileSheetHandle span {
+    background: #3a5478;
   }
 }
 
@@ -1298,6 +1386,33 @@ body.mapFullscreenActive {
 
   .mobileBottomSheet.dragging {
     transition: none;
+  }
+
+  /* Touch target: tab buttons need ≥40px height for reliable tapping */
+  .tabBtn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 0.9rem;
+  }
+
+  /* Touch target: sheet action buttons (Filters / Near Me / Hide) */
+  .mobileSheetActions .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Contain overscroll so sheet scroll doesn't bleed to page */
+  .mobilePointContent,
+  .drawer,
+  .controls {
+    overscroll-behavior: contain;
+  }
+
+  /* Stat cards fill row evenly on narrow phones */
+  .stat {
+    flex: 1;
+    min-width: 90px;
   }
 }
 
