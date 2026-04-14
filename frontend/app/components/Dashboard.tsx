@@ -13,7 +13,7 @@ type CyrillicFont = "ibm" | "manrope";
 
 const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high", "unknown"] as never;
 const officialOrder = ["all", "compliant", "violation", "unknown"] as const;
-type Lang = "ru" | "et";
+type Lang = "ru" | "et" | "en";
 type TabKey = "alerts" | "domain" | "analytics" | "aboutModel" | "aboutService";
 const countyKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
 const countyPretty = (value: string | null | undefined) =>
@@ -1185,6 +1185,9 @@ export default function Dashboard({ snapshot }: Props) {
           <button className={`btn ${lang === "et" ? "btnActive" : ""}`} onClick={() => setLang("et")}>
             ET
           </button>
+          <button className={`btn ${lang === "en" ? "btnActive" : ""}`} onClick={() => setLang("en")}>
+            EN
+          </button>
           <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
             <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>
               IBM
@@ -2257,7 +2260,7 @@ export default function Dashboard({ snapshot }: Props) {
                 ? "Технический слой: официальный статус — поле vastavus в данных Terviseamet. Координаты: сначала справочные точки Terviseamet (coord_source=terviseamet_*, преобразование EPSG:3301 -> WGS84), затем каскад геокодирования Google -> Geoapify -> OpenCage (coord_source=opencage/geocode_cache; в старых снимках возможны google). county_centroid — центроид уезда; approximate_ee — визуальная приблизительная точка в границах Эстонии. Параметры lr/rf/gb/lgbm_violation_prob — прогнозы отдельных ML-моделей, не замена официальной оценке."
                 : "Tehniline kiht: ametlik staatus tuleb väljast vastavus. Koordinaadid: esmalt Terviseameti viitepunktid (coord_source=terviseamet_*, teisendus EPSG:3301 -> WGS84), seejärel geokodeerimise kaskaad Google -> Geoapify -> OpenCage (coord_source=opencage/geocode_cache; vanemates snapshotides võimalik google). county_centroid on maakonna tsentroid; approximate_ee on visuaalne ligikaudne punkt Eesti piires. lr/rf/gb/lgbm_violation_prob on eraldi ML-mudelite prognoosid ega asenda ametlikku hinnangut."}
             </p>
-            <p className="hint">{snapshot.disclaimer || t.aboutService}</p>
+            <p className="hint">{t.aboutService}</p>
             {snapshot.data_catalog_url ? (
               <p className="hint">
                 {lruet(lang, "Источник открытых данных:", "Avaandmete allikas:", "Open data source:")}{" "}
@@ -2480,10 +2483,12 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="modalBackdrop" onClick={() => setInfoOpen(false)}>
           <div className="modalCard panel" onClick={(e) => e.stopPropagation()}>
             <h3 className="sectionTitle">{infoTitle}</h3>
-            {renderInfoContent(infoText)}
-            <button className="btn btnSmall" onClick={() => setInfoOpen(false)}>
-              {t.close}
-            </button>
+            <div className="modalBody">{renderInfoContent(infoText)}</div>
+            <div className="modalFooter">
+              <button className="btn btnSmall" onClick={() => setInfoOpen(false)}>
+                {t.close}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
