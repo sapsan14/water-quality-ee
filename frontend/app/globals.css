@@ -149,6 +149,8 @@ a {
   border-radius: 14px;
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(22, 34, 54, 0.08);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .controls,
@@ -869,6 +871,26 @@ body.mapFullscreenActive {
   background: #8db3db;
 }
 
+.mobileSheetHandleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mobileSheetHandleRow .mobileSheetHandle {
+  flex: 1;
+}
+
+.mobileSheetTitle {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.1rem;
+}
+
 .mobileSheetHeader {
   display: flex;
   align-items: center;
@@ -879,6 +901,11 @@ body.mapFullscreenActive {
 .mobileSheetActions {
   display: inline-flex;
   gap: 0.4rem;
+}
+
+/* "Done" close button — icon-only on desktop, shows label on mobile */
+.drawerDoneLabel {
+  display: none;
 }
 
 .mobilePointContent {
@@ -1086,6 +1113,8 @@ body.mapFullscreenActive {
 
 .infoTableWrap {
   margin-top: 0.6rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .infoMiniTable {
@@ -1396,7 +1425,7 @@ body.mapFullscreenActive {
     padding-inline: 0.9rem;
   }
 
-  /* Touch target: sheet action buttons (Filters / Near Me / Hide) */
+  /* Touch target: sheet action buttons (Filters / Near Me) */
   .mobileSheetActions .btn {
     min-height: 44px;
     min-width: 44px;
@@ -1413,6 +1442,50 @@ body.mapFullscreenActive {
   .stat {
     flex: 1;
     min-width: 90px;
+  }
+
+  /* Language buttons: compact on mobile — they fit in one row */
+  .topBarControls .btn {
+    padding: 0.28rem 0.48rem;
+    font-size: 0.78rem;
+    min-height: 32px;
+  }
+
+  /* Filter drawer: full-page overlay on mobile */
+  .drawer {
+    width: 100%;
+    border-radius: 0;
+    z-index: 2000;
+    border-right: 0;
+  }
+
+  /* Pin button makes no sense on mobile — hide it */
+  .drawerPinBtn {
+    display: none;
+  }
+
+  /* Show "Done" label on close button so users know how to dismiss */
+  .drawerDoneBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+  }
+
+  .drawerDoneLabel {
+    display: inline;
+  }
+
+  /* Sheet background fully opaque — stops content bleeding through */
+  .mobileBottomSheet {
+    background: #0f1828;
+    border-top-color: #2b3f5f;
+  }
+
+  /* Horizontal scroll on data tables instead of overflow */
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

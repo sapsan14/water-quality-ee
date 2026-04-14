@@ -323,7 +323,8 @@ function MarkerClusterLayer({
       } as L.MarkerOptions & { place: FrontendPlace });
       marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
       marker.on("click", () => {
-        marker.openPopup();
+        // On mobile disableHoverPopups=true — bottom sheet shows details, no popup needed
+        if (!disableHoverPopups) marker.openPopup();
         onSelectPoint?.(place.id);
       });
       if (!disableHoverPopups) {
