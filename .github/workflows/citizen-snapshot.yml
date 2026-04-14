@@ -9,7 +9,10 @@
 #
 # Ручной запуск: Actions → Citizen snapshot → mode по умолчанию full; map-only — только если нужен быстрый снимок без ML.
 #
-# Координаты: только OpenCage (OPENCAGE_API_KEY). Без ключа — только кэш.
+# Координаты (каскад):
+#   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha, без ключа)
+#   2. veevargid.xml — координаты объектов водопровода из vtiav.sm.ee (veevark, без ключа)
+#   3. OpenCage (OPENCAGE_API_KEY) — для всех доменов; без ключа — только кэш.
 # Лимит HTTP: dispatch → из inputs; cron → 4000. Кэши и артефакты коммитятся в репо.
 
 name: Citizen snapshot
@@ -113,6 +116,16 @@ jobs:
             --resolve-coordinates \
             --geocode-limit "${{ steps.wf.outputs.geocode }}" \
             --log-level INFO
+
+      - name: Enrich coordinates (EEA bathing water → veevargid.xml → OpenCage cache)
+        # EEA и veevargid.xml не требуют API-ключа — работают для supluskoha и veevark.
+        # OpenCage подхватывает остальные домены из уже накопленного кэша.
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+        run: |
+          python citizen-service/scripts/enrich_coordinates.py \
+            --limit 0 \
+            --quiet
 
       - name: Commit refreshed snapshot + model + geocode caches
         uses: stefanzweifel/git-auto-commit-action@v5
