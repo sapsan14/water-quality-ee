@@ -948,12 +948,23 @@ export default function Dashboard({ snapshot }: Props) {
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
-    if (isMobile) {
-      setToast(lruet(lang, `${filtered.length} точек · ${violations} нарушений`, `${filtered.length} punkti · ${violations} rikkumist`, `${filtered.length} points · ${violations} violations`));
-    }
-  // Only on first render
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [snapshot.places_count, snapshot.has_model_predictions]);
+
+  const toastFiredRef = useRef(false);
+  useEffect(() => {
+    if (!isMobile || toastFiredRef.current) return;
+    toastFiredRef.current = true;
+    const totalPlaces = snapshot.places.length;
+    const totalViolations = snapshot.places.filter((p) => p.official_compliant === 0).length;
+    const msg = lruet(
+      lang,
+      `${totalPlaces} точек · ${totalViolations} нарушений`,
+      `${totalPlaces} punkti · ${totalViolations} rikkumist`,
+      `${totalPlaces} points · ${totalViolations} violations`
+    );
+    const timer = setTimeout(() => setToast(msg), 300);
+    return () => clearTimeout(timer);
+  }, [isMobile, lang, snapshot.places]);
 
   useEffect(() => {
     pushHeaderLang(lang);
