@@ -20,7 +20,9 @@ from pathlib import Path
 import folium
 import pandas as pd
 import streamlit as st
+from branca.element import MacroElement
 from folium.plugins import MarkerCluster
+from jinja2 import Template
 from streamlit_folium import st_folium
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -313,6 +315,32 @@ def _sample_age_label(sample_date_str: str | None) -> str:
     return f"~{years} г. назад"
 
 
+class _InvalidateSizeOnResize(MacroElement):
+    """Calls map.invalidateSize() when the map container is resized (e.g. Streamlit fullscreen toggle).
+
+    Without this, Leaflet keeps stale container dimensions, so popups and
+    click targets appear shifted after entering/exiting fullscreen.
+    """
+
+    _template = Template("""
+        {% macro script(this, kwargs) %}
+            (function () {
+                var map = {{ this._parent.get_name() }};
+                var container = map.getContainer();
+                if (window.ResizeObserver) {
+                    new ResizeObserver(function () {
+                        map.invalidateSize({animate: false});
+                    }).observe(container);
+                } else {
+                    window.addEventListener('resize', function () {
+                        setTimeout(function () { map.invalidateSize({animate: false}); }, 200);
+                    });
+                }
+            })();
+        {% endmacro %}
+    """)
+
+
 def _display_locations_for_overlaps(points: list[dict]) -> dict[int, tuple[float, float]]:
     """
     Раздвигаем маркеры с одинаковыми координатами, чтобы их можно было кликнуть по отдельности.
@@ -495,6 +523,7 @@ def build_map(
         folium.Marker([58.65, 25.5], popup="Нет точек для выбранных фильтров").add_to(m)
 
     folium.LayerControl(collapsed=False).add_to(m)
+    _InvalidateSizeOnResize().add_to(m)
     return m
 
 
