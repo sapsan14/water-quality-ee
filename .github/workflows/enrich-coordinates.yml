@@ -6,7 +6,6 @@
 # Источники (в порядке приоритета):
 #   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha)
 #   2. veevargid.xml  — L-EST97 координаты объектов водопровода (veevark)
-#   3. OpenCage cache — только уже накопленный кэш (без новых HTTP; OPENCAGE_API_KEY опционален)
 #
 # Зависимости: requests, lxml (≈2 с установки).
 # Артефакты коммитятся с [skip ci], чтобы не создавать loop.
@@ -41,11 +40,10 @@ jobs:
       - name: Install dependencies (requests + lxml only)
         run: pip install requests lxml
 
-      - name: Enrich coordinates (EEA → veevargid.xml → OpenCage cache)
-        env:
-          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+      - name: Enrich coordinates (EEA bathing water → veevargid.xml)
         run: |
           python citizen-service/scripts/enrich_coordinates.py \
+            --skip-opencage \
             --limit 0 \
             --quiet
 
