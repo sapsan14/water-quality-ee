@@ -214,6 +214,70 @@ a {
   justify-content: space-between;
   align-items: center;
   grid-column: 1 / -1;
+  position: sticky;
+  top: 0.35rem;
+  z-index: 1300;
+}
+
+.unifiedTopBar {
+  gap: 0.85rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.unifiedTopBar.compact {
+  opacity: 0.25;
+  transform: translateY(-4px);
+}
+
+.unifiedTopBar:hover,
+.unifiedTopBar:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.unifiedBrandBlock {
+  gap: 0.55rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.unifiedBrandLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.unifiedBrandText {
+  min-width: 0;
+}
+
+.unifiedBrandTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.unifiedBrandSubtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topBarControls {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .fontToggle {
@@ -483,6 +547,19 @@ a {
   color: var(--brand);
 }
 
+.clickableBadge {
+  border: 2px solid rgba(220, 53, 69, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+  transition: transform 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.clickableBadge:hover,
+.clickableBadge:focus-visible {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.22);
+  transform: translateY(-1px);
+}
+
 .btnActive {
   background: #e8f1ff;
   border-color: #6ea8fe;
@@ -537,6 +614,22 @@ a {
   transform: rotate(-25deg);
 }
 
+.openFiltersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-width: 2px;
+  border-color: #6ea8fe;
+  background: linear-gradient(180deg, #e9f2ff 0%, #dcecff 100%);
+  color: #0a58ca;
+  font-weight: 700;
+}
+
+.openFiltersBtn:hover {
+  border-color: #3d8bfd;
+  box-shadow: 0 5px 14px rgba(13, 110, 253, 0.2);
+}
+
 .nearMeBtn {
   display: inline-flex;
   align-items: center;
@@ -579,6 +672,14 @@ a {
 
 .mapTopPanel {
   padding: 0.85rem 0.85rem 0.75rem;
+}
+
+.mapHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
 }
 
 .mapShell {
@@ -703,7 +804,7 @@ body.mapFullscreenActive {
 }
 
 .mobileBottomSheet.full {
-  transform: translateY(calc(14% + var(--sheet-drag-offset)));
+  transform: translateY(calc(4% + var(--sheet-drag-offset)));
 }
 
 .mobileBottomSheet.fullscreenShift {
@@ -787,8 +888,8 @@ body.mapFullscreenActive {
 }
 
 .mobileBottomSheet.full .mobilePointContent {
-  max-height: 74dvh;
-  max-height: 74vh;
+  max-height: 86dvh;
+  max-height: 86vh;
 }
 
 .mobileBadges {
@@ -823,6 +924,20 @@ body.mapFullscreenActive {
   gap: 0.55rem;
   flex-wrap: wrap;
   margin-bottom: 0.75rem;
+}
+
+.tabRow.isPending {
+  opacity: 0.86;
+}
+
+.tabPanel {
+  display: none;
+  content-visibility: auto;
+  contain-intrinsic-size: 700px;
+}
+
+.tabPanel.isActive {
+  display: block;
 }
 
 .tabBtn {
@@ -1091,8 +1206,26 @@ body.mapFullscreenActive {
     padding: 0;
   }
 
-  .topBar {
-    display: none;
+  .unifiedTopBar {
+    top: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .unifiedTopBar.compact {
+    opacity: 0.08;
+    transform: translateY(-10px);
+    pointer-events: none;
+  }
+
+  .unifiedBrandTitle {
+    font-size: 0.95rem;
+  }
+
+  .unifiedBrandSubtitle {
+    font-size: 0.74rem;
   }
 
   .mainContent {
@@ -1179,6 +1312,6 @@ body.mapFullscreenActive {
   }
 
   .mobileBottomSheet.full {
-    transform: translateY(calc(10% + var(--sheet-drag-offset)));
+    transform: translateY(calc(3% + var(--sheet-drag-offset)));
   }
 }

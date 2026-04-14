@@ -1,6 +1,4 @@
-import Image from "next/image";
 import Dashboard from "./components/Dashboard";
-import LocalizedSubtitle from "./components/LocalizedSubtitle";
 import WebVitalsReporter from "./components/WebVitalsReporter";
 import type { FrontendSnapshot } from "./lib/types";
 
@@ -17,17 +15,6 @@ export default async function HomePage() {
   const currentYear = new Date().getFullYear();
   return (
     <main className="page">
-      <header className="header">
-        <div className="brandBlock">
-          <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo" width={40} height={40} priority />
-          <div>
-            <h1 className="title">H2O Atlas</h1>
-            <p className="subtitle">
-              <LocalizedSubtitle />
-            </p>
-          </div>
-        </div>
-      </header>
       <WebVitalsReporter />
       <Dashboard snapshot={snapshot} />
       <footer className="footerNote">

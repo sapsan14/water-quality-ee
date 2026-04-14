@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
@@ -384,7 +384,7 @@ function FocusOnUserLocation({ userLocation }: { userLocation?: { lat: number; l
   return null;
 }
 
-export default function MapClient({
+function MapClient({
   places,
   onSelectPoint,
   locale = "ru",
@@ -572,7 +572,6 @@ export default function MapClient({
         maxZoom={15}
         maxBounds={estoniaBounds}
         maxBoundsViscosity={0.35}
-        keepBuffer={isMobile ? 2 : 5}
         zoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
@@ -583,6 +582,7 @@ export default function MapClient({
         <TileLayer
           attribution='Tiles &copy; Esri, OpenStreetMap contributors'
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          keepBuffer={isMobile ? 2 : 5}
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint selectedPoint={selectedPoint} />
@@ -592,3 +592,5 @@ export default function MapClient({
     </div>
   );
 }
+
+export default memo(MapClient);

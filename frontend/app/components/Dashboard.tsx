@@ -1,14 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 
 const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
 
 type Props = { snapshot: FrontendSnapshot };
-type IconName = "pin" | "unpin" | "close" | "alert" | "reset";
+type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters";
 type CyrillicFont = "ibm" | "manrope";
 
 const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high", "unknown"] as never;
@@ -150,6 +152,13 @@ function Icon({ name }: { name: IconName }) {
       </svg>
     );
   }
+  if (name === "filters") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7a1 1 0 0 1 1-1h2.3a2.5 2.5 0 0 1 4.8 0H19a1 1 0 1 1 0 2h-6.9a2.5 2.5 0 0 1-4.8 0H5a1 1 0 0 1-1-1Zm8 10a2.5 2.5 0 0 1-4.7 1H5a1 1 0 1 1 0-2h2.3a2.5 2.5 0 0 1 4.7 1Zm1-6a2.5 2.5 0 0 1 4.7-1H19a1 1 0 1 1 0 2h-1.3a2.5 2.5 0 0 1-4.7-1Z" fill="currentColor" />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 4a8 8 0 1 1-5.7 2.3L4.9 7.7A10 10 0 1 0 12 2v2Zm-1 1 4 4-4 4V10H2V8h9V5Z" fill="currentColor" />
@@ -214,6 +223,15 @@ export default function Dashboard({ snapshot }: Props) {
   const [sheetDragOffset, setSheetDragOffset] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const mobileFullscreenInitializedRef = useRef(false);
+  const [headerCompact, setHeaderCompact] = useState(false);
+  const [isTabPending, startTabTransition] = useTransition();
+  const [visitedTabs, setVisitedTabs] = useState<Record<TabKey, boolean>>({
+    alerts: true,
+    domain: false,
+    analytics: false,
+    aboutModel: false,
+    aboutService: false
+  });
 
   const tr = useMemo(
     () => ({
@@ -816,8 +834,17 @@ export default function Dashboard({ snapshot }: Props) {
   };
 
   const severityLabel = (level: "good" | "warn" | "bad") => {
-    if (lang === "ru") return level === "good" ? "ok" : level === "warn" ? "внимание" : "критично";
-    return level === "good" ? "ok" : level === "warn" ? "hoiatus" : "kriitiline";
+    return lruet(
+      lang,
+      level === "good" ? "ok" : level === "warn" ? "внимание" : "критично",
+      level === "good" ? "ok" : level === "warn" ? "hoiatus" : "kriitiline",
+      level === "good" ? "ok" : level === "warn" ? "warning" : "critical"
+    );
+  };
+  const officialStatusText = (value: number | null) => {
+    if (value === 1) return lruet(lang, "соответствует", "vastab", "compliant");
+    if (value === 0) return lruet(lang, "нарушение", "rikkumine", "violation");
+    return lruet(lang, "неизвестно", "teadmata", "unknown");
   };
   const placeKindLabel = (kind: string) => {
     const key = (kind || "other").toLowerCase();
@@ -828,11 +855,18 @@ export default function Dashboard({ snapshot }: Props) {
       if (key === "drinking_source") return "Источник питьевой воды";
       return "Другое";
     }
-    if (key === "swimming") return "Suplusvesi";
-    if (key === "pool_spa") return "Bassein / SPA";
-    if (key === "drinking_water") return "Joogivesi (võrk)";
-    if (key === "drinking_source") return "Joogivee allikas";
-    return "Muu";
+    if (lang === "et") {
+      if (key === "swimming") return "Suplusvesi";
+      if (key === "pool_spa") return "Bassein / SPA";
+      if (key === "drinking_water") return "Joogivesi (võrk)";
+      if (key === "drinking_source") return "Joogivee allikas";
+      return "Muu";
+    }
+    if (key === "swimming") return "Open water";
+    if (key === "pool_spa") return "Pool / SPA";
+    if (key === "drinking_water") return "Drinking water (network)";
+    if (key === "drinking_source") return "Drinking water source";
+    return "Other";
   };
 
   const openInfo = (title: string, text: string) => {
@@ -947,6 +981,14 @@ export default function Dashboard({ snapshot }: Props) {
   }, [isMapFullscreen]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => setHeaderCompact(window.scrollY > 56);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
     track("filters_changed", {
       segment,
       risk,
@@ -981,7 +1023,12 @@ export default function Dashboard({ snapshot }: Props) {
     return Math.round((officialPassShare * 0.6 + modelSafety * 0.4) * 100);
   }, [filtered, avgProb]);
 
-  const prognosis = healthIndex >= 80 ? "Excellent" : healthIndex >= 65 ? "Stable" : healthIndex >= 45 ? "Watch closely" : "Critical focus";
+  const prognosis = lruet(
+    lang,
+    healthIndex >= 80 ? "Отлично" : healthIndex >= 65 ? "Стабильно" : healthIndex >= 45 ? "Нужен контроль" : "Критично",
+    healthIndex >= 80 ? "Väga hea" : healthIndex >= 65 ? "Stabiilne" : healthIndex >= 45 ? "Vajab jälgimist" : "Kriitiline",
+    healthIndex >= 80 ? "Excellent" : healthIndex >= 65 ? "Stable" : healthIndex >= 45 ? "Watch closely" : "Critical focus"
+  );
 
   const domainStats = useMemo(() => {
     const counts: Record<string, { total: number; violations: number; highRisk: number }> = {};
@@ -1205,9 +1252,12 @@ export default function Dashboard({ snapshot }: Props) {
     );
   };
 
-  const selectPointFromMap = useCallback((id: string) => {
+  const selectPoint = useCallback((id: string) => {
     setSelectedId(id);
-    if (isMobile) setMobilePanelState("half");
+    if (isMobile) {
+      setIsMapFullscreen(false);
+      setMobilePanelState("full");
+    }
   }, [isMobile]);
 
   const handleCountySelect = useCallback((c: string) => {
@@ -1295,13 +1345,30 @@ export default function Dashboard({ snapshot }: Props) {
     }
   };
 
+  const switchTab = useCallback(
+    (tab: TabKey) => {
+      if (tab === activeTab) return;
+      if (!visitedTabs[tab]) {
+        setVisitedTabs((prev) => ({ ...prev, [tab]: true }));
+      }
+      startTabTransition(() => setActiveTab(tab));
+    },
+    [activeTab, visitedTabs, startTabTransition]
+  );
+
   return (
     <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
-      <div className="topBar">
-        <button className="btn" onClick={() => setDrawerOpen(true)}>
-          {t.openFilters}
-        </button>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div className={`topBar unifiedTopBar ${headerCompact ? "compact" : ""}`}>
+        <div className="brandBlock unifiedBrandBlock">
+          <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo unifiedBrandLogo" width={36} height={36} priority />
+          <div className="unifiedBrandText">
+            <div className="unifiedBrandTitle">H2O Atlas</div>
+            <p className="subtitle unifiedBrandSubtitle">
+              <LocalizedSubtitle />
+            </p>
+          </div>
+        </div>
+        <div className="topBarControls">
           <button className={`btn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => setLang("ru")}>
             RU
           </button>
@@ -1536,22 +1603,25 @@ export default function Dashboard({ snapshot }: Props) {
           <div className="k">{lruet(lang, "Индекс здоровья", "Tervise indeks", "Health index")}</div>
           <div className={`healthIndex ${healthIndex >= 75 ? "good" : healthIndex >= 50 ? "warn" : "bad"}`}>{healthIndex}/100</div>
           <div className="hint">{lruet(lang, "Прогноз", "Prognoos", "Outlook")}: {prognosis}</div>
-          <div className="hint">Avg P(violation): {avgProb === null ? "n/a" : avgProb.toFixed(2)}</div>
+          <div className="hint">{lruet(lang, "Средняя P(нарушения)", "Keskmine P(rikkumine)", "Avg P(violation)")}: {avgProb === null ? "n/a" : avgProb.toFixed(2)}</div>
         </div>
 
         <div className="panel reportPanel">
-          <h4>Your watchlist</h4>
+          <h4>{lruet(lang, "Избранные точки", "Jälgimisnimekiri", "Your watchlist")}</h4>
           {watchlistPlaces.length === 0 ? (
             <p className="hint">
-              {lang === "ru"
-                ? "Сохраняйте ключевые пляжи, бассейны/SPA и питьевые точки для быстрого мониторинга."
-                : "Salvesta olulised supluskohad, basseinid/SPA ja joogiveepunktid kiireks jälgimiseks."}
+              {lruet(
+                lang,
+                "Сохраняйте ключевые пляжи, бассейны/SPA и питьевые точки для быстрого мониторинга.",
+                "Salvesta olulised supluskohad, basseinid/SPA ja joogiveepunktid kiireks jälgimiseks.",
+                "Save key beaches, pools/SPA and drinking-water points for quick monitoring."
+              )}
             </p>
           ) : (
             <ul className="alertList">
               {watchlistPlaces.slice(0, 8).map((p) => (
                 <li key={`watch-${p.id}`}>
-                  <button className="linkBtn" onClick={() => setSelectedId(p.id)}>
+                  <button className="linkBtn" onClick={() => selectPoint(p.id)}>
                     {p.location}
                   </button>
                   <span className={`badge ${p.risk_level === "high" ? "bad" : p.risk_level === "medium" ? "warn" : "good"}`}>
@@ -1570,10 +1640,20 @@ export default function Dashboard({ snapshot }: Props) {
         ref={mapPanelRef}
         className={`panel mapTopPanel ${isMapFullscreen ? "mapPanelFullscreen" : ""} ${isMobile ? "mobileMapPanel" : ""}`}
       >
-        <h3 className="sectionTitle">{t.mapTitle}</h3>
+        <div className="mapHeaderRow">
+          <h3 className="sectionTitle">{t.mapTitle}</h3>
+          {!isMobile ? (
+            <button className="btn btnSmall openFiltersBtn" type="button" onClick={() => setDrawerOpen(true)}>
+              <span className="btnIcon" aria-hidden="true">
+                <Icon name="filters" />
+              </span>
+              {t.openFilters}
+            </button>
+          ) : null}
+        </div>
         <MapClient
           places={mapPlaces}
-          onSelectPoint={selectPointFromMap}
+          onSelectPoint={selectPoint}
           onSelectCounty={handleCountySelect}
           selectedCounty={county !== "all" ? countyPretty(county) : undefined}
           locale={lang}
@@ -1608,10 +1688,10 @@ export default function Dashboard({ snapshot }: Props) {
                 <br />
                 {lruet(lang, "Официальный статус", "Ametlik staatus", "Official status")}:{" "}
                 {selectedPlace.official_compliant === 1 ? (
-                  <span className="badge good">{lruet(lang, "соответствует", "vastab", "compliant")}</span>
+                  <span className="badge good">{officialStatusText(1)}</span>
                 ) : selectedPlace.official_compliant === 0 ? (
                   <button
-                    className="linkBtn badge bad"
+                    className="linkBtn badge bad clickableBadge"
                     onClick={() =>
                       openInfo(
                         lruet(lang, "Официальное нарушение", "Ametlik rikkumine", "Official violation"),
@@ -1619,7 +1699,7 @@ export default function Dashboard({ snapshot }: Props) {
                       )
                     }
                   >
-                    {lruet(lang, "нарушение", "rikkumine", "violation")}
+                    {officialStatusText(0)}
                   </button>
                 ) : (
                   <span className="badge warn">n/a</span>
@@ -1725,10 +1805,10 @@ export default function Dashboard({ snapshot }: Props) {
                           <td>{fmtDate(h.sample_date)}</td>
                           <td>
                             {h.official_compliant === 1 ? (
-                              <span className="badge good">{lruet(lang, "соответствует", "vastab", "compliant")}</span>
+                              <span className="badge good">{officialStatusText(1)}</span>
                             ) : h.official_compliant === 0 ? (
                               <button
-                                className="linkBtn badge bad"
+                                className="linkBtn badge bad clickableBadge"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openInfo(
@@ -1737,7 +1817,7 @@ export default function Dashboard({ snapshot }: Props) {
                                   );
                                 }}
                               >
-                                {lruet(lang, "нарушение", "rikkumine", "violation")}
+                                {officialStatusText(0)}
                               </button>
                             ) : (
                               <span className="badge warn">n/a</span>
@@ -1784,6 +1864,9 @@ export default function Dashboard({ snapshot }: Props) {
             <strong>{t.selectedPoint}</strong>
             <div className="mobileSheetActions">
               <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
+                <span className="btnIcon" aria-hidden="true">
+                  <Icon name="filters" />
+                </span>{" "}
                 {t.filters}
               </button>
               <button type="button" className="btn btnSmall nearMeFabBtn" onClick={activateNearMe}>
@@ -1812,11 +1895,7 @@ export default function Dashboard({ snapshot }: Props) {
                 </span>
                 <span className={`badge ${selectedPlace.official_compliant === 0 ? "bad" : selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
                   {lruet(lang, "Офиц.", "Ametlik", "Official")}:{" "}
-                  {selectedPlace.official_compliant === 1
-                    ? lruet(lang, "ok", "ok", "ok")
-                    : selectedPlace.official_compliant === 0
-                      ? lruet(lang, "нарушение", "rikkumine", "violation")
-                      : "n/a"}
+                  {selectedPlace.official_compliant === null ? "n/a" : officialStatusText(selectedPlace.official_compliant)}
                 </span>
               </div>
               {Object.keys(selectedPlace.measurements || {}).length ? (
@@ -1830,7 +1909,7 @@ export default function Dashboard({ snapshot }: Props) {
                     </thead>
                     <tbody>
                       {Object.entries(selectedPlace.measurements)
-                        .slice(0, mobilePanelState === "full" ? 18 : 6)
+                        .slice(0, mobilePanelState === "full" ? Number.MAX_SAFE_INTEGER : 6)
                         .map(([k, v]) => (
                           <tr key={`mm-${k}`}>
                             <td>
@@ -1875,20 +1954,20 @@ export default function Dashboard({ snapshot }: Props) {
       ) : null}
 
       <section className="panel">
-        <div className="tabRow">
-          <button className={`tabBtn ${activeTab === "alerts" ? "tabBtnActive" : ""}`} onClick={() => setActiveTab("alerts")}>
+        <div className={`tabRow ${isTabPending ? "isPending" : ""}`}>
+          <button className={`tabBtn ${activeTab === "alerts" ? "tabBtnActive" : ""}`} onClick={() => switchTab("alerts")}>
             {t.tabs.alerts}
           </button>
-          <button className={`tabBtn ${activeTab === "domain" ? "tabBtnActive" : ""}`} onClick={() => setActiveTab("domain")}>
+          <button className={`tabBtn ${activeTab === "domain" ? "tabBtnActive" : ""}`} onClick={() => switchTab("domain")}>
             {t.tabs.domain}
           </button>
-          <button className={`tabBtn ${activeTab === "analytics" ? "tabBtnActive" : ""}`} onClick={() => setActiveTab("analytics")}>
+          <button className={`tabBtn ${activeTab === "analytics" ? "tabBtnActive" : ""}`} onClick={() => switchTab("analytics")}>
             {t.tabs.analytics}
           </button>
-          <button className={`tabBtn ${activeTab === "aboutModel" ? "tabBtnActive" : ""}`} onClick={() => setActiveTab("aboutModel")}>
+          <button className={`tabBtn ${activeTab === "aboutModel" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutModel")}>
             {t.tabs.aboutModel}
           </button>
-          <button className={`tabBtn ${activeTab === "aboutService" ? "tabBtnActive" : ""}`} onClick={() => setActiveTab("aboutService")}>
+          <button className={`tabBtn ${activeTab === "aboutService" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutService")}>
             {t.tabs.aboutService}
           </button>
         </div>
@@ -1898,17 +1977,20 @@ export default function Dashboard({ snapshot }: Props) {
           <div className="panel reportPanel">
             <h4>{lruet(lang, "Центр алертов", "Häirekeskus", "Alert center")}</h4>
             <p className="hint">
-              {lang === "ru"
-                ? "Жёлтый статус означает недостаток модельных данных или промежуточный риск. Нажмите строку для деталей."
-                : "Kollane tähendab kas puuduvaid mudeliandmeid või keskmist riski. Vajuta reale detailideks."}
+              {lruet(
+                lang,
+                "Жёлтый статус означает недостаток модельных данных или промежуточный риск. Нажмите строку для деталей.",
+                "Kollane tähendab kas puuduvaid mudeliandmeid või keskmist riski. Vajuta reale detailideks.",
+                "Yellow status means either limited model data or medium risk. Tap a row for details."
+              )}
             </p>
             {topAlerts.length === 0 ? (
-              <p className="hint">No active alerts in current filter scope.</p>
+              <p className="hint">{lruet(lang, "Нет активных алертов в текущем фильтре.", "Praeguse filtri vaates aktiivseid häireid pole.", "No active alerts in current filter scope.")}</p>
             ) : (
               <ul className="alertList">
                 {topAlerts.map((p) => (
                   <li key={`alert-${p.id}`}>
-                    <button className="linkBtn" onClick={() => setSelectedId(p.id)}>
+                    <button className="linkBtn" onClick={() => selectPoint(p.id)}>
                       {p.location}
                     </button>
                     <span className={`badge ${p.risk_level === "high" ? "bad" : "warn"}`}>
@@ -1920,15 +2002,15 @@ export default function Dashboard({ snapshot }: Props) {
             )}
           </div>
           <div className="panel reportPanel">
-            <h4>Domain health report</h4>
+            <h4>{lruet(lang, "Отчёт здоровья доменов", "Domeenide tervisearuanne", "Domain health report")}</h4>
             <div className="tableWrap compact">
               <table className="table">
                 <thead>
                   <tr>
                     <th>{lruet(lang, "Домен", "Domeen", "Domain")}</th>
-                    <th>Total</th>
-                    <th>Viol.</th>
-                    <th>High</th>
+                    <th>{lruet(lang, "Всего", "Kokku", "Total")}</th>
+                    <th>{lruet(lang, "Наруш.", "Rikkum.", "Viol.")}</th>
+                    <th>{lruet(lang, "Высок.", "Kõrge", "High")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2265,7 +2347,8 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         ) : null}
 
-        {activeTab === "aboutModel" ? (
+        {visitedTabs.aboutModel ? (
+          <div className={`tabPanel ${activeTab === "aboutModel" ? "isActive" : ""}`}>
           <div className="reportsGrid">
           <div className="panel reportPanel">
             <h4>{lruet(lang, "О модели", "Mudelist", "About model")}</h4>
@@ -2477,9 +2560,11 @@ export default function Dashboard({ snapshot }: Props) {
             </p>
           </div>
           </div>
+          </div>
         ) : null}
 
-        {activeTab === "aboutService" ? (
+        {visitedTabs.aboutService ? (
+          <div className={`tabPanel ${activeTab === "aboutService" ? "isActive" : ""}`}>
           <div className="reportsGrid">
           <div className="panel reportPanel">
             <h4>{lruet(lang, "О сервисе", "Teenusest", "About service")}</h4>
@@ -2630,6 +2715,7 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           </div>
           </div>
+          </div>
         ) : null}
 
         <div className="tableWrap">
@@ -2682,14 +2768,14 @@ export default function Dashboard({ snapshot }: Props) {
             </thead>
             <tbody>
               {filtered.slice(0, 250).map((p) => (
-                <tr key={p.id} onClick={() => setSelectedId(p.id)} className={selectedId === p.id ? "rowSelected" : ""}>
+                <tr key={p.id} onClick={() => selectPoint(p.id)} className={selectedId === p.id ? "rowSelected" : ""}>
                   <td>{p.location}</td>
                   <td>{countyPretty(p.county || "Unknown")}</td>
                   <td>{p.domain}</td>
                   <td>
                     {p.official_compliant === 0 ? (
                       <button
-                        className="linkBtn badge bad"
+                        className="linkBtn badge bad clickableBadge"
                         onClick={(e) => {
                           e.stopPropagation();
                           openInfo(
@@ -2698,11 +2784,11 @@ export default function Dashboard({ snapshot }: Props) {
                           );
                         }}
                       >
-                        violation
+                        {officialStatusText(0)}
                       </button>
                     ) : (
                       <span className={`badge ${p.official_compliant === 1 ? "good" : "warn"}`}>
-                        {p.official_compliant === 1 ? "compliant" : "unknown"}
+                        {officialStatusText(p.official_compliant)}
                       </span>
                     )}
                   </td>
@@ -2721,7 +2807,7 @@ export default function Dashboard({ snapshot }: Props) {
                         toggleWatch(p.id);
                       }}
                     >
-                      {watchlist.includes(p.id) ? "Unwatch" : "Watch"}
+                      {watchlist.includes(p.id) ? lruet(lang, "Убрать", "Eemalda", "Unwatch") : lruet(lang, "Следить", "Jälgi", "Watch")}
                     </button>
                   </td>
                 </tr>
