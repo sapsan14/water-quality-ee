@@ -333,8 +333,7 @@ def _display_locations_for_overlaps(points: list[dict]) -> dict[int, tuple[float
         if n == 1:
             out[idxs[0]] = (base_lat, base_lon)
             continue
-        # ~20-35 метров визуального разлёта, чтобы не слипались (особенно pool-spa точки).
-        radius = min(0.00035, 0.00018 + 0.00003 * n)
+        radius = min(0.00055, 0.00028 + 0.00004 * n)
         for j, idx in enumerate(idxs):
             angle = (2 * math.pi * j) / n
             out[idx] = (
@@ -373,11 +372,11 @@ def build_map(
     cluster = MarkerCluster(name="Места", disable_clustering_at_zoom=11) if use_cluster else None
 
     radius_by_kind = {
-        "swimming": 9,
-        "pool_spa": 8,
-        "drinking_water": 6,
-        "drinking_source": 7,
-        "other": 7,
+        "swimming": 14,
+        "pool_spa": 13,
+        "drinking_water": 11,
+        "drinking_source": 12,
+        "other": 11,
     }
 
     catalog_href = html.escape(data_catalog_url or "https://vtiav.sm.ee/index.php/opendata/", quote=True)
@@ -468,17 +467,17 @@ def build_map(
         </div>
         """
 
-        r = radius_by_kind.get(kind, 8)
+        r = radius_by_kind.get(kind, 11)
         # Приблизительные координаты: пунктирная обводка маркера (dashArray)
         marker = folium.CircleMarker(
             location=[dlat, dlon],
             radius=r,
             color=border,
-            weight=1 if is_approx else 3,
+            weight=2 if is_approx else 3,
             dash_array="6 4" if is_approx else None,
             fill=True,
             fill_color=fill,
-            fill_opacity=0.55 if is_approx else 0.88,
+            fill_opacity=0.65 if is_approx else 0.92,
             popup=folium.Popup(popup_html, max_width=360),
             tooltip=f"{str(p.get('location', ''))[:42]} · {color_title}{'  ⚠ приблизит.' if is_approx else ''}",
         )
