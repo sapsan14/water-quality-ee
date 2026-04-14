@@ -18,16 +18,14 @@ const normalizeLang = (value: string | null | undefined): UiLang => {
 };
 
 export default function LocalizedSubtitle() {
-  const [lang, setLang] = useState<UiLang>("en");
-
-  useEffect(() => {
-    const fromStorage = typeof window !== "undefined" ? window.localStorage.getItem("water.ui.lang") : null;
-    if (fromStorage) {
-      setLang(normalizeLang(fromStorage));
-      return;
+  const [lang, setLang] = useState<UiLang>(() => {
+    if (typeof window !== "undefined") {
+      const fromStorage = window.localStorage.getItem("water.ui.lang");
+      if (fromStorage) return normalizeLang(fromStorage);
     }
-    if (typeof navigator !== "undefined") setLang(normalizeLang(navigator.language));
-  }, []);
+    if (typeof navigator !== "undefined") return normalizeLang(navigator.language);
+    return "en";
+  });
 
   useEffect(() => {
     const onLangChanged = (e: Event) => {

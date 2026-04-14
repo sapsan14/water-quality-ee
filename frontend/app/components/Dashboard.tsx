@@ -158,8 +158,16 @@ function Icon({ name }: { name: IconName }) {
 }
 
 export default function Dashboard({ snapshot }: Props) {
-  const [lang, setLang] = useState<Lang>("ru");
-  const [cyrillicFont, setCyrillicFont] = useState<CyrillicFont>("ibm");
+  const [lang, setLang] = useState<Lang>(() => {
+    if (typeof window === "undefined") return "ru";
+    const saved = window.localStorage.getItem("water.ui.lang");
+    return saved === "ru" || saved === "et" || saved === "en" ? saved : "ru";
+  });
+  const [cyrillicFont, setCyrillicFont] = useState<CyrillicFont>(() => {
+    if (typeof window === "undefined") return "ibm";
+    const saved = window.localStorage.getItem("water.ui.cyrillic-font.v1");
+    return saved === "ibm" || saved === "manrope" ? saved : "ibm";
+  });
   const [activeTab, setActiveTab] = useState<TabKey>("alerts");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filtersPinned, setFiltersPinned] = useState(false);
@@ -184,7 +192,17 @@ export default function Dashboard({ snapshot }: Props) {
   const [simDelta, setSimDelta] = useState(0);
   const [simPressure, setSimPressure] = useState(0);
   const [simMicro, setSimMicro] = useState(0);
-  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem("water.watchlist.v1");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as unknown;
+      return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
@@ -877,28 +895,6 @@ export default function Dashboard({ snapshot }: Props) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("water.ui.lang");
-    if (saved === "ru" || saved === "et") {
-      setLang(saved);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("water.watchlist.v1");
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as string[];
-      if (Array.isArray(parsed)) {
-        setWatchlist(parsed.filter((x) => typeof x === "string"));
-      }
-    } catch {
-      // ignore broken local storage payload
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
     window.localStorage.setItem("water.watchlist.v1", JSON.stringify(watchlist));
   }, [watchlist]);
 
@@ -906,14 +902,6 @@ export default function Dashboard({ snapshot }: Props) {
     const t = setTimeout(() => setMinProb(minProbInput), 120);
     return () => clearTimeout(t);
   }, [minProbInput]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("water.ui.cyrillic-font.v1");
-    if (saved === "ibm" || saved === "manrope") {
-      setCyrillicFont(saved);
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof document === "undefined") return;

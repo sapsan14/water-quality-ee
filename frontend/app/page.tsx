@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Dashboard from "./components/Dashboard";
 import LocalizedSubtitle from "./components/LocalizedSubtitle";
 import WebVitalsReporter from "./components/WebVitalsReporter";
@@ -18,7 +19,7 @@ export default async function HomePage() {
     <main className="page">
       <header className="header">
         <div className="brandBlock">
-          <img src="/logo.svg" alt="H2O Atlas logo" className="brandLogo" />
+          <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo" width={40} height={40} priority />
           <div>
             <h1 className="title">H2O Atlas</h1>
             <p className="subtitle">
