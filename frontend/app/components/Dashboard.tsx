@@ -10,7 +10,7 @@ import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
 
 type Props = { snapshot: FrontendSnapshot };
-type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters";
+type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters" | "locate";
 type CyrillicFont = "ibm" | "manrope";
 
 const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high", "unknown"] as never;
@@ -156,6 +156,14 @@ function Icon({ name }: { name: IconName }) {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 7a1 1 0 0 1 1-1h2.3a2.5 2.5 0 0 1 4.8 0H19a1 1 0 1 1 0 2h-6.9a2.5 2.5 0 0 1-4.8 0H5a1 1 0 0 1-1-1Zm8 10a2.5 2.5 0 0 1-4.7 1H5a1 1 0 1 1 0-2h2.3a2.5 2.5 0 0 1 4.7 1Zm1-6a2.5 2.5 0 0 1 4.7-1H19a1 1 0 1 1 0 2h-1.3a2.5 2.5 0 0 1-4.7-1Z" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (name === "locate") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     );
   }
@@ -1395,7 +1403,7 @@ export default function Dashboard({ snapshot }: Props) {
           <h3 className="sectionTitle">{t.filters}</h3>
           <div className="drawerHeaderActions">
             <button
-              className={`btn btnSmall iconBtn ${filtersPinned ? "btnActive" : ""}`}
+              className={`btn btnSmall iconBtn drawerPinBtn ${filtersPinned ? "btnActive" : ""}`}
               onClick={() => setFiltersPinned((v) => !v)}
               aria-label={filtersPinned ? t.unpin : t.pin}
               title={filtersPinned ? t.unpin : t.pin}
@@ -1405,10 +1413,11 @@ export default function Dashboard({ snapshot }: Props) {
               </span>
             </button>
             {!filtersPinned ? (
-              <button className="btn btnSmall iconBtn" onClick={() => setDrawerOpen(false)} aria-label={t.close} title={t.close}>
+              <button className="btn btnSmall drawerDoneBtn" onClick={() => setDrawerOpen(false)} aria-label={t.close}>
                 <span className="btnIcon" aria-hidden="true">
                   <Icon name="close" />
                 </span>
+                <span className="drawerDoneLabel">{lruet(lang, "Готово", "Valmis", "Done")}</span>
               </button>
             ) : null}
           </div>
@@ -1841,42 +1850,40 @@ export default function Dashboard({ snapshot }: Props) {
           className={`mobileBottomSheet ${mobilePanelState} ${isMapFullscreen ? "fullscreenShift" : ""} ${sheetDragging ? "dragging" : ""}`}
           style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
         >
-          <button
-            type="button"
-            className="mobileSheetHandle"
-            onClick={cycleMobilePanelState}
-            onPointerDown={onSheetPointerDown}
-            onPointerMove={onSheetPointerMove}
-            onPointerUp={onSheetPointerUp}
-            onPointerCancel={() => {
-              sheetDragStartY.current = null;
-              sheetDragLastY.current = null;
-              sheetDragLastTs.current = null;
-              sheetDragVelocity.current = 0;
-              setSheetDragging(false);
-              setSheetDragOffset(0);
-            }}
-            aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
-          >
-            <span />
-          </button>
-          <div className="mobileSheetHeader">
-            <strong>{t.selectedPoint}</strong>
+          <div className="mobileSheetHandleRow">
+            <button
+              type="button"
+              className="mobileSheetHandle"
+              onClick={cycleMobilePanelState}
+              onPointerDown={onSheetPointerDown}
+              onPointerMove={onSheetPointerMove}
+              onPointerUp={onSheetPointerUp}
+              onPointerCancel={() => {
+                sheetDragStartY.current = null;
+                sheetDragLastY.current = null;
+                sheetDragLastTs.current = null;
+                sheetDragVelocity.current = 0;
+                setSheetDragging(false);
+                setSheetDragOffset(0);
+              }}
+              aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
+            >
+              <span />
+            </button>
             <div className="mobileSheetActions">
-              <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
+              <button type="button" className="btn btnSmall iconBtn" onClick={() => setDrawerOpen(true)} aria-label={t.filters} title={t.filters}>
                 <span className="btnIcon" aria-hidden="true">
                   <Icon name="filters" />
-                </span>{" "}
-                {t.filters}
+                </span>
               </button>
-              <button type="button" className="btn btnSmall nearMeFabBtn" onClick={activateNearMe}>
-                {t.nearMe}
-              </button>
-              <button type="button" className="btn btnSmall" onClick={() => setMobilePanelState("collapsed")}>
-                {lruet(lang, "Скрыть", "Peida", "Hide")}
+              <button type="button" className="btn btnSmall iconBtn nearMeFabBtn" onClick={activateNearMe} aria-label={t.nearMe} title={t.nearMe}>
+                <span className="btnIcon" aria-hidden="true">
+                  <Icon name="locate" />
+                </span>
               </button>
             </div>
           </div>
+          <strong className="mobileSheetTitle">{t.selectedPoint}</strong>
           {!selectedPlace ? (
             <p className="hint">{t.noSelectedPoint}</p>
           ) : (
