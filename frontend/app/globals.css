@@ -595,7 +595,7 @@ a {
   position: absolute;
   top: calc(0.7rem + env(safe-area-inset-top, 0px));
   right: calc(0.7rem + env(safe-area-inset-right, 0px));
-  z-index: 900;
+  z-index: 1200;
   min-width: 46px;
   min-height: 46px;
   border: 1px solid #bfd3ea;
@@ -605,6 +605,7 @@ a {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(10, 20, 35, 0.22);
 }
 
 .mapFloatingControls {
@@ -620,6 +621,23 @@ a {
 .mapResetBtn,
 .mapRecenterBtn {
   position: static;
+}
+
+.mapFullscreenBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.38rem 0.65rem;
+  min-width: auto;
+  background: rgba(59, 130, 246, 0.92);
+  border-color: rgba(37, 99, 235, 0.95);
+  color: #ffffff;
+}
+
+.mapFullscreenLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .mapRecenterBtn:disabled {
@@ -712,6 +730,20 @@ body.mapFullscreenActive {
   background: linear-gradient(180deg, #eef5ff 0%, #e2efff 100%) !important;
   color: #0a58ca !important;
   font-weight: 700;
+}
+
+.mobileShowSheetBtn {
+  position: fixed;
+  left: calc(0.7rem + env(safe-area-inset-left, 0px));
+  bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
+  z-index: 2650;
+  border-radius: 999px;
+  padding: 0.44rem 0.72rem;
+  background: rgba(17, 27, 45, 0.9);
+  border-color: #45689d;
+  color: #e8f0fb;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .mobileSheetHandle {
@@ -820,7 +852,7 @@ body.mapFullscreenActive {
 }
 
 .modalCard {
-  max-width: 560px;
+  max-width: 460px;
   width: 100%;
   font-weight: 400;
   max-height: min(90vh, 980px);
@@ -912,8 +944,8 @@ body.mapFullscreenActive {
 
 .infoHeading {
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
   margin-top: 0.35rem;
 }
 
@@ -951,6 +983,83 @@ body.mapFullscreenActive {
 }
 
 @media (max-width: 1024px) {
+  :root {
+    --bg: #0b1220;
+    --panel: #111b2d;
+    --panel-soft: #162338;
+    --text: #e6eef9;
+    --muted: #9fb0c8;
+    --brand: #63a4ff;
+  }
+
+  html,
+  body {
+    background: linear-gradient(180deg, #0b1220 0%, #0a1322 100%);
+    color: var(--text);
+  }
+
+  .header,
+  .footerNote {
+    color: var(--muted);
+  }
+
+  .btn {
+    background: #1a2740;
+    border-color: #2f4569;
+    color: #e6eef9;
+  }
+
+  .btnActive {
+    background: #24406a;
+    border-color: #4d75ab;
+    color: #eaf2ff;
+  }
+
+  .fontToggle {
+    display: none;
+  }
+
+  .tabBtn {
+    background: #17263e;
+    border-color: #304a72;
+    color: #dbe8fa;
+  }
+
+  .tabBtnActive {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+  }
+
+  .panel,
+  .stat,
+  .reportPanel,
+  .nearbyPanel,
+  .alertList li,
+  .tableWrap,
+  .modalCard {
+    background: #111b2d;
+    border-color: #2b3f5f;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+  }
+
+  .table th,
+  .table td {
+    border-bottom-color: #2b3f5f;
+  }
+
+  .field select,
+  .field input {
+    background: #0f1a2b;
+    border-color: #2b3f5f;
+    color: #e6eef9;
+  }
+
+  .mobileBottomSheet {
+    background: rgba(15, 24, 40, 0.92);
+    border-color: #314a70;
+  }
+
   .dashboardPinned {
     display: flex;
     flex-direction: column;
@@ -962,6 +1071,10 @@ body.mapFullscreenActive {
     top: 0;
     width: min(360px, 92vw);
     max-height: 100vh;
+    background: rgba(14, 24, 39, 0.78);
+    border: 1px solid rgba(92, 121, 165, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .reportsGrid {
@@ -974,19 +1087,38 @@ body.mapFullscreenActive {
 }
 
 @media (max-width: 900px) {
-  .mobileMapPanel {
-    padding: 0.25rem;
+  .page {
+    padding: 0;
+  }
+
+  .topBar {
+    display: none;
+  }
+
+  .mainContent {
+    gap: 0.6rem;
+  }
+
+  .panel {
     border-radius: 10px;
+    padding: 0.7rem;
+  }
+
+  .mobileMapPanel {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .mobileMapPanel .sectionTitle {
-    font-size: 1rem;
+    display: none;
   }
 
   .mapShell {
-    height: calc(100dvh - 190px);
-    height: calc(100vh - 190px);
-    min-height: 440px;
+    height: 58dvh;
+    height: 58vh;
+    min-height: 360px;
   }
 
   .mapPanelFullscreen .mapShell {
@@ -997,6 +1129,13 @@ body.mapFullscreenActive {
 
   .mobileBottomSheet {
     touch-action: none;
+    left: max(0px, env(safe-area-inset-left, 0px));
+    right: max(0px, env(safe-area-inset-right, 0px));
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    padding: 0.35rem 0.6rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    border-left: 0;
+    border-right: 0;
   }
 
   .mobileBottomSheet.dragging {
@@ -1005,28 +1144,30 @@ body.mapFullscreenActive {
 }
 
 @media (max-width: 420px) {
+  .panel {
+    padding: 0.6rem;
+    border-radius: 8px;
+  }
+
   .mapFloatingBtn {
-    min-width: 42px;
-    min-height: 42px;
-    font-size: 0.92rem;
+    min-width: 38px;
+    min-height: 38px;
+    font-size: 0.86rem;
+  }
+
+  .mapFullscreenBtn {
+    padding: 0.28rem 0.52rem;
+    gap: 0.24rem;
+  }
+
+  .mapFullscreenLabel {
+    font-size: 0.72rem;
   }
 
   .mapFloatingControls {
     gap: 0.32rem;
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
     bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .mobileMapQuickActions {
-    gap: 0.32rem;
-    left: calc(0.5rem + env(safe-area-inset-left, 0px));
-    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .mobileMapQuickActions .btn {
-    min-height: 42px;
-    padding: 0.34rem 0.58rem;
-    font-size: 0.82rem;
   }
 
   .mobileBottomSheet.collapsed {

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 
@@ -213,6 +213,7 @@ export default function Dashboard({ snapshot }: Props) {
   const sheetDragVelocity = useRef(0);
   const [sheetDragOffset, setSheetDragOffset] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
+  const mobileFullscreenInitializedRef = useRef(false);
 
   const tr = useMemo(
     () => ({
@@ -884,6 +885,7 @@ export default function Dashboard({ snapshot }: Props) {
       return true;
     });
   }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
+  const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
@@ -915,7 +917,15 @@ export default function Dashboard({ snapshot }: Props) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(max-width: 900px)");
-    const apply = () => setIsMobile(mq.matches);
+    const apply = () => {
+      const nextIsMobile = mq.matches;
+      setIsMobile(nextIsMobile);
+      if (nextIsMobile && !mobileFullscreenInitializedRef.current) {
+        setIsMapFullscreen(true);
+        setMobilePanelState("collapsed");
+        mobileFullscreenInitializedRef.current = true;
+      }
+    };
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
@@ -1195,12 +1205,16 @@ export default function Dashboard({ snapshot }: Props) {
     );
   };
 
-  const selectPointFromMap = (id: string) => {
+  const selectPointFromMap = useCallback((id: string) => {
     setSelectedId(id);
     if (isMobile) setMobilePanelState("half");
-  };
+  }, [isMobile]);
 
-  const toggleMapFullscreen = async () => {
+  const handleCountySelect = useCallback((c: string) => {
+    setCounty((prev) => (countyKey(prev) === countyKey(c) ? "all" : countyKey(c)));
+  }, []);
+
+  const toggleMapFullscreen = useCallback(async () => {
     if (typeof document === "undefined") return;
     const target = mapPanelRef.current;
     if (!target) return;
@@ -1225,7 +1239,7 @@ export default function Dashboard({ snapshot }: Props) {
       }
     }
     setIsMapFullscreen(true);
-  };
+  }, [isMapFullscreen]);
 
   const cycleMobilePanelState = () => {
     setMobilePanelState((prev) => (prev === "collapsed" ? "half" : prev === "half" ? "full" : "collapsed"));
@@ -1558,31 +1572,23 @@ export default function Dashboard({ snapshot }: Props) {
       >
         <h3 className="sectionTitle">{t.mapTitle}</h3>
         <MapClient
-          places={filtered.slice(0, 3000)}
+          places={mapPlaces}
           onSelectPoint={selectPointFromMap}
-          onSelectCounty={(c: string) => setCounty((prev) => (countyKey(prev) === countyKey(c) ? "all" : countyKey(c)))}
+          onSelectCounty={handleCountySelect}
           selectedCounty={county !== "all" ? countyPretty(county) : undefined}
           locale={lang}
           selectedPoint={selectedPlace}
           userLocation={nearbyOnly ? userCoords : null}
           isFullscreen={isMapFullscreen}
+          isMobile={isMobile}
           onToggleFullscreen={toggleMapFullscreen}
-          fullscreenLabel={isMapFullscreen ? lruet(lang, "Свернуть карту", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
+          fullscreenLabel={isMapFullscreen ? lruet(lang, "Выйти из полноэкранного", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
           disableHoverPopups={isMobile}
           onRecenterUser={activateNearMe}
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
+          showCountyOverlay={!isMobile}
         />
-        {isMobile ? (
-          <div className="mobileMapQuickActions">
-            <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
-              {t.filters}
-            </button>
-            <button type="button" className="btn btnSmall nearMeFabBtn" onClick={activateNearMe}>
-              {t.nearMe}
-            </button>
-          </div>
-        ) : null}
       </section>
 
       <section className={`panel selectedPointDesktop ${isMobile ? "mobileHidden" : ""}`}>
@@ -1750,7 +1756,7 @@ export default function Dashboard({ snapshot }: Props) {
         )}
       </section>
 
-      {isMobile ? (
+      {isMobile && !isMapFullscreen ? (
         <section
           className={`mobileBottomSheet ${mobilePanelState} ${isMapFullscreen ? "fullscreenShift" : ""} ${sheetDragging ? "dragging" : ""}`}
           style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
@@ -1779,6 +1785,9 @@ export default function Dashboard({ snapshot }: Props) {
             <div className="mobileSheetActions">
               <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
                 {t.filters}
+              </button>
+              <button type="button" className="btn btnSmall nearMeFabBtn" onClick={activateNearMe}>
+                {t.nearMe}
               </button>
               <button type="button" className="btn btnSmall" onClick={() => setMobilePanelState("collapsed")}>
                 {lruet(lang, "Скрыть", "Peida", "Hide")}
@@ -1824,8 +1833,24 @@ export default function Dashboard({ snapshot }: Props) {
                         .slice(0, mobilePanelState === "full" ? 18 : 6)
                         .map(([k, v]) => (
                           <tr key={`mm-${k}`}>
-                            <td>{labelForParam(k)}</td>
-                            <td>{String(v)}</td>
+                            <td>
+                              <button className="linkBtn" onClick={() => openInfo(labelForParam(k), descForParam(k))}>
+                                {labelForParam(k)}
+                              </button>
+                            </td>
+                            <td>
+                              <button
+                                className="linkBtn"
+                                onClick={() =>
+                                  openInfo(
+                                    `${labelForParam(k)}: ${lruet(lang, "норматив", "norm", "norm")}`,
+                                    explainMeasurementNorm(k, v, selectedPlace)
+                                  )
+                                }
+                              >
+                                {String(v)}
+                              </button>
+                            </td>
                           </tr>
                         ))}
                     </tbody>
@@ -1835,6 +1860,18 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           )}
         </section>
+      ) : null}
+      {isMobile && isMapFullscreen ? (
+        <button
+          type="button"
+          className="btn btnSmall mobileShowSheetBtn"
+          onClick={() => {
+            setIsMapFullscreen(false);
+            setMobilePanelState("half");
+          }}
+        >
+          {lruet(lang, "Показать карточку", "Näita detaile", "Show details")}
+        </button>
       ) : null}
 
       <section className="panel">

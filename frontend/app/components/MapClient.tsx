@@ -297,6 +297,7 @@ function MarkerClusterLayer({
     const group = markerClusterFactory({
       chunkedLoading: true,
       spiderfyOnMaxZoom: true,
+      spiderfyDistanceMultiplier: 1.35,
       showCoverageOnHover: false,
       iconCreateFunction: (cluster: unknown) => {
         const c = cluster as ClusterLike;
@@ -321,7 +322,10 @@ function MarkerClusterLayer({
         place
       } as L.MarkerOptions & { place: FrontendPlace });
       marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
-      marker.on("click", () => onSelectPoint?.(place.id));
+      marker.on("click", () => {
+        marker.openPopup();
+        onSelectPoint?.(place.id);
+      });
       if (!disableHoverPopups) {
         marker.on("mouseover", () => marker.openPopup());
         marker.on("mouseout", () => marker.closePopup());
@@ -354,6 +358,8 @@ type Props = {
   resetViewLabel?: string;
   recenterLabel?: string;
   canRecenter?: boolean;
+  isMobile?: boolean;
+  showCountyOverlay?: boolean;
 };
 
 function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace | null }) {
@@ -394,7 +400,9 @@ export default function MapClient({
   onRecenterUser,
   resetViewLabel = "Reset view",
   recenterLabel = "Near me",
-  canRecenter = true
+  canRecenter = true,
+  isMobile = false,
+  showCountyOverlay = true
 }: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
   const countyRisk = useMemo(() => {
@@ -468,6 +476,7 @@ export default function MapClient({
   }, []);
 
   useEffect(() => {
+    if (!showCountyOverlay) return;
     let alive = true;
     fetch("/data/estonia_counties_simplified.geojson")
       .then((r) => (r.ok ? r.json() : null))
@@ -482,7 +491,7 @@ export default function MapClient({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [showCountyOverlay]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -532,23 +541,26 @@ export default function MapClient({
 
   return (
     <div className={`mapShell ${isFullscreen ? "isFullscreen" : ""}`}>
-      <div className="mapFloatingControls">
-        <button type="button" className="mapFloatingBtn mapResetBtn" onClick={resetView} aria-label={resetViewLabel} title={resetViewLabel}>
-          🧭
-        </button>
-        <button
-          type="button"
-          className="mapFloatingBtn mapRecenterBtn"
-          onClick={recenter}
-          disabled={!canRecenter}
-          aria-label={recenterLabel}
-          title={recenterLabel}
-        >
-          ◎
-        </button>
-      </div>
+      {!(isMobile && isFullscreen) ? (
+        <div className="mapFloatingControls">
+          <button type="button" className="mapFloatingBtn mapResetBtn" onClick={resetView} aria-label={resetViewLabel} title={resetViewLabel}>
+            🧭
+          </button>
+          <button
+            type="button"
+            className="mapFloatingBtn mapRecenterBtn"
+            onClick={recenter}
+            disabled={!canRecenter}
+            aria-label={recenterLabel}
+            title={recenterLabel}
+          >
+            ◎
+          </button>
+        </div>
+      ) : null}
       <button type="button" className="mapFloatingBtn mapFullscreenBtn" onClick={onToggleFullscreen} aria-label={fullscreenLabel} title={fullscreenLabel}>
-        ⛶
+        <span aria-hidden="true">⛶</span>
+        <span className="mapFullscreenLabel">{fullscreenLabel}</span>
       </button>
       <MapContainer
         ref={(instance) => {
@@ -560,6 +572,10 @@ export default function MapClient({
         maxZoom={15}
         maxBounds={estoniaBounds}
         maxBoundsViscosity={0.35}
+        keepBuffer={isMobile ? 2 : 5}
+        zoomAnimation={!isMobile}
+        fadeAnimation={!isMobile}
+        markerZoomAnimation={!isMobile}
         style={{ height: "100%", width: "100%", borderRadius: isFullscreen ? "0" : "12px" }}
         scrollWheelZoom
         preferCanvas
@@ -570,7 +586,7 @@ export default function MapClient({
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint selectedPoint={selectedPoint} />
-        {countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
+        {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
     </div>
