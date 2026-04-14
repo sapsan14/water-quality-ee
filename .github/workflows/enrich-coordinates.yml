@@ -1,0 +1,58 @@
+# Быстрое обогащение координат — без пересборки ML-модели.
+#
+# Запускается при каждом push в main (кроме изменений артефактов/данных),
+# а также вручную через Actions → Enrich coordinates → Run workflow.
+#
+# Источники (в порядке приоритета):
+#   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha)
+#   2. veevargid.xml  — L-EST97 координаты объектов водопровода (veevark)
+#   3. OpenCage cache — только уже накопленный кэш (без новых HTTP; OPENCAGE_API_KEY опционален)
+#
+# Зависимости: requests, lxml (≈2 с установки).
+# Артефакты коммитятся с [skip ci], чтобы не создавать loop.
+
+name: Enrich coordinates
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'citizen-service/artifacts/**'
+      - 'citizen-service/data/**'
+      - 'docs/**'
+      - '**.md'
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (requests + lxml only)
+        run: pip install requests lxml
+
+      - name: Enrich coordinates (EEA → veevargid.xml → OpenCage cache)
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+        run: |
+          python citizen-service/scripts/enrich_coordinates.py \
+            --limit 0 \
+            --quiet
+
+      - name: Commit updated snapshot + coordinate cache
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(coords): enrich coordinates [skip ci]"
+          file_pattern: |
+            citizen-service/artifacts/snapshot.json
+            citizen-service/data/coordinate_resolve_cache.json
