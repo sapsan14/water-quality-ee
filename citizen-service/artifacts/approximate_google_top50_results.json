@@ -1,0 +1,510 @@
+{
+  "top50_total": 50,
+  "hits": 50,
+  "misses": 0,
+  "overrides_added": 50,
+  "overrides_updated": 0,
+  "overrides_total_now": 50,
+  "results": [
+    {
+      "domain": "veevark",
+      "location": "A.Le Coq Reola tootmisüksuse veevärk",
+      "county": "",
+      "used_query": "A.Le Coq Reola tootmisüksuse veevärk, Eesti",
+      "hit": true,
+      "lat": 58.2983364,
+      "lon": 26.7115798,
+      "matched_address": "Vilja tee 8, Reola küla, Ülenurme vald, Tartumaa 61707, Reola, 61707 Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "ALREY OÜ  tootmishoone veevärk",
+      "county": "",
+      "used_query": "ALREY OÜ  tootmishoone veevärk, Eesti",
+      "hit": true,
+      "lat": 58.449395,
+      "lon": 26.8091444,
+      "matched_address": "Nurga, Aovere, 60503 Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS E-Piim tootmine Põltsamaa E-Piim veevärk",
+      "county": "",
+      "used_query": "AS E-Piim tootmine Põltsamaa E-Piim veevärk, Eesti",
+      "hit": true,
+      "lat": 58.6541713,
+      "lon": 25.9828818,
+      "matched_address": "Välja tn 4, Põltsamaa, 48105 Jõgeva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS HKScan Estonia tapamaja veevärk",
+      "county": "",
+      "used_query": "AS HKScan Estonia tapamaja veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS Maag Eesti Rakvere Lihakombinaadi veevärk",
+      "county": "",
+      "used_query": "AS Maag Eesti Rakvere Lihakombinaadi veevärk, Eesti",
+      "hit": true,
+      "lat": 59.37073969999999,
+      "lon": 26.3938465,
+      "matched_address": "Roodevälja, 44207 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS Maag Eesti tapamaja veevärk",
+      "county": "",
+      "used_query": "AS Maag Eesti tapamaja veevärk, Eesti",
+      "hit": true,
+      "lat": 58.3434637,
+      "lon": 26.7324325,
+      "matched_address": "Ringtee 12, 50105 Tartu, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Aasa Haldus veevärk",
+      "county": "",
+      "used_query": "Aasa Haldus veevärk, Eesti",
+      "hit": true,
+      "lat": 58.685434,
+      "lon": 24.5036554,
+      "matched_address": "Aasa, Pärnu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Adami talu veevärk",
+      "county": "",
+      "used_query": "Adami talu veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Allika Puhkemaja veevärk",
+      "county": "",
+      "used_query": "Allika Puhkemaja veevärk, Eesti",
+      "hit": true,
+      "lat": 59.46279949999999,
+      "lon": 25.418287,
+      "matched_address": "Allika, Harju maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Altja Kõrtsi veevärk",
+      "county": "",
+      "used_query": "Altja Kõrtsi veevärk, Eesti",
+      "hit": true,
+      "lat": 59.5818311,
+      "lon": 26.1081623,
+      "matched_address": "Altja, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Alujoa Puhkekeskuse veevärk",
+      "county": "",
+      "used_query": "Alujoa Puhkekeskuse veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Andre küla veevärk",
+      "county": "",
+      "used_query": "Andre küla veevärk, Eesti",
+      "hit": true,
+      "lat": 57.99625090000001,
+      "lon": 27.0983779,
+      "matched_address": "Andre, Põlva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Aravete Kardi- ja Vabaajakeskuse veevärk",
+      "county": "",
+      "used_query": "Aravete Kardi- ja Vabaajakeskuse veevärk, Eesti",
+      "hit": true,
+      "lat": 59.1443936,
+      "lon": 25.7514467,
+      "matched_address": "Aravete, Järva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Arbavere Puhkekeskuse veevärk",
+      "county": "",
+      "used_query": "Arbavere Puhkekeskuse veevärk, Eesti",
+      "hit": true,
+      "lat": 59.4417163,
+      "lon": 25.9630692,
+      "matched_address": "Puhkekeskuse tee, Arbavere, 45206 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Arma Ratsatalu veevärk",
+      "county": "",
+      "used_query": "Arma Ratsatalu veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Atria Eesti AS Valga Tootmisüksuse veevärk",
+      "county": "",
+      "used_query": "Atria Eesti AS Valga Tootmisüksuse veevärk, Eesti",
+      "hit": true,
+      "lat": 57.78477700000001,
+      "lon": 26.0532132,
+      "matched_address": "Metsa 19, Valga, 68206 Valga maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "BAUROC Andja tehase veevärk",
+      "county": "",
+      "used_query": "BAUROC Andja tehase veevärk, Eesti",
+      "hit": true,
+      "lat": 59.44828620000001,
+      "lon": 26.4820923,
+      "matched_address": "Andja, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Barto Puhkemaja veevärk",
+      "county": "",
+      "used_query": "Barto Puhkemaja veevärk, Eesti",
+      "hit": true,
+      "lat": 59.2030058,
+      "lon": 26.5656471,
+      "matched_address": "Estonia, Kulina, 46625 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Cantervilla Lossi ühisveevärk",
+      "county": "",
+      "used_query": "Cantervilla Lossi ühisveevärk, Eesti",
+      "hit": true,
+      "lat": 58.070057,
+      "lon": 26.592482,
+      "matched_address": "Põlvamaa, Pikajärve, 63410 Põlva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Cautes veevärk",
+      "county": "",
+      "used_query": "Cautes veevärk, Eesti",
+      "hit": true,
+      "lat": 58.2705066,
+      "lon": 26.5242362,
+      "matched_address": "Voika tn 16, Nõo, 61601 Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "DGM SHIPPING AS kalatööstus",
+      "county": "",
+      "used_query": "DGM SHIPPING AS kalatööstus, Eesti",
+      "hit": true,
+      "lat": 59.45502879999999,
+      "lon": 24.9386457,
+      "matched_address": "Maardu, 74114 Harju maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "E-Betoonelement OÜ Tamsalu tehase veevärk",
+      "county": "",
+      "used_query": "E-Betoonelement OÜ Tamsalu tehase veevärk, Eesti",
+      "hit": true,
+      "lat": 59.1705415,
+      "lon": 26.1340676,
+      "matched_address": "Tamsalu vald, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eametsa küla Puti elamurajooni veevärk",
+      "county": "",
+      "used_query": "Eametsa küla Puti elamurajooni veevärk, Eesti",
+      "hit": true,
+      "lat": 58.423545,
+      "lon": 24.4538548,
+      "matched_address": "Eametsa, 85001 Pärnu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eametsa küla Veepargi pumpla piirkond",
+      "county": "",
+      "used_query": "Eametsa küla Veepargi pumpla piirkond, Eesti",
+      "hit": true,
+      "lat": 58.6141628,
+      "lon": 24.6591937,
+      "matched_address": "Eametsa, 87207 Pärnu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eesti Leivatööstuse ühisveevärk",
+      "county": "",
+      "used_query": "Eesti Leivatööstuse ühisveevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eisma Külalistemaja veevärk",
+      "county": "",
+      "used_query": "Eisma Külalistemaja veevärk, Eesti",
+      "hit": true,
+      "lat": 59.54747339999999,
+      "lon": 26.3112671,
+      "matched_address": "Eisma, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eistvere jahimaja veevärk",
+      "county": "",
+      "used_query": "Eistvere jahimaja veevärk, Eesti",
+      "hit": true,
+      "lat": 58.6909412,
+      "lon": 25.7559056,
+      "matched_address": "Eistvere, 72402 Järva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Elektra Tootmise veevärk",
+      "county": "",
+      "used_query": "Elektra Tootmise veevärk, Eesti",
+      "hit": true,
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "matched_address": "Tähe tn 118, 50111 Tartu, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Emmaste kooli veevärk",
+      "county": "",
+      "used_query": "Emmaste kooli veevärk, Eesti",
+      "hit": true,
+      "lat": 58.69906799999999,
+      "lon": 22.581856,
+      "matched_address": "Emmaste, 92001 Hiiu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ermistu puhkeküla",
+      "county": "",
+      "used_query": "Ermistu puhkeküla, Eesti",
+      "hit": true,
+      "lat": 58.35545939999999,
+      "lon": 24.0022284,
+      "matched_address": "Ermistu Järvemajand, Ermistu, 88105 Pärnu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Est-Agari veevärk",
+      "county": "",
+      "used_query": "Est-Agari veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Estonia kaevanduse veevärk",
+      "county": "",
+      "used_query": "Estonia kaevanduse veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Farmi Piimatööstuse veevärk",
+      "county": "",
+      "used_query": "Farmi Piimatööstuse veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Flexa Eesti AS Viru-Nigula tehase veevärk",
+      "county": "",
+      "used_query": "Flexa Eesti AS Viru-Nigula tehase veevärk, Eesti",
+      "hit": true,
+      "lat": 59.4507173,
+      "lon": 26.8687488,
+      "matched_address": "Tehase, Aseri, 43401 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Greete Motelli veevärk",
+      "county": "",
+      "used_query": "Greete Motelli veevärk, Eesti",
+      "hit": true,
+      "lat": 57.98623269999999,
+      "lon": 26.0499076,
+      "matched_address": "Soontaga, Puka vald, Võru-Kuigatsi-Tõrva, Soontaga, 67005 Valga maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "HKScan Estonia Rakvere Lihakombinaadi veevärk",
+      "county": "",
+      "used_query": "HKScan Estonia Rakvere Lihakombinaadi veevärk, Eesti",
+      "hit": true,
+      "lat": 59.37073969999999,
+      "lon": 26.3938465,
+      "matched_address": "Roodevälja, 44207 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Haage Joogid veevärk",
+      "county": "",
+      "used_query": "Haage Joogid veevärk, Eesti",
+      "hit": true,
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "matched_address": "Tähe tn 118, 50111 Tartu, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Haljala Maheda veevärk",
+      "county": "",
+      "used_query": "Haljala Maheda veevärk, Eesti",
+      "hit": true,
+      "lat": 59.4334809,
+      "lon": 26.266223,
+      "matched_address": "Maheda tn, Haljala, 45301 Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Häädemeeste keskuse veevärk",
+      "county": "",
+      "used_query": "Häädemeeste keskuse veevärk, Eesti",
+      "hit": true,
+      "lat": 58.0792088,
+      "lon": 24.4931663,
+      "matched_address": "Häädemeeste, 86001 Pärnu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ilmatsalu aleviku ühisveevärk",
+      "county": "",
+      "used_query": "Ilmatsalu aleviku ühisveevärk, Eesti",
+      "hit": true,
+      "lat": 58.38847139999999,
+      "lon": 26.555647,
+      "matched_address": "Ilmatsalu, Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jeld-Wen Eesti AS tehase veevärk",
+      "county": "",
+      "used_query": "Jeld-Wen Eesti AS tehase veevärk, Eesti",
+      "hit": true,
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "matched_address": "Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jokri talu veevärk",
+      "county": "",
+      "used_query": "Jokri talu veevärk, Eesti",
+      "hit": true,
+      "lat": 58.7805256,
+      "lon": 26.9053865,
+      "matched_address": ", 49506, Nõmme, Nõmme, 49506 Jõgeva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Juulamõisa veevärk",
+      "county": "",
+      "used_query": "Juulamõisa veevärk, Eesti",
+      "hit": true,
+      "lat": 58.5497363,
+      "lon": 26.7090027,
+      "matched_address": "Lähte, Elistvere, 49104 Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Järva-Jaani meierei veevärk",
+      "county": "",
+      "used_query": "Järva-Jaani meierei veevärk, Eesti",
+      "hit": true,
+      "lat": 59.0405045,
+      "lon": 25.8915081,
+      "matched_address": "Järva-Jaani, Järva maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jõgisoo elamute ühisveevärk",
+      "county": "",
+      "used_query": "Jõgisoo elamute ühisveevärk, Eesti",
+      "hit": true,
+      "lat": 59.28517859999999,
+      "lon": 24.5215349,
+      "matched_address": "Jõgisoo, Harju maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kaatri Puhkemaja veevärk",
+      "county": "",
+      "used_query": "Kaatri Puhkemaja veevärk, Eesti",
+      "hit": true,
+      "lat": 58.14581719999999,
+      "lon": 26.2350012,
+      "matched_address": "Viljandi mnt 32, Rõngu, 61001 Tartu maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kadrina küla kalatööstuse veevärk",
+      "county": "",
+      "used_query": "Kadrina küla kalatööstuse veevärk, Eesti",
+      "hit": true,
+      "lat": 59.339128,
+      "lon": 26.1414751,
+      "matched_address": "Kadrina, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kalma külalistemaja veevärk, Kalma kohvik Õige koht",
+      "county": "",
+      "used_query": "Kalma külalistemaja veevärk, Kalma kohvik Õige koht, Eesti",
+      "hit": true,
+      "lat": 58.53168340000001,
+      "lon": 23.0007934,
+      "matched_address": "Kalma, Saare maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kalvi Mõisa veevärk",
+      "county": "",
+      "used_query": "Kalvi Mõisa veevärk, Eesti",
+      "hit": true,
+      "lat": 59.4785765,
+      "lon": 26.7832309,
+      "matched_address": "Kalvi, Lääne-Viru maakond, Eesti"
+    },
+    {
+      "domain": "veevark",
+      "location": "Karaski Pansionaadi ühisveevärk",
+      "county": "",
+      "used_query": "Karaski Pansionaadi ühisveevärk, Eesti",
+      "hit": true,
+      "lat": 58.0431235,
+      "lon": 26.8665622,
+      "matched_address": "Karaski, Põlva maakond, Eesti"
+    }
+  ]
+}

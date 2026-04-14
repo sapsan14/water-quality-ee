@@ -13,6 +13,7 @@ from __future__ import annotations
 import html
 import json
 import logging
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -312,6 +313,37 @@ def _sample_age_label(sample_date_str: str | None) -> str:
     return f"~{years} г. назад"
 
 
+def _display_locations_for_overlaps(points: list[dict]) -> dict[int, tuple[float, float]]:
+    """
+    Раздвигаем маркеры с одинаковыми координатами, чтобы их можно было кликнуть по отдельности.
+    Смещение только визуальное; данные в popup остаются исходными.
+    """
+    by_coord: dict[tuple[float, float], list[int]] = {}
+    out: dict[int, tuple[float, float]] = {}
+    for i, p in enumerate(points):
+        lat, lon = p.get("lat"), p.get("lon")
+        if lat is None or lon is None:
+            continue
+        key = (round(float(lat), 7), round(float(lon), 7))
+        by_coord.setdefault(key, []).append(i)
+
+    for key, idxs in by_coord.items():
+        base_lat, base_lon = key
+        n = len(idxs)
+        if n == 1:
+            out[idxs[0]] = (base_lat, base_lon)
+            continue
+        # ~20-35 метров визуального разлёта, чтобы не слипались (особенно pool-spa точки).
+        radius = min(0.00035, 0.00018 + 0.00003 * n)
+        for j, idx in enumerate(idxs):
+            angle = (2 * math.pi * j) / n
+            out[idx] = (
+                base_lat + radius * math.sin(angle),
+                base_lon + radius * math.cos(angle),
+            )
+    return out
+
+
 def build_map(
     places: list[dict],
     color_mode: str,
@@ -324,11 +356,17 @@ def build_map(
     model_labels: dict[str, str] | None = None,
     selected_model: str = "rf",
     data_catalog_url: str | None = None,
+    map_center: tuple[float, float] | None = None,
+    map_zoom: int = 7,
+    debug_focus_name: str | None = None,
 ) -> folium.Map:
     available_models = available_models or []
     model_labels = model_labels or MODEL_LABELS_DEFAULT
 
-    m = folium.Map(location=[58.65, 25.5], zoom_start=7, tiles=None)
+    center = [58.65, 25.5]
+    if map_center is not None:
+        center = [float(map_center[0]), float(map_center[1])]
+    m = folium.Map(location=center, zoom_start=int(map_zoom), tiles=None)
     folium.TileLayer("CartoDB Positron", name="Карта (светлая)", control=True).add_to(m)
     folium.TileLayer("OpenStreetMap", name="OpenStreetMap", control=True).add_to(m)
 
@@ -344,11 +382,15 @@ def build_map(
 
     catalog_href = html.escape(data_catalog_url or "https://vtiav.sm.ee/index.php/opendata/", quote=True)
 
+    filtered = _filtered_places(places, kinds_filter, counties_filter)
+    display_loc = _display_locations_for_overlaps(filtered)
+
     plotted = 0
-    for p in _filtered_places(places, kinds_filter, counties_filter):
+    for i, p in enumerate(filtered):
         lat, lon = p.get("lat"), p.get("lon")
         if lat is None or lon is None:
             continue
+        dlat, dlon = display_loc.get(i, (float(lat), float(lon)))
         kind = _place_kind(p)
         border = KIND_OUTLINE.get(kind, "#64748b")
 
@@ -400,9 +442,14 @@ def build_map(
 
         models_html = _model_comparison_html(p, available_models, model_labels)
 
+        focus_badge = ""
+        if debug_focus_name and str(p.get("location") or "") == debug_focus_name:
+            focus_badge = "<br/><small style='color:#1d4ed8'><b>DEBUG focus</b></small>"
+
         popup_html = f"""
         <div style="max-width:340px;font-size:13px">
         <b>{html.escape(str(p.get("location") or "—"))}</b><br/>
+        {focus_badge}
         <span style="color:#444">{html.escape(kind_label)}</span><br/>
         <i style="font-size:12px">{html.escape(dom_label)}</i><br/>
         <hr style="margin:6px 0"/>
@@ -424,7 +471,7 @@ def build_map(
         r = radius_by_kind.get(kind, 8)
         # Приблизительные координаты: пунктирная обводка маркера (dashArray)
         marker = folium.CircleMarker(
-            location=[lat, lon],
+            location=[dlat, dlon],
             radius=r,
             color=border,
             weight=1 if is_approx else 3,
@@ -625,6 +672,16 @@ def _render_diagnostics(places: list, has_model: bool, snap: dict) -> None:
 
 def main() -> None:
     st.set_page_config(page_title="Качество воды (гражданский вид)", layout="wide")
+    st.markdown(
+        """
+<style>
+html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+  font-family: "Proxima Nova", "ProximaNova", "Segoe UI", Roboto, sans-serif !important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
     snap = load_snapshot()
 
     st.title("Качество воды в Эстонии — точки на карте")
@@ -725,10 +782,55 @@ def main() -> None:
             st.warning("Выберите хотя бы один тип объектов.")
             kinds_filter.add("swimming")
 
+        # Опциональный debug-блок: быстрый переход к конкретной точке на карте.
+        # Полностью отключается одним переключателем и не влияет на обычный режим.
+        debug_enabled = st.checkbox("Debug mode: переход к локации", value=False, key="map_debug_enabled")
+        debug_focus_name: str | None = None
+        debug_only_selected = False
+        map_center: tuple[float, float] | None = None
+        map_zoom = 7
+
+        if debug_enabled:
+            with st.expander("Debug инструменты карты", expanded=True):
+                options = sorted(
+                    {
+                        str(p.get("location") or "").strip()
+                        for p in places
+                        if p.get("lat") is not None and p.get("lon") is not None and str(p.get("location") or "").strip()
+                    }
+                )
+                debug_focus_name = st.selectbox(
+                    "Локация для проверки",
+                    options=options,
+                    index=0 if options else None,
+                    key="map_debug_focus_name",
+                )
+                debug_only_selected = st.checkbox(
+                    "Показывать на карте только выбранную локацию",
+                    value=False,
+                    key="map_debug_only_selected",
+                )
+
+                if debug_focus_name:
+                    for p in places:
+                        if str(p.get("location") or "") == debug_focus_name and p.get("lat") is not None and p.get("lon") is not None:
+                            map_center = (float(p["lat"]), float(p["lon"]))
+                            map_zoom = 11
+                            st.caption(
+                                f"DEBUG: центр карты -> `{debug_focus_name}` "
+                                f"({float(p['lat']):.6f}, {float(p['lon']):.6f}), "
+                                f"source={p.get('coord_source','?')}"
+                            )
+                            break
+
         selected_model = color_mode if color_mode != "official" else "rf"
 
+        places_for_map = places
+        if debug_enabled and debug_only_selected and debug_focus_name:
+            places_for_map = [p for p in places if str(p.get("location") or "") == debug_focus_name]
+
         m_map = build_map(
-            places,
+            places_for_map,
             color_mode,
             kinds_filter,
             use_cluster=use_cluster,
@@ -737,6 +839,9 @@ def main() -> None:
             model_labels=model_labels,
             selected_model=selected_model,
             data_catalog_url=snap.get("data_catalog_url"),
+            map_center=map_center,
+            map_zoom=map_zoom,
+            debug_focus_name=debug_focus_name if debug_enabled else None,
         )
         st_folium(m_map, width=None, height=560, returned_objects=[])
 

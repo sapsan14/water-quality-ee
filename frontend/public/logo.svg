@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Estonia Water Quality Intelligence logo</title>
+  <desc id="desc">Rounded gradient square with water droplet, shield and sparkline</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f6efd"/>
+      <stop offset="100%" stop-color="#17b0ff"/>
+    </linearGradient>
+    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dff4ff"/>
+      <stop offset="100%" stop-color="#a9ddff"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="116" height="116" rx="26" fill="url(#bg)"/>
+  <path d="M64 26c13 18 24 30 24 43 0 13-10 23-24 23s-24-10-24-23c0-13 11-25 24-43Z" fill="url(#drop)" opacity="0.95"/>
+  <path d="M64 36c9 13 16 22 16 31 0 9-7 16-16 16s-16-7-16-16c0-9 7-18 16-31Z" fill="#ffffff" opacity="0.36"/>
+  <path d="M36 78h14l8-10 10 14 9-8 15 4" fill="none" stroke="#073a7a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="92" cy="78" r="5" fill="#073a7a"/>
+</svg>

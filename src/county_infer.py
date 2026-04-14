@@ -5,9 +5,10 @@
 1. Уже заполненный county из XML — без изменений (county_source=xml).
 2. Справочник data/reference/location_county_overrides.csv (нормализованный ключ).
 3. Кэш геокодирования data/processed/county_geocode_cache.json.
-4. OpenCage Geocoding (если задан opencage_api_key или env OPENCAGE_API_KEY) — из components.
+4. Google Geocoding (если задан google_api_key или env GOOGLE_MAPS_GEOCODING_API_KEY) — из address_components.
+5. OpenCage Geocoding (fallback, если задан opencage_api_key или env OPENCAGE_API_KEY) — из components.
 
-Google Geocoding, публичный Nominatim и In-ADS не используются. Нужен requests; без сети: geocode=False — только XML, overrides и кэш.
+Публичный Nominatim и In-ADS не используются. Нужен requests; без сети: geocode=False — только XML, overrides и кэш.
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ OVERRIDES_CSV = DATA_ROOT / "reference" / "location_county_overrides.csv"
 GEOCODE_CACHE_PATH = DATA_ROOT / "processed" / "county_geocode_cache.json"
 
 OPENCAGE_GEOCODE_URL = "https://api.opencagedata.com/geocode/v1/json"
+GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 # Англ. названия OSM → официальная форма как в Eesti haldusjaotus
 _COUNTY_EN_TO_ET = {
@@ -164,11 +166,74 @@ def _geocode_one_opencage(location_display: str, api_key: str) -> Tuple[Optional
     return _normalize_county_name(county), query
 
 
+def _county_from_google_components(components: Any) -> Optional[str]:
+    """Вытащить maakond из Google results[].address_components."""
+    if not isinstance(components, list):
+        return None
+    for comp in components:
+        if not isinstance(comp, dict):
+            continue
+        types = comp.get("types")
+        if not isinstance(types, list):
+            continue
+        tset = set(str(t) for t in types)
+        if not (
+            "administrative_area_level_1" in tset
+            or "administrative_area_level_2" in tset
+            or "administrative_area_level_3" in tset
+        ):
+            continue
+        for key in ("long_name", "short_name"):
+            v = comp.get(key)
+            if not v:
+                continue
+            s = str(v).strip()
+            if not s:
+                continue
+            if "maakond" in s.lower() or "county" in s.lower():
+                return _normalize_county_name(s)
+    return None
+
+
+def _geocode_one_google(location_display: str, api_key: str) -> Tuple[Optional[str], Optional[str]]:
+    """Вернуть (county, query_used) через Google Geocoding API."""
+    query = f"{location_display}, Estonia"
+    try:
+        r = requests.get(
+            GOOGLE_GEOCODE_URL,
+            params={
+                "address": query,
+                "key": api_key,
+                "region": "ee",
+                "language": "et",
+            },
+            timeout=25,
+        )
+        r.raise_for_status()
+        data = r.json()
+    except (requests.RequestException, ValueError, KeyError) as e:
+        _county_log.warning("Google county: HTTP/JSON error: %s", e)
+        return None, query
+    status = str(data.get("status") or "").strip()
+    if status != "OK":
+        if status not in ("ZERO_RESULTS", ""):
+            err = (str(data.get("error_message") or "") or "").strip()
+            _county_log.warning("Google county: status=%s%s", status, f" — {err[:400]}" if err else "")
+        return None, query
+    results = data.get("results") or []
+    if not results:
+        return None, query
+    county = _county_from_google_components(results[0].get("address_components") or [])
+    return _normalize_county_name(county), query
+
+
 def enrich_county_column(
     df: pd.DataFrame,
     *,
     geocode: bool = False,
     geocode_limit: Optional[int] = None,
+    google_api_key: Optional[str] = None,
+    google_delay_sec: float = 0.2,
     opencage_api_key: Optional[str] = None,
     opencage_delay_sec: float = 0.55,
     verbose: bool = True,
@@ -176,10 +241,10 @@ def enrich_county_column(
     """
     Заполнить пропуски в колонке county; добавить county_source.
 
-    county_source: xml | override | geocache | geocache_miss | geocode_opencage | geocode_google (устар.) | unknown
+    county_source: xml | override | geocache | geocache_miss | geocode_google | geocode_opencage | unknown
 
     По умолчанию геокодирование выключено: XML, overrides и файл кэша.
-    При geocode=True: HTTP к OpenCage для каждой уникальной локации без county в кэше/overrides,
+    При geocode=True: HTTP к Google (и fallback к OpenCage) для каждой уникальной локации без county в кэше/overrides,
     пока не исчерпан geocode_limit. **geocode_limit=None** (по умолчанию) — без ограничения числа
     запросов за вызов. Уже успешные и уже проверенные промахи (**miss** в county_geocode_cache.json)
     повторно в OpenCage не отправляются.
@@ -238,9 +303,10 @@ def enrich_county_column(
     geocode_calls = 0
     lim = geocode_limit if geocode else 0
 
+    gk = (google_api_key or os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY", "") or "").strip() or None
     ok = (opencage_api_key or os.environ.get("OPENCAGE_API_KEY", "") or "").strip() or None
     pending_http = 0
-    if geocode and ok:
+    if geocode and (gk or ok):
         for _nk in need_keys:
             if _nk in overrides:
                 continue
@@ -248,22 +314,29 @@ def enrich_county_column(
             if isinstance(_ent, dict) and _ent.get("county"):
                 continue
             if isinstance(_ent, dict) and _ent.get("miss"):
-                continue
+                # legacy miss (обычно старый OpenCage) можно пере-проверить через Google
+                if gk and _ent.get("provider") not in ("google", "google+opencage"):
+                    pass
+                else:
+                    continue
             pending_http += 1
 
-    if verbose and geocode and ok:
+    if verbose and geocode and (gk or ok):
         cap = pending_http if lim is None else min(pending_http, lim)
-        est_min = max(1, int(cap * (opencage_delay_sec + 0.25) / 60))
+        est_min = max(1, int(cap * (max(google_delay_sec, opencage_delay_sec) + 0.25) / 60))
         lim_msg = "без лимита (все отсутствующие в кэше)" if lim is None else str(lim)
+        provider_msg = "Google" if gk else "OpenCage"
         _county_log.info(
-            "Уезд (OpenCage): уникальных без кэша/overrides ≈ %s; за этот вызов HTTP ≤ %s; пауза ~%.2fs; оценка ~%s мин",
+            "Уезд (%s): уникальных без кэша/overrides ≈ %s; за этот вызов HTTP ≤ %s; пауза ~%.2f/%.2fs; оценка ~%s мин",
+            provider_msg,
             pending_http,
             lim_msg,
+            google_delay_sec,
             opencage_delay_sec,
             est_min,
         )
-    elif verbose and geocode and not ok:
-        _county_log.warning("geocode=True, но нет OPENCAGE_API_KEY — новых HTTP-запросов не будет")
+    elif verbose and geocode and not (gk or ok):
+        _county_log.warning("geocode=True, но нет GOOGLE_MAPS_GEOCODING_API_KEY/OPENCAGE_API_KEY — новых HTTP-запросов не будет")
 
     for nk, display in need_keys.items():
         if nk in overrides:
@@ -274,8 +347,10 @@ def enrich_county_column(
             resolved[nk] = (str(ent["county"]), "geocache")
             continue
         if isinstance(ent, dict) and ent.get("miss"):
-            resolved[nk] = (None, "geocache_miss")
-            continue
+            # Для старых miss без Google-провайдера даем еще один шанс через Google.
+            if not (geocode and gk and ent.get("provider") not in ("google", "google+opencage")):
+                resolved[nk] = (None, "geocache_miss")
+                continue
         if not geocode:
             continue
         if lim is not None and geocode_calls >= lim:
@@ -283,23 +358,38 @@ def enrich_county_column(
 
         county: Optional[str] = None
         src_geo: Optional[str] = None
+        provider_used: Optional[str] = None
 
-        if ok and (lim is None or geocode_calls < lim):
+        if gk and (lim is None or geocode_calls < lim):
+            county, _gq = _geocode_one_google(display, gk)
+            geocode_calls += 1
+            provider_used = "google"
+            if county:
+                src_geo = "geocode_google"
+            time.sleep(google_delay_sec)
+            if verbose and geocode_calls % 25 == 0:
+                cap = f"/{lim}" if lim is not None else " (∞)"
+                _county_log.info("County HTTP: запрос %s%s (Google/OpenCage)", geocode_calls, cap)
+
+        # Если доступен Google, OpenCage fallback для county не используем:
+        # это исключает 402 и лишние запросы в старый провайдер.
+        if not county and ok and not gk and (lim is None or geocode_calls < lim):
             county, _oq = _geocode_one_opencage(display, ok)
             geocode_calls += 1
+            provider_used = "google+opencage" if provider_used == "google" else "opencage"
             if county:
                 src_geo = "geocode_opencage"
             time.sleep(opencage_delay_sec)
             if verbose and geocode_calls % 25 == 0:
                 cap = f"/{lim}" if lim is not None else " (∞)"
-                _county_log.info("County HTTP: запрос %s%s (OpenCage)", geocode_calls, cap)
+                _county_log.info("County HTTP: запрос %s%s (Google/OpenCage)", geocode_calls, cap)
 
         if county:
             resolved[nk] = (county, src_geo or "geocode_opencage")
-            cache[nk] = {"county": county, "query": display}
+            cache[nk] = {"county": county, "query": display, "provider": provider_used or src_geo}
             modified_cache = True
         else:
-            cache[nk] = {"county": None, "query": display, "miss": True}
+            cache[nk] = {"county": None, "query": display, "miss": True, "provider": provider_used}
             modified_cache = True
 
     if modified_cache:

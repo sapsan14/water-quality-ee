@@ -2,9 +2,11 @@
 Каскадное получение координат (WGS84) для точек Terviseamet без lat/lon в XML.
 
 Порядок (для каждого варианта запроса из build_geocode_queries):
-  **OpenCage Geocoding** — если задан OPENCAGE_API_KEY (https://opencagedata.com/).
+  1) **Google Geocoding** — основной внешний провайдер при GOOGLE_MAPS_GEOCODING_API_KEY.
+  2) **Geoapify Geocoding** — fallback при GEOAPIFY_API_KEY (https://www.geoapify.com/).
+  3) **OpenCage Geocoding** — fallback при OPENCAGE_API_KEY (https://opencagedata.com/).
 
-Google Geocoding, In-ADS и публичный Nominatim не используются.
+In-ADS и публичный Nominatim не используются.
 
 Кэш JSON: citizen-service/data/coordinate_resolve_cache.json
 Ключ: "opencage|…" (нормализованная строка запроса). В старых кэшах могут остаться ключи `google|…` — они не читаются и не обновляются.
@@ -30,7 +32,9 @@ def _clip_q(q: str, n: int = 88) -> str:
     s = " ".join(str(q).split())
     return s if len(s) <= n else s[: n - 3] + "..."
 
+GEOAPIFY_GEOCODE_URL = "https://api.geoapify.com/v1/geocode/search"
 OPENCAGE_GEOCODE_URL = "https://api.opencagedata.com/geocode/v1/json"
+GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 USER_AGENT = "water-quality-ee-citizen/1.0 (research; contact: repo water-quality-ee)"
 
 EE_LAT = (55.5, 60.5)
@@ -270,6 +274,90 @@ def geocode_opencage(address: str, api_key: str, session: requests.Session) -> O
     }
 
 
+def geocode_geoapify(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
+    r = session.get(
+        GEOAPIFY_GEOCODE_URL,
+        params={
+            "text": address,
+            "filter": "countrycode:ee",
+            "limit": 1,
+            "lang": "et",
+            "format": "json",
+            "apiKey": api_key,
+        },
+        headers={"User-Agent": USER_AGENT},
+        timeout=45,
+    )
+    r.raise_for_status()
+    data = r.json()
+    feats = data.get("results") or []
+    if not feats:
+        return None
+    first = feats[0]
+    try:
+        lat = float(first["lat"])
+        lon = float(first["lon"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not _in_estonia_bbox(lat, lon):
+        return None
+    matched = str(first.get("formatted") or "").strip()
+    if matched.lower() in ("eesti", "estonia"):
+        return None
+    # Geoapify rank.confidence обычно [0..1].
+    rank = first.get("rank") if isinstance(first.get("rank"), dict) else {}
+    conf = rank.get("confidence")
+    try:
+        conf_f = float(conf) if conf is not None else None
+    except (TypeError, ValueError):
+        conf_f = None
+    if conf_f is not None and conf_f < 0.35:
+        return None
+    return {
+        "lat": lat,
+        "lon": lon,
+        "matched_address": matched,
+        "confidence": conf_f,
+        "provider_rank": rank,
+    }
+
+
+def geocode_google(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
+    r = session.get(
+        GOOGLE_GEOCODE_URL,
+        params={
+            "address": address,
+            "key": api_key,
+            "region": "ee",
+            "language": "et",
+        },
+        headers={"User-Agent": USER_AGENT},
+        timeout=45,
+    )
+    r.raise_for_status()
+    data = r.json()
+    if str(data.get("status") or "") != "OK":
+        return None
+    results = data.get("results") or []
+    if not results:
+        return None
+    first = results[0]
+    geom = first.get("geometry") if isinstance(first.get("geometry"), dict) else {}
+    loc = geom.get("location") if isinstance(geom.get("location"), dict) else {}
+    try:
+        lat = float(loc["lat"])
+        lon = float(loc["lng"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not _in_estonia_bbox(lat, lon):
+        return None
+    return {
+        "lat": lat,
+        "lon": lon,
+        "matched_address": str(first.get("formatted_address") or "").strip() or None,
+    }
+
+
 def load_resolve_cache(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -292,7 +380,11 @@ def resolve_coordinates_cascade(
     *,
     resolve_cache: dict[str, Any],
     session: requests.Session,
-    opencage_api_key: Optional[str],
+    geoapify_api_key: Optional[str] = None,
+    google_api_key: Optional[str] = None,
+    opencage_api_key: Optional[str] = None,
+    delay_geoapify: float = 0.25,
+    delay_google: float = 0.15,
     delay_opencage: float = 0.55,
     budget_remaining: list[int],
     log: Optional[logging.Logger] = None,
@@ -305,7 +397,82 @@ def resolve_coordinates_cascade(
     for raw_q in queries:
         nq = normalize_query_key(raw_q)
 
-        # 1) OpenCage — при наличии ключа (без In-ADS / Nominatim).
+        # 1) Google Geocoding — основной внешний провайдер.
+        gg = f"google|{nq}"
+        if google_api_key:
+            if gg in resolve_cache:
+                ent = resolve_cache[gg]
+                if ent.get("miss"):
+                    lg.debug("coords cache-hit miss google query=%s", _clip_q(raw_q))
+                elif ent.get("lat") is not None and ent.get("lon") is not None:
+                    return ("google", float(ent["lat"]), float(ent["lon"]), ent.get("matched_address"))
+            elif budget_remaining[0] > 0:
+                budget_remaining[0] -= 1
+                lg.info(
+                    "coords HTTP google budget_left=%s query=%s",
+                    budget_remaining[0],
+                    _clip_q(raw_q),
+                )
+                time.sleep(delay_google)
+                try:
+                    res_gg = geocode_google(raw_q, google_api_key, session)
+                except (requests.RequestException, ValueError, json.JSONDecodeError, KeyError):
+                    res_gg = None
+                if res_gg:
+                    resolve_cache[gg] = {
+                        "lat": res_gg["lat"],
+                        "lon": res_gg["lon"],
+                        "matched_address": res_gg.get("matched_address"),
+                    }
+                    lg.info(
+                        "coords update-cache google lat=%.5f lon=%.5f match=%s",
+                        float(res_gg["lat"]),
+                        float(res_gg["lon"]),
+                        _clip_q(str(res_gg.get("matched_address") or "")),
+                    )
+                    return ("google", res_gg["lat"], res_gg["lon"], res_gg.get("matched_address"))
+                resolve_cache[gg] = {"lat": None, "lon": None, "miss": True}
+                lg.info("coords miss google (cached) query=%s", _clip_q(raw_q))
+
+        # 2) Geoapify — fallback.
+        gk = f"geoapify|{nq}"
+        if geoapify_api_key:
+            if gk in resolve_cache:
+                ent = resolve_cache[gk]
+                if ent.get("miss"):
+                    lg.debug("coords cache-hit miss geoapify query=%s", _clip_q(raw_q))
+                elif ent.get("lat") is not None and ent.get("lon") is not None:
+                    return ("geoapify", float(ent["lat"]), float(ent["lon"]), ent.get("matched_address"))
+            elif budget_remaining[0] > 0:
+                budget_remaining[0] -= 1
+                lg.info(
+                    "coords HTTP geoapify budget_left=%s query=%s",
+                    budget_remaining[0],
+                    _clip_q(raw_q),
+                )
+                time.sleep(delay_geoapify)
+                try:
+                    res_g = geocode_geoapify(raw_q, geoapify_api_key, session)
+                except (requests.RequestException, ValueError, json.JSONDecodeError, KeyError):
+                    res_g = None
+                if res_g:
+                    resolve_cache[gk] = {
+                        "lat": res_g["lat"],
+                        "lon": res_g["lon"],
+                        "matched_address": res_g.get("matched_address"),
+                        "confidence": res_g.get("confidence"),
+                    }
+                    lg.info(
+                        "coords update-cache geoapify lat=%.5f lon=%.5f match=%s",
+                        float(res_g["lat"]),
+                        float(res_g["lon"]),
+                        _clip_q(str(res_g.get("matched_address") or "")),
+                    )
+                    return ("geoapify", res_g["lat"], res_g["lon"], res_g.get("matched_address"))
+                resolve_cache[gk] = {"lat": None, "lon": None, "miss": True}
+                lg.info("coords miss geoapify (cached) query=%s", _clip_q(raw_q))
+
+        # 3) OpenCage — fallback.
         ok = f"opencage|{nq}"
         if opencage_api_key:
             if ok in resolve_cache:

@@ -22,3 +22,7 @@ Thumbs.db
 .streamlit/secrets.toml
 **/.streamlit/secrets.toml
 .env
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/

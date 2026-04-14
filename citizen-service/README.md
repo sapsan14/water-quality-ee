@@ -28,22 +28,67 @@
 pip install -r requirements.txt -r citizen-service/requirements.txt
 # быстро: карта и официальные статусы без обучения RF
 python citizen-service/scripts/build_citizen_snapshot.py --map-only
+# экспорт frontend-оптимизированного JSON для нового web UI
+python citizen-service/scripts/export_frontend_snapshot.py
 # полный снимок: то же + прогноз Random Forest и citizen_model.joblib
 python citizen-service/scripts/build_citizen_snapshot.py
+# опционально: попробовать добавить домен mineraalvesi (если доступен в источнике)
+python citizen-service/scripts/build_citizen_snapshot.py --include-mineraalvesi
 # автоматически: OpenCage и уезд (OPENCAGE_API_KEY в .env) — см. GEO_SECRETS.md
 ./scripts/refresh_citizen_geo.sh --map-only
 streamlit run citizen-service/app/streamlit_app.py
 ```
 
 Полностью без ручных флагов геокодирования: **GitHub Actions → Citizen snapshot** (cron или ручной запуск) уже собирает снимок с `--resolve-coordinates` и коммитит кэши. Секрет **OPENCAGE_API_KEY**: [GEO_SECRETS.md](GEO_SECRETS.md).
+Рекомендуется также задать **GEOAPIFY_API_KEY** — основной провайдер геокодинга (OpenCage используется как fallback).
 
 Артефакты:
 
 - `artifacts/snapshot.json` — последняя проба по каждому месту, координаты, официальный статус; при полном прогоне — ещё `model_violation_prob` и поле `has_model_predictions: true` (`--map-only` оставляет `has_model_predictions: false` и без вероятностей по точкам)
 - `artifacts/citizen_model.joblib` — imputer + RF (только после полного прогона, не перезаписывается в режиме `--map-only`)
 - `data/geocode_cache.json` — кэш простого геокода (создаётся при `--geocode-limit > 0`)
+- `../frontend/public/data/snapshot.frontend.json` — precomputed контракт данных для нового Next.js интерфейса
 
 Логи: у скрипта сборки флаг **`--log-level`** (`INFO` / `DEBUG`); в лог пишутся этапы сборки, HTTP-геокод и попадания в кэш координат. Приложение Streamlit при старте страницы логирует сводку по снимку (число точек, разбивка `coord_source`, наличие `citizen_model.joblib`).
+
+### Ручная проверка координат (queue + overrides)
+
+1) Сформировать очередь проблемных точек:
+
+```bash
+python citizen-service/scripts/generate_coordinate_review_queue.py
+```
+
+Артефакты:
+- `artifacts/coordinate_review_queue.csv` — список точек для проверки (ссылки на Google Maps)
+- `artifacts/coordinate_review_queue.json` — то же в JSON
+- `artifacts/coordinate_review_summary.json` — сводка по количеству
+- `data/coordinate_overrides.template.json` — шаблон ручных правок
+
+2) Создать `citizen-service/data/coordinate_overrides.json` по шаблону:
+- `action: "set_manual"` + `lat/lon` для ручной фиксации
+- `action: "hide"` чтобы убрать точку с карты
+
+Или полуавтоматически из CSV-очереди:
+
+```bash
+python citizen-service/scripts/apply_coordinate_review_queue.py
+```
+
+Скрипт читает колонки `action`, `manual_lat`, `manual_lon`, `review_note` из
+`artifacts/coordinate_review_queue.csv` и обновляет `data/coordinate_overrides.json`.
+
+3) Пересобрать snapshot:
+
+```bash
+python citizen-service/scripts/build_citizen_snapshot.py --map-only
+```
+
+В `snapshot.json` добавляется блок `coordinate_override_stats` (сколько оверрайдов применено и скрыто).
+
+Примечание: при сборке snapshot скрипт также подтягивает адреса из paged-страниц
+`active_tab_id=U` и `active_tab_id=JV` (кэш `data/paged_address_cache.json`) и
+использует их как дополнительный fallback для геокодинга проблемных точек.
 
 ## Объяснение модели
 

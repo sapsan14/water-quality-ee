@@ -31,6 +31,7 @@ REF_FILES = {
     "supluskohad": "supluskohad.xml",
     "veevargid": "veevargid.xml",
     "basseinid": "basseinid.xml",
+    "ujulad": "ujulad.xml",
     "joogiveeallikad": "joogiveeallikad.xml",
 }
 
@@ -98,8 +99,11 @@ class ReferenceCoordIndex:
     veevark_by_vv: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     bassein_by_pt: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     bassein_by_bs: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    ujula_by_ujula: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    bassein_to_ujula: Dict[str, str] = field(default_factory=dict)
     joogi_by_allikas: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     joogi_by_pt: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    veevark_to_veeallikad: Dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 def _download_ref(cache_name: str, use_cache: bool, session: Optional[requests.Session]) -> bytes:
@@ -144,6 +148,11 @@ def build_reference_index(use_cache: bool = True, session: Optional[requests.Ses
                 wgs = _wgs_from_koord_elem(vv.find("koordinaadid"))
                 if vid and wgs:
                     idx.veevark_by_vv[vid] = wgs
+                if vid:
+                    idx.veevark_to_veeallikad[vid] = _parse_related_ids(
+                        vv.find("seotud_veeallikad"),
+                        "veeallikas",
+                    )
                 for pk in vv.findall("./proovivotukohad/proovivotukoht"):
                     pid = (_text(pk, "id") or "").strip()
                     wgs2 = _wgs_from_koord_elem(pk.find("koordinaadid"))
@@ -152,14 +161,23 @@ def build_reference_index(use_cache: bool = True, session: Optional[requests.Ses
         elif key == "basseinid" and tag == "basseinid":
             for bs in tree.findall("bassein"):
                 bid = (_text(bs, "id") or "").strip()
+                ujula_id = (_text(bs, "ujula_id") or "").strip()
                 wgs = _wgs_from_koord_elem(bs.find("koordinaadid"))
                 if bid and wgs:
                     idx.bassein_by_bs[bid] = wgs
+                if bid and ujula_id:
+                    idx.bassein_to_ujula[bid] = ujula_id
                 for pk in bs.findall("./proovivotukohad/proovivotukoht"):
                     pid = (_text(pk, "id") or "").strip()
                     wgs2 = _wgs_from_koord_elem(pk.find("koordinaadid"))
                     if pid and wgs2:
                         idx.bassein_by_pt[pid] = wgs2
+        elif key == "ujulad" and tag == "ujulad":
+            for uj in tree.findall("ujula"):
+                uid = (_text(uj, "id") or "").strip()
+                wgs = _wgs_from_koord_elem(uj.find("koordinaadid"))
+                if uid and wgs:
+                    idx.ujula_by_ujula[uid] = wgs
         elif key == "joogiveeallikad" and tag == "joogiveeallikad":
             for ja in tree.findall("joogiveeallikas"):
                 jid = (_text(ja, "id") or "").strip()
@@ -203,6 +221,18 @@ def _norm_id(v: Any) -> Optional[str]:
     return s
 
 
+def _parse_related_ids(parent: Optional[etree._Element], item_tag: str) -> tuple[str, ...]:
+    """Собрать связанные id из блока вида <seotud_...><item><id>...</id></item></seotud_...>."""
+    if parent is None:
+        return ()
+    out: list[str] = []
+    for it in parent.findall(item_tag):
+        sid = (_text(it, "id") or "").strip()
+        if sid:
+            out.append(sid)
+    return tuple(out)
+
+
 def _apply_pt_then_facility(
     pid: pd.Series,
     fid: pd.Series,
@@ -228,6 +258,42 @@ def _apply_pt_then_facility(
     lat = lat.astype("Float64").fillna(lat_f)
     lon = lon.astype("Float64").fillna(lon_f)
     src = src.where(src.notna(), src_fac)
+    return lat, lon, src
+
+
+def _apply_facility_fallback(
+    base_lat: pd.Series,
+    base_lon: pd.Series,
+    base_src: pd.Series,
+    facility_ids: pd.Series,
+    fallback_fn,
+    fallback_src: str,
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """Заполнить пустые координаты по fallback-функции от id объекта."""
+    lat = base_lat.copy()
+    lon = base_lon.copy()
+    src = base_src.copy()
+    miss = lat.isna()
+    if not miss.any():
+        return lat, lon, src
+
+    fid_n = facility_ids.map(_norm_id)
+
+    def _pick(fid: Optional[str]) -> Optional[Tuple[float, float]]:
+        if not fid:
+            return None
+        try:
+            return fallback_fn(fid)
+        except Exception:
+            return None
+
+    fb = fid_n[miss].map(_pick)
+    lat_f = fb.map(lambda t: t[0] if isinstance(t, tuple) else pd.NA)
+    lon_f = fb.map(lambda t: t[1] if isinstance(t, tuple) else pd.NA)
+    src_f = fb.map(lambda t: fallback_src if isinstance(t, tuple) else pd.NA)
+    lat.loc[miss] = lat_f
+    lon.loc[miss] = lon_f
+    src.loc[miss] = src.loc[miss].where(src.loc[miss].notna(), src_f)
     return lat, lon, src
 
 
@@ -294,6 +360,23 @@ def attach_official_coords_to_df(
             "terviseamet_proovivotukoht",
             "terviseamet_veevark",
         )
+        # Fallback: если у veevark нет своей точки, используем связанную joogiveeallikas.
+        def _fallback_veevark(fid: str) -> Optional[Tuple[float, float]]:
+            related = idx.veevark_to_veeallikad.get(fid, ())
+            for aid in related:
+                pt = idx.joogi_by_allikas.get(aid)
+                if pt:
+                    return pt
+            return None
+
+        la, lo, sr = _apply_facility_fallback(
+            la,
+            lo,
+            sr,
+            out["veevark_id"],
+            _fallback_veevark,
+            "terviseamet_veevark_seotud_veeallikas",
+        )
     elif domain_key == "basseinid":
         if "proovivotukoht_id" not in out.columns or "bassein_id" not in out.columns:
             out["official_lat"] = pd.NA
@@ -307,6 +390,21 @@ def attach_official_coords_to_df(
             idx.bassein_by_bs,
             "terviseamet_proovivotukoht",
             "terviseamet_bassein",
+        )
+        # Fallback: если у bassein нет точки, берём координаты родительской ujula.
+        def _fallback_bassein(fid: str) -> Optional[Tuple[float, float]]:
+            ujula_id = idx.bassein_to_ujula.get(fid)
+            if not ujula_id:
+                return None
+            return idx.ujula_by_ujula.get(ujula_id)
+
+        la, lo, sr = _apply_facility_fallback(
+            la,
+            lo,
+            sr,
+            out["bassein_id"],
+            _fallback_bassein,
+            "terviseamet_ujula",
         )
     elif domain_key == "joogivesi":
         if "proovivotukoht_id" not in out.columns or "veeallikas_id" not in out.columns:

@@ -1,0 +1,26 @@
+{
+  "snapshot_path": "/home/anton/projects/water-quality-ee/citizen-service/artifacts/snapshot.json",
+  "snapshot_places": 2194,
+  "review_sources": [
+    "approximate_ee",
+    "county_centroid",
+    "geocode_cache",
+    "google",
+    "opencage"
+  ],
+  "needs_review_total": 330,
+  "needs_review_by_domain": {
+    "basseinid": 44,
+    "joogivesi": 4,
+    "supluskoha": 3,
+    "veevark": 279
+  },
+  "needs_review_by_coord_source": {
+    "approximate_ee": 329,
+    "county_centroid": 1
+  },
+  "outputs": {
+    "csv": "/home/anton/projects/water-quality-ee/citizen-service/artifacts/coordinate_review_queue.csv",
+    "json": "/home/anton/projects/water-quality-ee/citizen-service/artifacts/coordinate_review_queue.json"
+  }
+}

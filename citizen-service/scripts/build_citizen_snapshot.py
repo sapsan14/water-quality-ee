@@ -5,14 +5,14 @@
 
 Координаты в файлах *_veeproovid_YYYY.xml нет; при load_all/load_domain подтягиваются
 официальные L-EST97→WGS84 из справочников opendata (supluskohad.xml и др.) → official_lat/lon.
-Если их нет — простой режим или --resolve-coordinates: OpenCage (OPENCAGE_API_KEY);
+Если их нет — простой режим или --resolve-coordinates: Google → Geoapify → OpenCage;
 кэш coordinate_resolve_cache.json. Google / In-ADS / Nominatim не используются.
 --geocode-limit — лимит HTTP-запросов на всю сборку.
 
 Запуск из корня репозитория:
   python citizen-service/scripts/build_citizen_snapshot.py
   python citizen-service/scripts/build_citizen_snapshot.py --resolve-coordinates --geocode-limit 8000 --infer-county
-  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: OpenCage
+  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: Google→Geoapify→OpenCage
   python citizen-service/scripts/build_citizen_snapshot.py --map-only
   python citizen-service/scripts/build_citizen_snapshot.py --infer-county
   python citizen-service/scripts/build_citizen_snapshot.py --log-level DEBUG  # подробный лог геокода/кэша
@@ -28,11 +28,13 @@ import hashlib
 import json
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
 
 import requests
+from lxml import html as lxml_html
 
 import joblib
 import numpy as np
@@ -63,12 +65,14 @@ _CS_DIR = ROOT / "citizen-service"
 if str(_CS_DIR) not in sys.path:
     sys.path.insert(0, str(_CS_DIR))
 
-from county_centroids import county_to_latlon  # noqa: E402
+from county_centroids import COUNTY_CENTROIDS, county_to_latlon  # noqa: E402
 import geocode_resolve as _geocode_resolve  # noqa: E402
 
 ARTIFACTS = ROOT / "citizen-service" / "artifacts"
 GEOCODE_PATH = ROOT / "citizen-service" / "data" / "geocode_cache.json"
 COORD_RESOLVE_PATH = ROOT / "citizen-service" / "data" / "coordinate_resolve_cache.json"
+COORD_OVERRIDES_PATH = ROOT / "citizen-service" / "data" / "coordinate_overrides.json"
+PAGED_ADDR_CACHE_PATH = ROOT / "citizen-service" / "data" / "paged_address_cache.json"
 
 LOG = logging.getLogger("citizen.snapshot")
 
@@ -108,8 +112,9 @@ def _prefer_certifi_ca_bundle() -> None:
         return
     os.environ.setdefault("SSL_CERT_FILE", bundle)
     os.environ.setdefault("REQUESTS_CA_BUNDLE", bundle)
-# Точки на карте: купание, бассейны/СПА, водопровод (питьевая вода по точкам сети)
-MAP_DOMAINS = {"supluskoha", "basseinid", "veevark", "joogivesi"}
+# Точки на карте по умолчанию: купание, бассейны/СПА, водопровод, источники питьевой воды.
+# Mineraalvesi можно включить флагом --include-mineraalvesi без изменения дефолта.
+BASE_MAP_DOMAINS = {"supluskoha", "basseinid", "veevark", "joogivesi"}
 OPENDATA_CATALOG_URL = "https://vtiav.sm.ee/index.php/opendata/"
 
 PLACE_KIND = {
@@ -117,7 +122,13 @@ PLACE_KIND = {
     "basseinid": "pool_spa",
     "veevark": "drinking_water",
     "joogivesi": "drinking_source",
+    "mineraalvesi": "drinking_water",
 }
+
+# Для этих доменов не шлём name-only геокодинг:
+# только адрес из paged-таблиц vtiav (U/JV), иначе без HTTP-запроса.
+STRICT_PAGED_ADDRESS_ONLY_DOMAINS = {"veevark", "basseinid"}
+_COUNTY_ADDR_RE = re.compile(r"\b([A-ZÕÄÖÜa-zõäöü\-]+(?:\s+[A-ZÕÄÖÜa-zõäöü\-]+)*)\s+maakond\b", re.IGNORECASE)
 
 
 def _normalize_location_key(name: str, domain: str) -> str:
@@ -152,6 +163,41 @@ def _normalize_location_key(name: str, domain: str) -> str:
     n = _re.sub(r"[,;]+", " ", n)
     n = _re.sub(r"\s+", " ", n).strip()
     return f"{domain}|{n}"
+
+
+def _extract_county_from_address(addr: str | None) -> str | None:
+    if not addr:
+        return None
+    m = _COUNTY_ADDR_RE.search(str(addr))
+    if not m:
+        return None
+    base = " ".join((m.group(1) or "").split()).strip()
+    if not base:
+        return None
+    return f"{base} maakond"
+
+
+def _nearest_county_from_coords(lat: float | None, lon: float | None) -> str | None:
+    if lat is None or lon is None:
+        return None
+    try:
+        lt = float(lat)
+        ln = float(lon)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(lt) or not np.isfinite(ln):
+        return None
+    best_name: str | None = None
+    best_d2: float | None = None
+    for nm, (clat, clon) in COUNTY_CENTROIDS.items():
+        d2 = (lt - float(clat)) ** 2 + (ln - float(clon)) ** 2
+        if best_d2 is None or d2 < best_d2:
+            best_d2 = d2
+            best_name = nm
+    if not best_name:
+        return None
+    return " ".join(str(best_name).split()).strip().title()
+
 # Kui pole Nominatimi ega maakonda: stabiilne punkt EE bbox-is (pole GPS, ainult ülevaade).
 EE_BBOX_LAT = (57.48, 59.68)
 EE_BBOX_LON = (21.65, 28.22)
@@ -186,6 +232,139 @@ def save_geocode_cache(cache: dict) -> None:
         json.dump(cache, f, ensure_ascii=False, indent=0)
 
 
+def _text_norm(s: str) -> str:
+    return re.sub(r"\s+", " ", (s or "").strip())
+
+
+def _last_page_from_html(page_html: str, tab_id: str) -> int:
+    # На сайте встречаются оба варианта: active_tab_id и active%5Ftab%5Fid.
+    # Берём максимум page=N среди ссылок текущего tab, это надёжнее, чем парсить "Viimane" текст.
+    pat = re.compile(
+        rf"page=(\d+)&active(?:%5[fF]|_)tab(?:%5[fF]|_)id={re.escape(tab_id)}",
+        re.I,
+    )
+    nums = [int(m.group(1)) for m in pat.finditer(page_html)]
+    return max(nums) if nums else 1
+
+
+def _fetch_tab_rows(session: requests.Session, tab_id: str) -> list[dict]:
+    base = "https://vtiav.sm.ee"
+    first_url = f"{base}/index.php/?active_tab_id={tab_id}"
+    first_html = session.get(first_url, timeout=45).text
+    last_page = _last_page_from_html(first_html, tab_id)
+    rows: list[dict] = []
+
+    for p in range(1, last_page + 1):
+        u = f"{base}/index.php/?page={p}&active_tab_id={tab_id}"
+        t = session.get(u, timeout=45).text
+        doc = lxml_html.fromstring(t)
+        tr_nodes = doc.xpath('//tr[.//a[contains(@href,"/frontpage/show?id=")]]')
+        for tr in tr_nodes:
+            a_nodes = tr.xpath('.//a[contains(@href,"/frontpage/show?id=")]')
+            if not a_nodes:
+                continue
+            href = a_nodes[0].get("href") or ""
+            m = re.search(r"id=(\d+)", href)
+            if not m:
+                continue
+            cells = [_text_norm(c.text_content()) for c in tr.xpath("./td")]
+            rows.append({"id": m.group(1), "cells": cells})
+    return rows
+
+
+def build_paged_address_index(session: requests.Session, use_cache: bool = True) -> dict[str, str]:
+    """
+    Собрать индекс адресов из публичных paged-страниц:
+    - U: bassein (название бассейна) -> Asukoht
+    - JV: veevark (название сети) -> Tegutsemise piirkond
+    """
+    if use_cache and PAGED_ADDR_CACHE_PATH.is_file():
+        try:
+            with open(PAGED_ADDR_CACHE_PATH, encoding="utf-8") as f:
+                payload = json.load(f)
+            if isinstance(payload, dict) and isinstance(payload.get("index"), dict):
+                return payload["index"]
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    idx: dict[str, str] = {}
+
+    # U: col[4] = Basseini nimi, col[1] = Asukoht
+    try:
+        for r in _fetch_tab_rows(session, "U"):
+            cells = r["cells"]
+            if len(cells) < 5:
+                continue
+            bassein_name = cells[4]
+            asukoht = cells[1]
+            if bassein_name and asukoht:
+                idx[_normalize_location_key(bassein_name, "basseinid")] = asukoht
+    except requests.RequestException as e:
+        LOG.warning("Не удалось собрать адреса с active_tab_id=U: %s", e)
+
+    # JV: col[1] = Veevärk, col[2] = Tegutsemise piirkond
+    try:
+        for r in _fetch_tab_rows(session, "JV"):
+            cells = r["cells"]
+            if len(cells) < 3:
+                continue
+            veevark_name = cells[1]
+            area_addr = cells[2]
+            if veevark_name and area_addr:
+                idx[_normalize_location_key(veevark_name, "veevark")] = area_addr
+    except requests.RequestException as e:
+        LOG.warning("Не удалось собрать адреса с active_tab_id=JV: %s", e)
+
+    PAGED_ADDR_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_at": pd.Timestamp.now("UTC").isoformat(),
+        "index_size": len(idx),
+        "index": idx,
+    }
+    with open(PAGED_ADDR_CACHE_PATH, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    return idx
+
+
+def load_coordinate_overrides() -> dict[str, dict]:
+    """
+    Загрузить ручные оверрайды координат.
+
+    Формат файла citizen-service/data/coordinate_overrides.json:
+    {
+      "version": 1,
+      "items": [
+        {"domain": "veevark", "location": "X", "action": "set_manual", "lat": 58.1, "lon": 25.2},
+        {"domain": "veevark", "location": "Y", "action": "hide", "note": "..."}
+      ]
+    }
+    """
+    if not COORD_OVERRIDES_PATH.is_file():
+        return {}
+    try:
+        with open(COORD_OVERRIDES_PATH, encoding="utf-8") as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        LOG.warning("Не удалось прочитать coordinate_overrides.json: %s", e)
+        return {}
+
+    items = payload.get("items") if isinstance(payload, dict) else None
+    if not isinstance(items, list):
+        return {}
+
+    out: dict[str, dict] = {}
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        dom = str(it.get("domain") or "").strip()
+        loc = str(it.get("location") or "").strip()
+        if not dom or not loc:
+            continue
+        key = _normalize_location_key(loc, dom)
+        out[key] = it
+    return out
+
+
 def _serialize_measurement_value(val) -> float | int | str | None:
     if val is None or (isinstance(val, float) and pd.isna(val)):
         return None
@@ -215,11 +394,13 @@ def geocode_address_simple(
     cache: dict,
     session: requests.Session,
     *,
+    geoapify_key: str | None,
     opencage_key: str | None,
+    google_key: str | None,
     http_budget: int,
 ) -> tuple[float | None, float | None, str | None, int]:
     """
-    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе OpenCage.
+    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе Google→Geoapify→OpenCage.
     Возвращает (lat, lon, coord_source, число_HTTP); lat/lon None при промахе.
     """
     clip = query[:88] + ("…" if len(query) > 88 else "")
@@ -248,10 +429,59 @@ def geocode_address_simple(
     used = 0
     if http_budget <= 0:
         return None, None, None, 0
-    if not opencage_key:
-        LOG.warning("coords simple: нет OPENCAGE_API_KEY — пропуск query=%s", clip)
+    if not geoapify_key and not opencage_key and not google_key:
+        LOG.warning("coords simple: нет GEOAPIFY/OPENCAGE/GOOGLE key — пропуск query=%s", clip)
         cache[query] = {"lat": None, "lon": None, "miss": True}
         return None, None, None, 0
+
+    if google_key and used < http_budget:
+        LOG.info("coords HTTP google(simple) query=%s", clip)
+        time.sleep(max(0.12, _opencage_inter_request_delay_sec() * 0.35))
+        used += 1
+        try:
+            res = _geocode_resolve.geocode_google(query, google_key, session)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            LOG.warning("coords google(simple) error: %s", e)
+            res = None
+        if res:
+            cache[query] = {
+                "lat": res["lat"],
+                "lon": res["lon"],
+                "coord_source": "google",
+                "matched_address": res.get("matched_address"),
+            }
+            LOG.info(
+                "coords update-cache google(simple) lat=%.5f lon=%.5f query=%s",
+                float(res["lat"]),
+                float(res["lon"]),
+                clip,
+            )
+            return float(res["lat"]), float(res["lon"]), "google", used
+
+    if geoapify_key and used < http_budget:
+        LOG.info("coords HTTP geoapify(simple) query=%s", clip)
+        time.sleep(max(0.15, _opencage_inter_request_delay_sec() * 0.5))
+        used += 1
+        try:
+            res = _geocode_resolve.geocode_geoapify(query, geoapify_key, session)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            LOG.warning("coords geoapify(simple) error: %s", e)
+            res = None
+        if res:
+            cache[query] = {
+                "lat": res["lat"],
+                "lon": res["lon"],
+                "coord_source": "geoapify",
+                "matched_address": res.get("matched_address"),
+                "confidence": res.get("confidence"),
+            }
+            LOG.info(
+                "coords update-cache geoapify(simple) lat=%.5f lon=%.5f query=%s",
+                float(res["lat"]),
+                float(res["lon"]),
+                clip,
+            )
+            return float(res["lat"]), float(res["lon"]), "geoapify", used
 
     if opencage_key and used < http_budget:
         LOG.info("coords HTTP opencage(simple) query=%s", clip)
@@ -280,7 +510,7 @@ def geocode_address_simple(
             return float(res["lat"]), float(res["lon"]), "opencage", used
 
     cache[query] = {"lat": None, "lon": None, "miss": True}
-    LOG.info("coords miss simple (opencage) query=%s", clip)
+    LOG.info("coords miss simple (google/geoapify/opencage) query=%s", clip)
     return None, None, None, used
 
 
@@ -300,7 +530,7 @@ def main() -> None:
         "--geocode-limit",
         type=int,
         default=0,
-        help="лимит новых HTTP к OpenCage на сборку (простой режим и --resolve-coordinates)",
+        help="лимит новых HTTP к внешним геокодерам на сборку (простой режим и --resolve-coordinates)",
     )
     ap.add_argument("--no-cache-xml", action="store_true", help="перекачать XML (load_all use_cache=False)")
     ap.add_argument(
@@ -311,12 +541,12 @@ def main() -> None:
     ap.add_argument(
         "--infer-county",
         action="store_true",
-        help="дозаполнить county через county_infer (кэш + OpenCage; медленнее, точнее карта)",
+        help="дозаполнить county через county_infer (кэш + Google→OpenCage; медленнее, точнее карта)",
     )
     ap.add_argument(
         "--resolve-coordinates",
         action="store_true",
-        help="OpenCage по вариантам адреса (нужен OPENCAGE_API_KEY); --geocode-limit = лимит HTTP",
+        help="Google→Geoapify→OpenCage по вариантам адреса; --geocode-limit = лимит HTTP",
     )
     ap.add_argument(
         "--log-level",
@@ -330,6 +560,11 @@ def main() -> None:
         default=50,
         metavar="N",
         help="каждые N мест на карте писать строку прогресса в лог (и 1-е и последнее всегда)",
+    )
+    ap.add_argument(
+        "--include-mineraalvesi",
+        action="store_true",
+        help="добавить в сборку домен mineraalvesi (если доступен у источника данных)",
     )
     args = ap.parse_args()
     logging.basicConfig(
@@ -354,21 +589,43 @@ def main() -> None:
 
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
+    map_domains = set(BASE_MAP_DOMAINS)
+    if args.include_mineraalvesi:
+        map_domains.add("mineraalvesi")
+    selected_domains = sorted(map_domains)
+
     LOG.info(
-        "Старт: map_only=%s resolve_coordinates=%s infer_county=%s geocode_limit=%s log_level=%s",
+        "Старт: map_only=%s resolve_coordinates=%s infer_county=%s include_mineraalvesi=%s geocode_limit=%s log_level=%s",
         args.map_only,
         args.resolve_coordinates,
         args.infer_county,
+        args.include_mineraalvesi,
         args.geocode_limit,
         args.log_level,
     )
 
     df = load_all(
+        domains=selected_domains,
         use_cache=not args.no_cache_xml,
         geocode_county=args.infer_county,
     )
+    loaded_domains = set()
+    if "domain" in df.columns:
+        loaded_domains = set(str(x) for x in df["domain"].dropna().astype(str).unique().tolist())
+    domain_source_status = {
+        d: {
+            "requested": True,
+            "loaded": d in loaded_domains,
+            "reason": "ok" if d in loaded_domains else "no_rows_or_source_unavailable",
+        }
+        for d in selected_domains
+    }
+    if args.include_mineraalvesi and "mineraalvesi" not in loaded_domains:
+        LOG.warning(
+            "mineraalvesi был запрошен (--include-mineraalvesi), но не загружен: источник не отдаёт данные или вернул 0 строк"
+        )
     if args.infer_county:
-        LOG.info("load_all: --infer-county — OpenCage для всех локаций без county в кэше (лимит HTTP снят)")
+        LOG.info("load_all: --infer-county — Google→OpenCage для локаций без county в кэше (лимит HTTP снят)")
     _timer_print("1) load_all — загрузка и парсинг XML → DataFrame", t_run, last)
 
     if args.map_only:
@@ -468,8 +725,8 @@ def main() -> None:
     )
     latest_idx = full.groupby(["domain", "_loc_key"], sort=False).tail(1).index
     latest = full.loc[latest_idx].copy()
-    latest = latest[latest["domain"].isin(MAP_DOMAINS)]
-    n_dedup = len(full[full["domain"].isin(MAP_DOMAINS)].groupby(["domain", "location"])) - len(latest)
+    latest = latest[latest["domain"].isin(map_domains)]
+    n_dedup = len(full[full["domain"].isin(map_domains)].groupby(["domain", "location"])) - len(latest)
     if n_dedup > 0:
         LOG.info("Дедупликация по нормализованному имени: объединено %s дублей (переименования в XML)", n_dedup)
     _timer_print(
@@ -479,6 +736,7 @@ def main() -> None:
     )
 
     cache = load_geocode_cache()
+    coord_overrides = load_coordinate_overrides()
     resolve_cache = (
         _geocode_resolve.load_resolve_cache(COORD_RESOLVE_PATH) if args.resolve_coordinates else {}
     )
@@ -489,17 +747,25 @@ def main() -> None:
             "Accept": "application/json",
         }
     )
+    paged_addr_index = build_paged_address_index(session, use_cache=not args.no_cache_xml)
+    LOG.info("Индекс адресов paged U/JV: %s записей", len(paged_addr_index))
+    geoapify_key = ((os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None)
+    google_key = ((os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None)
     opencage_key = ((os.environ.get("OPENCAGE_API_KEY") or "").strip() or None)
     budget_remain = [max(0, int(args.geocode_limit))]
     api_calls = 0
     rows_out = []
+    hidden_rows = 0
+    overridden_rows = 0
     n_map = len(latest)
     LOG.info(
-        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; OpenCage=%s",
+        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; Geoapify=%s; OpenCage=%s; Google=%s",
         n_map,
         args.resolve_coordinates,
         args.geocode_limit,
+        "да" if geoapify_key else "нет",
         "да" if opencage_key else "нет",
+        "да" if google_key else "нет",
     )
     progress_every = max(1, int(args.progress_every))
 
@@ -540,44 +806,91 @@ def main() -> None:
                 pass
 
         if lat is None and args.resolve_coordinates:
-            queries = _geocode_resolve.build_geocode_queries(
-                str(domain), loc_name, site, fac, str(county) if county else None
-            )
-            got = _geocode_resolve.resolve_coordinates_cascade(
-                queries,
-                resolve_cache=resolve_cache,
-                session=session,
-                opencage_api_key=opencage_key,
-                budget_remaining=budget_remain,
-                log=LOG,
-            )
-            if got:
-                coord_source, lat, lon, geocode_matched = got
-        elif lat is None:
-            query = f"{loc_name}, Estonia"
-            needs_geo = query not in cache or cache[query].get("lat") is None
-            rem = max(0, int(args.geocode_limit) - api_calls)
-            if needs_geo and rem > 0:
-                LOG.info(
-                    "coords simple-mode OpenCage %s/%s для места %s/%s",
-                    api_calls + 1,
-                    args.geocode_limit,
-                    idx,
-                    n_map,
+            strict_paged_only = domain in STRICT_PAGED_ADDRESS_ONLY_DOMAINS
+            paged_addr = paged_addr_index.get(_normalize_location_key(loc_name, domain))
+            if paged_addr:
+                got = _geocode_resolve.resolve_coordinates_cascade(
+                    [f"{paged_addr}, Eesti", f"{loc_name}, {paged_addr}, Eesti"],
+                    resolve_cache=resolve_cache,
+                    session=session,
+                    geoapify_api_key=geoapify_key,
+                    google_api_key=google_key,
+                    opencage_api_key=opencage_key,
+                    budget_remaining=budget_remain,
+                    log=LOG,
                 )
-                _, _, _, nu = geocode_address_simple(
-                    query,
+                if got:
+                    coord_source, lat, lon, geocode_matched = got
+                    coord_source = f"{coord_source}_paged_address"
+
+            if lat is None and not strict_paged_only:
+                queries = _geocode_resolve.build_geocode_queries(
+                    str(domain), loc_name, site, fac, str(county) if county else None
+                )
+                got = _geocode_resolve.resolve_coordinates_cascade(
+                    queries,
+                    resolve_cache=resolve_cache,
+                    session=session,
+                    geoapify_api_key=geoapify_key,
+                    google_api_key=google_key,
+                    opencage_api_key=opencage_key,
+                    budget_remaining=budget_remain,
+                    log=LOG,
+                )
+                if got:
+                    coord_source, lat, lon, geocode_matched = got
+        elif lat is None:
+            strict_paged_only = domain in STRICT_PAGED_ADDRESS_ONLY_DOMAINS
+            paged_addr = paged_addr_index.get(_normalize_location_key(loc_name, domain))
+            if paged_addr:
+                q_addr = f"{paged_addr}, Eesti"
+                rem_addr = max(0, int(args.geocode_limit) - api_calls)
+                _, _, src_addr, nu_addr = geocode_address_simple(
+                    q_addr,
                     cache,
                     session,
+                    geoapify_key=geoapify_key,
                     opencage_key=opencage_key,
-                    http_budget=rem,
+                    google_key=google_key,
+                    http_budget=rem_addr,
                 )
-                api_calls += nu
+                api_calls += nu_addr
+                c_addr = cache.get(q_addr, {})
+                if c_addr.get("lat") is not None:
+                    lat, lon = float(c_addr["lat"]), float(c_addr["lon"])
+                    coord_source = (
+                        f"{src_addr}_paged_address"
+                        if src_addr
+                        else "geocode_cache_paged_address"
+                    )
 
-            c = cache.get(query, {})
-            if c.get("lat") is not None:
-                lat, lon = float(c["lat"]), float(c["lon"])
-                coord_source = str(c.get("coord_source") or "geocode_cache")
+            if lat is None and not strict_paged_only:
+                query = f"{loc_name}, Estonia"
+                needs_geo = query not in cache or cache[query].get("lat") is None
+                rem = max(0, int(args.geocode_limit) - api_calls)
+                if needs_geo and rem > 0:
+                    LOG.info(
+                        "coords simple-mode Geocoding %s/%s для места %s/%s",
+                        api_calls + 1,
+                        args.geocode_limit,
+                        idx,
+                        n_map,
+                    )
+                    _, _, _, nu = geocode_address_simple(
+                        query,
+                        cache,
+                        session,
+                        geoapify_key=geoapify_key,
+                        opencage_key=opencage_key,
+                        google_key=google_key,
+                        http_budget=rem,
+                    )
+                    api_calls += nu
+
+                c = cache.get(query, {})
+                if c.get("lat") is not None:
+                    lat, lon = float(c["lat"]), float(c["lon"])
+                    coord_source = str(c.get("coord_source") or "geocode_cache")
 
         if lat is None and county:
             cll = county_to_latlon(str(county))
@@ -589,6 +902,40 @@ def main() -> None:
             lat, lon = approximate_point_estonia(domain, loc_name)
             coord_source = "approximate_ee"
 
+        # Ручные оверрайды (приоритетнее автологики): set_manual | hide
+        ov_key = _normalize_location_key(loc_name, domain)
+        ov = coord_overrides.get(ov_key)
+        if isinstance(ov, dict):
+            action = str(ov.get("action") or "").strip().lower()
+            if action == "hide":
+                hidden_rows += 1
+                continue
+            if action == "set_manual":
+                try:
+                    ov_lat = float(ov.get("lat"))
+                    ov_lon = float(ov.get("lon"))
+                    if np.isfinite(ov_lat) and np.isfinite(ov_lon):
+                        lat, lon = ov_lat, ov_lon
+                        coord_source = "manual_override"
+                        overridden_rows += 1
+                except (TypeError, ValueError):
+                    LOG.warning(
+                        "Некорректный manual override для %s/%s: %s",
+                        domain,
+                        loc_name,
+                        ov,
+                    )
+
+        county_out = str(county).strip() if county else None
+        if not county_out:
+            county_from_match = _extract_county_from_address(geocode_matched)
+            if county_from_match:
+                county_out = county_from_match
+        if not county_out:
+            county_from_coords = _nearest_county_from_coords(lat, lon)
+            if county_from_coords:
+                county_out = county_from_coords
+
         kind = PLACE_KIND.get(domain, "other")
         sid = None
         if "sample_id" in row.index and pd.notna(row.get("sample_id")):
@@ -597,7 +944,7 @@ def main() -> None:
             "location": loc_name,
             "domain": domain,
             "place_kind": kind,
-            "county": county,
+            "county": county_out,
             "sample_date": row["sample_date"].isoformat()
             if pd.notna(row["sample_date"])
             else None,
@@ -631,7 +978,7 @@ def main() -> None:
 
     _timer_print(
         f"7) цикл координат по {len(latest)} точкам "
-        f"({'resolve: OpenCage' if args.resolve_coordinates else 'OpenCage (simple)'}; "
+        f"({'resolve: Google→Geoapify→OpenCage' if args.resolve_coordinates else 'Google→Geoapify→OpenCage (simple)'}; "
         f"HTTP остаток лимита: {budget_remain[0] if args.resolve_coordinates else '—'})",
         t_run,
         last,
@@ -676,7 +1023,7 @@ def main() -> None:
     base_disclaimer = (
         "Официальный статус — по полю vastavus в данных Terviseamet. "
         "Координаты: при наличии — из справочников opendata Terviseamet (EPSG:3301→WGS84), см. coord_source terviseamet_*; "
-        "иначе при --resolve-coordinates или простом режиме с лимитом — OpenCage (OPENCAGE_API_KEY). "
+        "иначе при --resolve-coordinates или простом режиме с лимитом — Google→Geoapify→OpenCage. "
         "coord_source=opencage|geocode_cache (в старых снимках возможны google) — привязка к найденному адресу (см. geocode_matched_address в точке); "
         "county_centroid — центроид уезда; approximate_ee — только визуальный разброс по bbox Эстонии, не место объекта."
     )
@@ -705,7 +1052,17 @@ def main() -> None:
             "lgbm": "LightGBM",
         },
         "data_catalog_url": OPENDATA_CATALOG_URL,
-        "map_domains": sorted(MAP_DOMAINS),
+        "map_domains": selected_domains,
+        "source_domain_status": domain_source_status,
+        "mineraalvesi_status": {
+            "requested": bool(args.include_mineraalvesi),
+            "loaded": "mineraalvesi" in loaded_domains,
+            "reason": (
+                "ok"
+                if "mineraalvesi" in loaded_domains
+                else ("not_requested" if not args.include_mineraalvesi else "no_rows_or_source_unavailable")
+            ),
+        },
         "place_kinds": {
             "swimming": "Открытая вода (купальные места)",
             "pool_spa": "Бассейн / СПА / ujula",
@@ -714,6 +1071,11 @@ def main() -> None:
             "other": "Прочее",
         },
         "disclaimer": base_disclaimer + model_note,
+        "coordinate_override_stats": {
+            "overrides_loaded": len(coord_overrides),
+            "manual_applied": overridden_rows,
+            "hidden_applied": hidden_rows,
+        },
         "places": rows_out,
     }
     with open(ARTIFACTS / "snapshot.json", "w", encoding="utf-8") as f:

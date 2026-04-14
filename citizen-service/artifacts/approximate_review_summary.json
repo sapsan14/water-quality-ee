@@ -1,0 +1,11 @@
+{
+  "total_places": 2194,
+  "approximate_total": 318,
+  "approximate_share_pct": 14.49,
+  "approximate_by_domain": {
+    "veevark": 278,
+    "basseinid": 39,
+    "joogivesi": 1
+  },
+  "top50_csv": "/home/anton/projects/water-quality-ee/citizen-service/artifacts/approximate_review_top50.csv"
+}

@@ -1,0 +1,5 @@
+Source for county boundaries:
+https://gist.github.com/nutiteq/1ab8f24f9a6ad2bb47da (file: maakonnad.geojson)
+
+Local file `estonia_counties_simplified.geojson` was derived from that source
+by reducing coordinate precision for faster frontend rendering.

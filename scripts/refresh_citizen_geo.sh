@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Пересборка citizen snapshot: координаты и уезд — только OpenCage (OPENCAGE_API_KEY).
+# Пересборка citizen snapshot: координаты через каскад Geoapify -> OpenCage -> Google.
 # Из корня репозитория (см. citizen-service/GEO_SECRETS.md).
 #
 # Примеры:
@@ -20,8 +20,10 @@ fi
 LIMIT="${GEOCODE_HTTP_LIMIT:-8000}"
 export OPENCAGE_API_KEY="${OPENCAGE_API_KEY:-}"
 
-exec python citizen-service/scripts/build_citizen_snapshot.py \
+python3 citizen-service/scripts/build_citizen_snapshot.py \
   --infer-county \
   --resolve-coordinates \
   --geocode-limit "$LIMIT" \
   "$@"
+
+python3 citizen-service/scripts/export_frontend_snapshot.py

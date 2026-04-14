@@ -186,6 +186,23 @@ water-quality-ee/
 - **Веб (Streamlit Cloud):** после деплоя вставьте ссылку в [citizen-service/STREAMLIT_ACCESS.md](citizen-service/STREAMLIT_ACCESS.md) (формат `https://<subdomain>.streamlit.app`). Инструкция по публикации: [citizen-service/DEPLOY.md](citizen-service/DEPLOY.md).
 - Сбор снимка и план CI: [citizen-service/README.md](citizen-service/README.md), [citizen-service/PLAN.md](citizen-service/PLAN.md).
 
+### Новый web UI (Next.js + Cloudflare Pages)
+
+Добавлен production-ориентированный фронтенд в [`frontend/`](frontend/README.md) для более быстрого и гибкого UX, чем Streamlit:
+
+```bash
+python3 citizen-service/scripts/export_frontend_snapshot.py
+cd frontend
+npm install
+npm run dev
+```
+
+Архитектура и контракты:
+- [docs/frontend_architecture.md](docs/frontend_architecture.md)
+- [docs/frontend_data_contract.md](docs/frontend_data_contract.md)
+- [docs/frontend_design_system.md](docs/frontend_design_system.md)
+- [docs/frontend_observability_and_cost.md](docs/frontend_observability_and_cost.md)
+
 ---
 
 ## Связи

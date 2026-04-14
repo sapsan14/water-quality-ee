@@ -37,6 +37,7 @@ OPENDATA_PREFIX = {
     "veevark": "veevargi_veeproovid",
     "basseinid": "basseini_veeproovid",
     "joogivesi": "joogiveeallika_veeproovid",
+    "mineraalvesi": "mineraalvee_veeproovid",
 }
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
@@ -439,6 +440,72 @@ def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
     return df
 
 
+def _parse_mineraalvesi_opendata(tree: etree._Element) -> pd.DataFrame:
+    """
+    Opendata: корень mineraalvee_veeproovid (если доступен), структура близка к veevärk.
+    Поддерживаем несколько вариантов названий полей объекта.
+    """
+    records = []
+    for pv in tree.findall(".//proovivott"):
+        facility = (
+            _text(pv, "mineraalvesi")
+            or _text(pv, "mineraalvesi_asutus")
+            or _text(pv, "veevark")
+            or _text(pv, "veeallikas")
+            or ""
+        ).strip()
+        site = _proovivotukoht_nimetus(pv)
+        loc = facility or site or ""
+        rec = {
+            "domain": "mineraalvesi",
+            "sample_id": _text(pv, "id"),
+            "proovivotukoht_id": _proovivotukoht_id(pv),
+            "mineraalvesi_id": _text(pv, "mineraalvesi_id") or _text(pv, "veevark_id"),
+            "location": loc,
+            "geocode_facility": facility,
+            "geocode_site": site,
+            "county": _text(pv, "maakond"),
+            "sample_date": _text(pv, "proovivotu_aeg"),
+        }
+        keys = (
+            "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+            "ammonium", "fluoride", "manganese", "iron", "chlorides",
+            "sulfates", "ph", "turbidity", "color",
+        )
+        for k in keys:
+            rec[k] = None
+
+        for n_el in pv.findall(".//naitaja"):
+            nm = _text(n_el, "nimetus")
+            if not nm:
+                continue
+            col = _veevark_naitaja_col(nm)
+            if not col:
+                continue
+            val = _parse_float_text(_text(n_el, "sisaldus"))
+            yhik = _text(n_el, "yhik")
+            if col in ("iron", "manganese") and _ugl_to_mgl(yhik):
+                val = val / 1000.0 if val is not None else None
+            rec[col] = _merge_num(rec[col], val, col)
+
+        rec["compliant"] = _compliant_from_hinnang(pv)
+        records.append(rec)
+
+    df = pd.DataFrame(records)
+    if len(df) == 0:
+        return df
+    df["sample_date"] = pd.to_datetime(df["sample_date"], dayfirst=True, errors="coerce")
+    num_cols = [
+        "e_coli", "coliforms", "enterococci", "nitrates", "nitrites",
+        "ammonium", "fluoride", "manganese", "iron", "chlorides",
+        "sulfates", "ph", "turbidity", "color",
+    ]
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
+
+
 def _basseinid_naitaja_col(nimetus: str) -> Optional[str]:
     """Маппинг эстонских названий показателей бассейна → колонки DataFrame."""
     n = nimetus.strip().lower()
@@ -696,6 +763,19 @@ def parse_joogivesi(xml_bytes: bytes) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def parse_mineraalvesi(xml_bytes: bytes) -> pd.DataFrame:
+    tree = etree.fromstring(xml_bytes)
+    root_tag = etree.QName(tree).localname
+    if root_tag == "mineraalvee_veeproovid":
+        return _parse_mineraalvesi_opendata(tree)
+    if tree.findall(".//uuring"):
+        df = _parse_veevark_legacy(tree)
+        if len(df):
+            df["domain"] = "mineraalvesi"
+        return df
+    return pd.DataFrame()
+
+
 # ── Универсальная загрузка ───────────────────────────────────────────────────
 
 PARSERS = {
@@ -703,6 +783,7 @@ PARSERS = {
     "veevark": parse_veevark,
     "basseinid": parse_basseinid,
     "joogivesi": parse_joogivesi,
+    "mineraalvesi": parse_mineraalvesi,
 }
 
 
@@ -718,7 +799,7 @@ def load_domain(
     Загрузить домен: несколько годов opendata, объединить в один DataFrame.
 
     Параметры:
-        domain_key: supluskoha | veevark | basseinid | joogivesi
+        domain_key: supluskoha | veevark | basseinid | joogivesi | mineraalvesi
         use_cache: читать data/raw/{domain}_{year}.xml
         years: список лет (по умолчанию текущий и 5 предыдущих)
         infer_county: заполнить пустой maakond из overrides + кэша (+ опционально OpenCage)
@@ -747,7 +828,7 @@ def load_domain(
             lambda s: normalize_location(s, domain_key)
         )
 
-    if len(df) > 0 and domain_key in ("supluskoha", "veevark", "basseinid", "joogivesi"):
+    if len(df) > 0 and domain_key in ("supluskoha", "veevark", "basseinid", "joogivesi", "mineraalvesi"):
         from terviseamet_reference_coords import attach_official_coords_to_df
 
         df = attach_official_coords_to_df(df, domain_key, use_cache=use_cache)

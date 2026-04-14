@@ -127,18 +127,25 @@ jobs:
             --limit 0 \
             --quiet
 
+      - name: Export frontend snapshot JSON
+        run: |
+          python citizen-service/scripts/export_frontend_snapshot.py
+
       - name: Commit refreshed snapshot + model + geocode caches
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(citizen): refresh snapshot [${{ steps.wf.outputs.mode }}] [skip ci]"
+          commit_message: "chore(citizen): refresh snapshot [${{ steps.wf.outputs.mode }}]"
           file_pattern: |
             citizen-service/artifacts/snapshot.json
             citizen-service/artifacts/citizen_model.joblib
             citizen-service/data/coordinate_resolve_cache.json
             citizen-service/data/geocode_cache.json
+            frontend/public/data/snapshot.frontend.json
 
       - name: Upload snapshot artifact
         uses: actions/upload-artifact@v4
         with:
           name: citizen-snapshot-${{ steps.wf.outputs.mode }}
-          path: citizen-service/artifacts/snapshot.json
+          path: |
+            citizen-service/artifacts/snapshot.json
+            frontend/public/data/snapshot.frontend.json
