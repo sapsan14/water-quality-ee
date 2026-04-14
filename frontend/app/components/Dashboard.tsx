@@ -180,6 +180,10 @@ export default function Dashboard({ snapshot }: Props) {
     const saved = window.localStorage.getItem("water.ui.lang");
     return saved === "ru" || saved === "et" || saved === "en" ? saved : "ru";
   });
+  const [showLangDialog, setShowLangDialog] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !window.localStorage.getItem("water.ui.lang");
+  });
   const [cyrillicFont, setCyrillicFont] = useState<CyrillicFont>(() => {
     if (typeof window === "undefined") return "ibm";
     const saved = window.localStorage.getItem("water.ui.cyrillic-font.v1");
@@ -189,6 +193,9 @@ export default function Dashboard({ snapshot }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filtersPinned, setFiltersPinned] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [infoPageOpen, setInfoPageOpen] = useState(false);
+  const [infoPageTab, setInfoPageTab] = useState<TabKey>("alerts");
+  const [toast, setToast] = useState<string | null>(null);
   const [infoTitle, setInfoTitle] = useState("");
   const [infoText, setInfoText] = useState("");
   const [query, setQuery] = useState("");
@@ -277,7 +284,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Алерты",
           domain: "Домены",
-          analytics: "Модели и диагностика",
+          analytics: "Диагностика",
           aboutModel: "О модели",
           aboutService: "О сервисе"
         },
@@ -359,7 +366,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Häired",
           domain: "Domeenid",
-          analytics: "Mudelid ja diagnostika",
+          analytics: "Diagnostika",
           aboutModel: "Mudelist",
           aboutService: "Teenusest"
         },
@@ -441,7 +448,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Alerts",
           domain: "Domains",
-          analytics: "Models and diagnostics",
+          analytics: "Diagnostics",
           aboutModel: "About model",
           aboutService: "About service"
         },
@@ -498,6 +505,16 @@ export default function Dashboard({ snapshot }: Props) {
     window.localStorage.setItem("water.ui.lang", nextLang);
     window.dispatchEvent(new CustomEvent("water-ui-lang-changed", { detail: { lang: nextLang } }));
   };
+  const chooseLang = (nextLang: Lang) => {
+    setLang(nextLang);
+    setShowLangDialog(false);
+    pushHeaderLang(nextLang);
+  };
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
   const expertModeText =
     lang === "ru"
       ? [
@@ -933,6 +950,22 @@ export default function Dashboard({ snapshot }: Props) {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
   }, [snapshot.places_count, snapshot.has_model_predictions]);
 
+  const toastFiredRef = useRef(false);
+  useEffect(() => {
+    if (!isMobile || toastFiredRef.current) return;
+    toastFiredRef.current = true;
+    const totalPlaces = snapshot.places.length;
+    const totalViolations = snapshot.places.filter((p) => p.official_compliant === 0).length;
+    const msg = lruet(
+      lang,
+      `${totalPlaces} точек · ${totalViolations} нарушений`,
+      `${totalPlaces} punkti · ${totalViolations} rikkumist`,
+      `${totalPlaces} points · ${totalViolations} violations`
+    );
+    const timer = setTimeout(() => setToast(msg), 300);
+    return () => clearTimeout(timer);
+  }, [isMobile, lang, snapshot.places]);
+
   useEffect(() => {
     pushHeaderLang(lang);
   }, [lang]);
@@ -1366,8 +1399,24 @@ export default function Dashboard({ snapshot }: Props) {
 
   return (
     <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
+      {toast ? <div className="toastBanner">{toast}</div> : null}
+
+      {showLangDialog ? (
+        <div className="langDialogBackdrop">
+          <div className="langDialogCard panel">
+            <p className="langDialogTitle">Choose language / Выберите язык</p>
+            <p className="langDialogHint">Keel / Language / Язык</p>
+            <div className="langDialogButtons">
+              <button className="btn" onClick={() => chooseLang("et")}>Eesti</button>
+              <button className="btn" onClick={() => chooseLang("ru")}>Русский</button>
+              <button className="btn" onClick={() => chooseLang("en")}>English</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className={`topBar unifiedTopBar ${headerCompact ? "compact" : ""}`}>
-        <div className="brandBlock unifiedBrandBlock">
+        <div className="brandBlock unifiedBrandBlock" style={{ display: "flex" }}>
           <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo unifiedBrandLogo" width={36} height={36} priority />
           <div className="unifiedBrandText">
             <div className="unifiedBrandTitle">H2O Atlas</div>
@@ -1377,13 +1426,13 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          <button className={`btn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => setLang("ru")}>
+          <button className={`btn langBtn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>
             RU
           </button>
-          <button className={`btn ${lang === "et" ? "btnActive" : ""}`} onClick={() => setLang("et")}>
+          <button className={`btn langBtn ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>
             ET
           </button>
-          <button className={`btn ${lang === "en" ? "btnActive" : ""}`} onClick={() => setLang("en")}>
+          <button className={`btn langBtn ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>
             EN
           </button>
           <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
@@ -1396,6 +1445,40 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
       </div>
+
+      {isMobile ? (
+        <div className={`mobileFloatingToolbar ${isMapFullscreen && mobilePanelState === "collapsed" ? "" : "hidden"}`}>
+          <button
+            type="button"
+            className="fabBtn"
+            onClick={() => setDrawerOpen(true)}
+            aria-label={t.filters}
+            title={t.filters}
+          >
+            <span className="btnIcon" aria-hidden="true"><Icon name="filters" /></span>
+          </button>
+          <button
+            type="button"
+            className={`fabBtn ${nearbyOnly ? "active" : ""}`}
+            onClick={activateNearMe}
+            aria-label={t.nearMe}
+            title={t.nearMe}
+          >
+            <span className="btnIcon" aria-hidden="true"><Icon name="locate" /></span>
+          </button>
+          <button
+            type="button"
+            className="fabBtn"
+            onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
+            aria-label="Info"
+            title="Info"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+          </button>
+        </div>
+      ) : null}
 
       {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
       <aside className={`drawer panel ${drawerOpen || filtersPinned ? "open" : ""} ${filtersPinned ? "pinned" : ""}`}>
@@ -1881,6 +1964,17 @@ export default function Dashboard({ snapshot }: Props) {
                   <Icon name="locate" />
                 </span>
               </button>
+              <button
+                type="button"
+                className="btn btnSmall iconBtn"
+                onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
+                aria-label="Info"
+                title="Info"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+              </button>
             </div>
           </div>
           <strong className="mobileSheetTitle">{t.selectedPoint}</strong>
@@ -2010,7 +2104,7 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
           <div className="panel reportPanel">
             <h4>{lruet(lang, "Отчёт здоровья доменов", "Domeenide tervisearuanne", "Domain health report")}</h4>
-            <div className="tableWrap compact">
+            <div className={`tableWrap compact ${isMobile ? "mobileResponsiveTable" : ""}`}>
               <table className="table">
                 <thead>
                   <tr>
@@ -2040,7 +2134,7 @@ export default function Dashboard({ snapshot }: Props) {
           <div className="reportsGrid">
             <div className="panel reportPanel">
               <h4>{lruet(lang, "Отчёт по доменам", "Domeenide aruanne", "Domain report")}</h4>
-              <div className="tableWrap">
+              <div className={`tableWrap ${isMobile ? "mobileResponsiveTable" : ""}`}>
                 <table className="table">
                   <thead>
                     <tr>
@@ -2725,7 +2819,7 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         ) : null}
 
-        <div className="tableWrap">
+        <div className={`tableWrap ${isMobile ? "mobileResponsiveTable" : ""}`}>
           <table className="table">
             <thead>
               <tr>
@@ -2824,6 +2918,228 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       </section>
       </div>
+
+      {infoPageOpen ? (
+        <div className="infoPageOverlay">
+          <div className="infoPageHeader">
+            <h3 className="infoPageTitle">H2O Atlas</h3>
+            <button className="btn btnSmall" onClick={() => setInfoPageOpen(false)}>
+              <span className="btnIcon" aria-hidden="true"><Icon name="close" /></span>
+              <span>{t.close}</span>
+            </button>
+          </div>
+          <div className="infoPageTabRow">
+            {(["alerts", "domain", "analytics", "aboutModel", "aboutService"] as TabKey[]).map((tab) => (
+              <button
+                key={`ipt-${tab}`}
+                className={`infoPageTab ${infoPageTab === tab ? "active" : ""}`}
+                onClick={() => setInfoPageTab(tab)}
+              >
+                {t.tabs[tab]}
+              </button>
+            ))}
+          </div>
+          <div className="infoPageBody">
+            {infoPageTab === "alerts" ? (
+              <div>
+                <h4>{lruet(lang, "Центр алертов", "Häirekeskus", "Alert center")}</h4>
+                <p className="hint">
+                  {lruet(
+                    lang,
+                    "Точки с высоким модельным риском или официальными нарушениями.",
+                    "Punktid kõrge mudeliriski või ametliku rikkumisega.",
+                    "Points with high model risk or official violations."
+                  )}
+                </p>
+                {topAlerts.length === 0 ? (
+                  <p className="hint">{lruet(lang, "Нет активных алертов.", "Aktiivseid häireid pole.", "No active alerts.")}</p>
+                ) : (
+                  <ul className="alertList">
+                    {topAlerts.map((p) => (
+                      <li key={`ip-alert-${p.id}`}>
+                        <button className="linkBtn" onClick={() => { selectPoint(p.id); setInfoPageOpen(false); }}>
+                          {p.location}
+                        </button>
+                        <span className={`badge ${p.risk_level === "high" ? "bad" : "warn"}`}>
+                          {p.model_violation_prob !== null ? p.model_violation_prob.toFixed(2) : p.risk_level}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
+
+            {infoPageTab === "domain" ? (
+              <div>
+                <h4>{lruet(lang, "Отчёт по доменам", "Domeenide aruanne", "Domain report")}</h4>
+                <div className="tableWrap mobileResponsiveTable">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{lruet(lang, "Домен", "Domeen", "Domain")}</th>
+                        <th>{lruet(lang, "Всего", "Kokku", "Total")}</th>
+                        <th>{lruet(lang, "Наруш.", "Rikkum.", "Viol.")}</th>
+                        <th>{lruet(lang, "Высок.", "Kõrge", "High")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {domainStats.map(([d, s]) => (
+                        <tr key={`ip-domain-${d}`}>
+                          <td>{d}</td>
+                          <td>{s.total}</td>
+                          <td>{s.violations}</td>
+                          <td>{s.highRisk}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+
+            {infoPageTab === "analytics" ? (
+              <div>
+                <h4>{t.tabs.analytics}</h4>
+                <div className="stats">
+                  {quickInsights.map((i) => (
+                    <div className="stat" key={`ip-qi-${i.key}`}>
+                      <div className="k">{i.label}</div>
+                      <div className="v">
+                        {i.value} <span className={`badge ${i.level}`}>{severityLabel(i.level)}</span>
+                      </div>
+                      <div className="hint">{i.hint}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: "0.75rem" }}>
+                  <p className="hint">
+                    {lruet(
+                      lang,
+                      "Модели (LR, RF, GB, LightGBM) оценивают P(нарушение) по лабораторным данным. Это не прогноз будущего.",
+                      "Mudelid (LR, RF, GB, LightGBM) hindavad P(rikkumine) laborinäitajate põhjal.",
+                      "Models (LR, RF, GB, LightGBM) estimate P(violation) from lab data."
+                    )}
+                  </p>
+                  <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.5rem" }}>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Model</th>
+                          <th>{lruet(lang, "Средняя P", "Keskmine P", "Average P")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(snapshot.diagnostics.mean_model_probabilities || {}).map(([key, val]) => (
+                          <tr key={`ip-diag-${key}`}>
+                            <td>{snapshot.model_labels?.[key] || key}</td>
+                            <td>{typeof val === "number" ? val.toFixed(2) : "n/a"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {infoPageTab === "aboutModel" ? (
+              <div>
+                <h4>{t.tabs.aboutModel}</h4>
+                <p className="hint">{t.aboutModel}</p>
+                <div className="stats" style={{ marginTop: "0.5rem" }}>
+                  {quickInsights.map((i) => (
+                    <div className="stat" key={`ip-qim-${i.key}`}>
+                      <div className="k">{i.label}</div>
+                      <div className="v">{i.value} <span className={`badge ${i.level}`}>{severityLabel(i.level)}</span></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.75rem" }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{lruet(lang, "Уровень", "Tase", "Level")}</th>
+                        <th>{lruet(lang, "Вопрос", "Küsimus", "Question")}</th>
+                        <th>{lruet(lang, "Метрика", "Mõõdik", "Metric")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>1</td>
+                        <td>{lruet(lang, "Разделяет ли модель классы?", "Kas mudel eristab klasse?", "Does the model separate classes?")}</td>
+                        <td>ROC-AUC</td>
+                      </tr>
+                      <tr>
+                        <td>2</td>
+                        <td>{lruet(lang, "Какие ошибки?", "Milliseid vigu?", "What errors?")}</td>
+                        <td>Precision / Recall</td>
+                      </tr>
+                      <tr>
+                        <td>3</td>
+                        <td>{lruet(lang, "Калиброваны ли вероятности?", "Kui hästi kalibreeritud?", "Calibrated?")}</td>
+                        <td>Calibration</td>
+                      </tr>
+                      <tr>
+                        <td>4</td>
+                        <td>{lruet(lang, "Почему этот риск?", "Miks just see risk?", "Why this risk?")}</td>
+                        <td>SHAP</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+
+            {infoPageTab === "aboutService" ? (
+              <div>
+                <h4>{t.tabs.aboutService}</h4>
+                <p className="hint">{t.aboutService}</p>
+                <p className="hint">
+                  {lruet(
+                    lang,
+                    "Сервис объединяет данные Terviseamet, карту, аналитику и ML-оценки для жителей, туристов и специалистов.",
+                    "Teenus ühendab Terviseameti avaandmed, kaardi, analüütika ja ML-hinnangud.",
+                    "The service combines Terviseamet open data, map, analytics and ML assessments."
+                  )}
+                </p>
+                {snapshot.data_catalog_url ? (
+                  <p className="hint">
+                    {lruet(lang, "Источник:", "Allikas:", "Source:")}{" "}
+                    <a href={snapshot.data_catalog_url} target="_blank" rel="noreferrer" className="linkBtn">
+                      {snapshot.data_catalog_url}
+                    </a>
+                  </p>
+                ) : null}
+                <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.75rem" }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{lruet(lang, "Элемент", "Element", "Element")}</th>
+                        <th>{lruet(lang, "Описание", "Kirjeldus", "Description")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>{lruet(lang, "Цвет маркера", "Markeri värv", "Marker color")}</td>
+                        <td>{lruet(lang, "Зелёный/жёлтый/красный = низкий/средний/высокий риск", "Roheline/kollane/punane = madal/keskmine/kõrge risk", "Green/yellow/red = low/medium/high risk")}</td>
+                      </tr>
+                      <tr>
+                        <td>{lruet(lang, "Иконка", "Ikoon", "Icon")}</td>
+                        <td>{lruet(lang, "Тип: пляж, бассейн, сеть, источник", "Tüüp: rand, bassein, võrk, allikas", "Type: beach, pool, network, source")}</td>
+                      </tr>
+                      <tr>
+                        <td>{lruet(lang, "Кластер", "Klaster", "Cluster")}</td>
+                        <td>{lruet(lang, "Количество точек в группе", "Punktide arv grupis", "Number of points in group")}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {infoOpen ? (
         <div className="modalBackdrop" onClick={() => setInfoOpen(false)}>
