@@ -10,7 +10,7 @@ import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
 
 type Props = { snapshot: FrontendSnapshot };
-type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters" | "locate";
+type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters" | "locate" | "info";
 type CyrillicFont = "ibm" | "manrope";
 
 const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high", "unknown"] as never;
@@ -167,6 +167,15 @@ function Icon({ name }: { name: IconName }) {
       </svg>
     );
   }
+  if (name === "info") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M12 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="12" cy="7.5" r="1" fill="currentColor" />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 4a8 8 0 1 1-5.7 2.3L4.9 7.7A10 10 0 1 0 12 2v2Zm-1 1 4 4-4 4V10H2V8h9V5Z" fill="currentColor" />
@@ -189,6 +198,12 @@ export default function Dashboard({ snapshot }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filtersPinned, setFiltersPinned] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [infoOverlayOpen, setInfoOverlayOpen] = useState(false);
+  const [langDialogDismissed, setLangDialogDismissed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    // Dismissed if user already has a saved language preference
+    return Boolean(window.localStorage.getItem("water.ui.lang"));
+  });
   const [infoTitle, setInfoTitle] = useState("");
   const [infoText, setInfoText] = useState("");
   const [query, setQuery] = useState("");
@@ -277,7 +292,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Алерты",
           domain: "Домены",
-          analytics: "Модели и диагностика",
+          analytics: "Диагностика",
           aboutModel: "О модели",
           aboutService: "О сервисе"
         },
@@ -359,7 +374,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Häired",
           domain: "Domeenid",
-          analytics: "Mudelid ja diagnostika",
+          analytics: "Diagnostika",
           aboutModel: "Mudelist",
           aboutService: "Teenusest"
         },
@@ -441,7 +456,7 @@ export default function Dashboard({ snapshot }: Props) {
         tabs: {
           alerts: "Alerts",
           domain: "Domains",
-          analytics: "Models and diagnostics",
+          analytics: "Diagnostics",
           aboutModel: "About model",
           aboutService: "About service"
         },
@@ -497,6 +512,11 @@ export default function Dashboard({ snapshot }: Props) {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("water.ui.lang", nextLang);
     window.dispatchEvent(new CustomEvent("water-ui-lang-changed", { detail: { lang: nextLang } }));
+  };
+  const pickLang = (l: Lang) => {
+    setLang(l);
+    pushHeaderLang(l);
+    setLangDialogDismissed(true);
   };
   const expertModeText =
     lang === "ru"
@@ -1377,15 +1397,17 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          <button className={`btn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => setLang("ru")}>
-            RU
-          </button>
-          <button className={`btn ${lang === "et" ? "btnActive" : ""}`} onClick={() => setLang("et")}>
-            ET
-          </button>
-          <button className={`btn ${lang === "en" ? "btnActive" : ""}`} onClick={() => setLang("en")}>
-            EN
-          </button>
+          <div className="langBtnsDesktop">
+            <button className={`btn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => setLang("ru")}>
+              RU
+            </button>
+            <button className={`btn ${lang === "et" ? "btnActive" : ""}`} onClick={() => setLang("et")}>
+              ET
+            </button>
+            <button className={`btn ${lang === "en" ? "btnActive" : ""}`} onClick={() => setLang("en")}>
+              EN
+            </button>
+          </div>
           <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
             <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>
               IBM
@@ -1422,6 +1444,13 @@ export default function Dashboard({ snapshot }: Props) {
             ) : null}
           </div>
         </div>
+        {isMobile ? (
+          <div className="drawerLangRow">
+            <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => pickLang("ru")}>RU</button>
+            <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => pickLang("et")}>ET</button>
+            <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => pickLang("en")}>EN</button>
+          </div>
+        ) : null}
         <div className="field">
           <label htmlFor="search-input">{t.search}</label>
           <input
@@ -1850,39 +1879,25 @@ export default function Dashboard({ snapshot }: Props) {
           className={`mobileBottomSheet ${mobilePanelState} ${isMapFullscreen ? "fullscreenShift" : ""} ${sheetDragging ? "dragging" : ""}`}
           style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
         >
-          <div className="mobileSheetHandleRow">
-            <button
-              type="button"
-              className="mobileSheetHandle"
-              onClick={cycleMobilePanelState}
-              onPointerDown={onSheetPointerDown}
-              onPointerMove={onSheetPointerMove}
-              onPointerUp={onSheetPointerUp}
-              onPointerCancel={() => {
-                sheetDragStartY.current = null;
-                sheetDragLastY.current = null;
-                sheetDragLastTs.current = null;
-                sheetDragVelocity.current = 0;
-                setSheetDragging(false);
-                setSheetDragOffset(0);
-              }}
-              aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
-            >
-              <span />
-            </button>
-            <div className="mobileSheetActions">
-              <button type="button" className="btn btnSmall iconBtn" onClick={() => setDrawerOpen(true)} aria-label={t.filters} title={t.filters}>
-                <span className="btnIcon" aria-hidden="true">
-                  <Icon name="filters" />
-                </span>
-              </button>
-              <button type="button" className="btn btnSmall iconBtn nearMeFabBtn" onClick={activateNearMe} aria-label={t.nearMe} title={t.nearMe}>
-                <span className="btnIcon" aria-hidden="true">
-                  <Icon name="locate" />
-                </span>
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="mobileSheetHandle"
+            onClick={cycleMobilePanelState}
+            onPointerDown={onSheetPointerDown}
+            onPointerMove={onSheetPointerMove}
+            onPointerUp={onSheetPointerUp}
+            onPointerCancel={() => {
+              sheetDragStartY.current = null;
+              sheetDragLastY.current = null;
+              sheetDragLastTs.current = null;
+              sheetDragVelocity.current = 0;
+              setSheetDragging(false);
+              setSheetDragOffset(0);
+            }}
+            aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
+          >
+            <span />
+          </button>
           <strong className="mobileSheetTitle">{t.selectedPoint}</strong>
           {!selectedPlace ? (
             <p className="hint">{t.noSelectedPoint}</p>
@@ -1960,7 +1975,74 @@ export default function Dashboard({ snapshot }: Props) {
         </button>
       ) : null}
 
-      <section className="panel">
+      {isMobile ? (
+        <>
+          <div className="mobileSearchBar">
+            <svg className="mobileSearchIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="2"/>
+              <path d="M15.5 15.5L20 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <input
+              className="mobileSearchInput"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={lruet(lang, "Поиск места...", "Otsi kohta...", "Search place...")}
+              aria-label={lruet(lang, "Поиск", "Otsing", "Search")}
+            />
+            {query ? (
+              <button className="mobileSearchClear" onClick={() => setQuery("")} aria-label="Clear search">
+                <Icon name="close" />
+              </button>
+            ) : null}
+          </div>
+          <div className="mobileFabs">
+            <button
+              type="button"
+              className="mobileFabBtn"
+              onClick={() => setDrawerOpen(true)}
+              aria-label={t.filters}
+              title={t.filters}
+            >
+              <span className="btnIcon" aria-hidden="true"><Icon name="filters" /></span>
+            </button>
+            <button
+              type="button"
+              className="mobileFabBtn nearMeFabBtn"
+              onClick={activateNearMe}
+              aria-label={t.nearMe}
+              title={t.nearMe}
+            >
+              <span className="btnIcon" aria-hidden="true"><Icon name="locate" /></span>
+            </button>
+            <button
+              type="button"
+              className="mobileFabBtn"
+              onClick={() => setInfoOverlayOpen(true)}
+              aria-label={lruet(lang, "Информация", "Info", "Info")}
+              title={lruet(lang, "Информация", "Info", "Info")}
+            >
+              <span className="btnIcon" aria-hidden="true"><Icon name="info" /></span>
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      <section className={`panel${isMobile && !infoOverlayOpen ? " mobileHidden" : ""}${isMobile && infoOverlayOpen ? " infoOverlayVisible" : ""}`}>
+        {isMobile && infoOverlayOpen ? (
+          <div className="infoOverlayHeader">
+            <strong className="infoOverlayTitle">
+              {lruet(lang, "Информация", "Info", "Info")}
+            </strong>
+            <button
+              type="button"
+              className="btn btnSmall iconBtn"
+              onClick={() => setInfoOverlayOpen(false)}
+              aria-label={t.close}
+            >
+              <span className="btnIcon" aria-hidden="true"><Icon name="close" /></span>
+            </button>
+          </div>
+        ) : null}
         <div className={`tabRow ${isTabPending ? "isPending" : ""}`}>
           <button className={`tabBtn ${activeTab === "alerts" ? "tabBtnActive" : ""}`} onClick={() => switchTab("alerts")}>
             {t.tabs.alerts}
@@ -2833,6 +2915,29 @@ export default function Dashboard({ snapshot }: Props) {
             <div className="modalFooter">
               <button className="btn btnSmall" onClick={() => setInfoOpen(false)}>
                 {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isMobile && !langDialogDismissed ? (
+        <div className="langDialogBackdrop">
+          <div className="langDialogCard">
+            <div className="langDialogGlobe" aria-hidden="true">🌐</div>
+            <p className="langDialogHint">Choose language · Valige keel · Выберите язык</p>
+            <div className="langDialogBtns">
+              <button className="langDialogBtn" onClick={() => pickLang("et")}>
+                <span className="langDialogFlag">🇪🇪</span>
+                <span>Eesti</span>
+              </button>
+              <button className="langDialogBtn" onClick={() => pickLang("ru")}>
+                <span className="langDialogFlag">🇷🇺</span>
+                <span>Русский</span>
+              </button>
+              <button className="langDialogBtn" onClick={() => pickLang("en")}>
+                <span className="langDialogFlag">🇬🇧</span>
+                <span>English</span>
               </button>
             </div>
           </div>

@@ -372,6 +372,7 @@ a {
   border-bottom: 1px solid #d8e5f6;
   padding: 0.5rem;
   text-align: left;
+  white-space: nowrap;
 }
 
 .table tbody tr {
@@ -1117,6 +1118,265 @@ body.mapFullscreenActive {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── Mobile search bar (fixed, hovers above map) ── */
+.mobileSearchBar {
+  position: fixed;
+  top: calc(40px + 0.6rem);
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  right: calc(44px + 1.5rem);
+  z-index: 1490;
+  display: none; /* shown only on mobile via @media */
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(11, 18, 32, 0.92);
+  border: 1px solid rgba(55, 82, 128, 0.6);
+  border-radius: 999px;
+  padding: 0.32rem 0.6rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.mobileSearchIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #9fb0c8;
+}
+
+.mobileSearchInput {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: #e6eef9;
+  font-size: 0.88rem;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.mobileSearchInput::placeholder {
+  color: #5b7a9c;
+}
+
+.mobileSearchClear {
+  background: transparent;
+  border: 0;
+  color: #9fb0c8;
+  cursor: pointer;
+  padding: 0.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.mobileSearchClear svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Language selection dialog (first-time mobile) ── */
+.langDialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  background: rgba(6, 12, 24, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+}
+
+.langDialogCard {
+  background: #0e1b2e;
+  border: 1px solid #2b3f5f;
+  border-radius: 20px 20px 16px 16px;
+  padding: 1.8rem 1.5rem 1.5rem;
+  width: min(380px, 92vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.langDialogGlobe {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.langDialogHint {
+  color: #9fb0c8;
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.langDialogBtns {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.langDialogBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  background: #162338;
+  border: 1px solid #2b3f5f;
+  border-radius: 14px;
+  padding: 0.9rem 0.5rem;
+  color: #e6eef9;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: inherit;
+  min-height: 80px;
+}
+
+.langDialogBtn:active {
+  background: #1e3054;
+  border-color: #4a72b0;
+}
+
+.langDialogFlag {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+/* Lang buttons: desktop only (hidden on mobile) */
+.langBtnsDesktop {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+/* Drawer lang row (mobile only, hidden on desktop) */
+.drawerLangRow {
+  display: none;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #2b3f5f;
+}
+
+/* Pin pulse animation for high-risk markers */
+@keyframes pinPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+/* ── Mobile floating action buttons ── */
+.mobileFabs {
+  position: fixed;
+  top: calc(52px + 0.6rem);
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  z-index: 1500;
+}
+
+body.mapFullscreenActive .mobileFabs {
+  z-index: 2600;
+}
+
+body.mapFullscreenActive .mobileSearchBar {
+  z-index: 2600;
+}
+
+.mobileFabBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(55, 82, 128, 0.55);
+  background: rgba(17, 27, 45, 0.92);
+  color: #e6eef9;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.15s;
+  padding: 0;
+}
+
+.mobileFabBtn:active {
+  background: rgba(35, 55, 90, 0.97);
+}
+
+.mobileFabBtn .btnIcon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileFabBtn .btnIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Info overlay (full-page tab section on mobile) ── */
+.mobileHidden {
+  display: none !important;
+}
+
+.infoOverlayVisible {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 3100 !important;
+  background: var(--bg) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  max-height: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.infoOverlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem 0.5rem;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+  border-bottom: 1px solid #2b3f5f;
+  margin-bottom: 0.5rem;
+}
+
+.infoOverlayTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.infoOverlayVisible .tabRow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 0 0.9rem 0.3rem;
+  margin-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.infoOverlayVisible > *:not(.infoOverlayHeader):not(.tabRow) {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
 .infoMiniTable {
   font-size: 0.8rem;
 }
@@ -1353,7 +1613,7 @@ body.mapFullscreenActive {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    padding: 0.45rem 0.55rem;
+    padding: 0.28rem 0.55rem;
   }
 
   .unifiedTopBar.compact {
@@ -1363,11 +1623,34 @@ body.mapFullscreenActive {
   }
 
   .unifiedBrandTitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
   .unifiedBrandSubtitle {
-    font-size: 0.74rem;
+    display: none;
+  }
+
+  .unifiedBrandLogo {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px;
+  }
+
+  /* Show search bar on mobile */
+  .mobileSearchBar {
+    display: flex;
+  }
+
+  /* Hide lang buttons from header on mobile */
+  .langBtnsDesktop {
+    display: none;
+  }
+
+  /* Show lang row inside the drawer on mobile */
+  .drawerLangRow {
+    display: flex;
   }
 
   .mainContent {
@@ -1451,12 +1734,16 @@ body.mapFullscreenActive {
     min-height: 32px;
   }
 
-  /* Filter drawer: full-page overlay on mobile */
+  /* Filter drawer: full-page overlay on mobile, above FABs (2600) and fullscreen map (2500) */
   .drawer {
     width: 100%;
     border-radius: 0;
-    z-index: 2000;
+    z-index: 3000;
     border-right: 0;
+  }
+
+  .drawerBackdrop {
+    z-index: 2990;
   }
 
   /* Pin button makes no sense on mobile — hide it */
