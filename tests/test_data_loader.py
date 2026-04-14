@@ -80,8 +80,9 @@ SUPLUSKOHA_XML = textwrap.dedent("""\
     <supluskoha_veeproovid>
       <proovivott>
         <id>1001</id>
+        <supluskoht_id>501</supluskoht_id>
         <supluskoht>Harku järve rand</supluskoht>
-        <proovivotukoht><nimetus>Harku põhjarand</nimetus></proovivotukoht>
+        <proovivotukoht><id>9001</id><nimetus>Harku põhjarand</nimetus></proovivotukoht>
         <maakond>Harju maakond</maakond>
         <proovivotu_aeg>15.07.2024</proovivotu_aeg>
         <naitaja>
@@ -98,8 +99,9 @@ SUPLUSKOHA_XML = textwrap.dedent("""\
       </proovivott>
       <proovivott>
         <id>1002</id>
+        <supluskoht_id>502</supluskoht_id>
         <supluskoht>Anne kanal</supluskoht>
-        <proovivotukoht><nimetus>Anne kanal</nimetus></proovivotukoht>
+        <proovivotukoht><id>9002</id><nimetus>Anne kanal</nimetus></proovivotukoht>
         <maakond>Tartu maakond</maakond>
         <proovivotu_aeg>20.07.2024</proovivotu_aeg>
         <naitaja>
@@ -151,6 +153,11 @@ class TestSupluskohaParser:
         row = self.df[self.df["location"] == "Harku järve rand"].iloc[0]
         assert row["county"] == "Harju maakond"
 
+    def test_facility_and_sampling_point_ids(self):
+        row = self.df[self.df["location"] == "Harku järve rand"].iloc[0]
+        assert row["supluskoht_id"] == "501"
+        assert row["proovivotukoht_id"] == "9001"
+
 
 # ── Парсинг veevark XML ───────────────────────────────────────────────────────
 
@@ -158,8 +165,9 @@ VEEVARK_XML = textwrap.dedent("""\
     <veevargi_veeproovid>
       <proovivott>
         <id>2001</id>
+        <veevark_id>701</veevark_id>
         <veevark>Tallinn veevärk</veevark>
-        <proovivotukoht><nimetus>Mustamäe pump</nimetus></proovivotukoht>
+        <proovivotukoht><id>8001</id><nimetus>Mustamäe pump</nimetus></proovivotukoht>
         <maakond>Harju maakond</maakond>
         <proovivotu_aeg>10.03.2024</proovivotu_aeg>
         <naitaja>
@@ -178,8 +186,9 @@ VEEVARK_XML = textwrap.dedent("""\
       </proovivott>
       <proovivott>
         <id>2002</id>
+        <veevark_id>702</veevark_id>
         <veevark>Tartu veevärk</veevark>
-        <proovivotukoht><nimetus>Annelinn</nimetus></proovivotukoht>
+        <proovivotukoht><id>8002</id><nimetus>Annelinn</nimetus></proovivotukoht>
         <maakond>Tartu maakond</maakond>
         <proovivotu_aeg>12.03.2024</proovivotu_aeg>
         <naitaja>
@@ -219,3 +228,8 @@ class TestVeevarkParser:
 
     def test_domain_column(self):
         assert (self.df["domain"] == "veevark").all()
+
+    def test_veevark_and_pt_ids(self):
+        row = self.df[self.df["iron"].round(2) == 0.18].iloc[0]
+        assert row["veevark_id"] == "701"
+        assert row["proovivotukoht_id"] == "8001"

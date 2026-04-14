@@ -3,16 +3,19 @@
 Собрать snapshot для гражданского приложения: последняя проба по (domain, location),
 официальный compliant, вероятности нарушения по 4 моделям (LR, RF, GradBoost, LightGBM), координаты.
 
-Координаты в XML Terviseamet нет. Режим --resolve-coordinates: каскад In-ADS (Maa-amet) →
-Google (переменная GOOGLE_MAPS_GEOCODING_API_KEY) → Nominatim; кэш coordinate_resolve_cache.json.
---geocode-limit — лимит HTTP-запросов на всю сборку (разделён между сервисами).
+Координаты в файлах *_veeproovid_YYYY.xml нет; при load_all/load_domain подтягиваются
+официальные L-EST97→WGS84 из справочников opendata (supluskohad.xml и др.) → official_lat/lon.
+Если их нет — простой режим или --resolve-coordinates: OpenCage (OPENCAGE_API_KEY);
+кэш coordinate_resolve_cache.json. Google / In-ADS / Nominatim не используются.
+--geocode-limit — лимит HTTP-запросов на всю сборку.
 
 Запуск из корня репозитория:
   python citizen-service/scripts/build_citizen_snapshot.py
   python citizen-service/scripts/build_citizen_snapshot.py --resolve-coordinates --geocode-limit 8000 --infer-county
-  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # только старый Nominatim
+  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: OpenCage
   python citizen-service/scripts/build_citizen_snapshot.py --map-only
   python citizen-service/scripts/build_citizen_snapshot.py --infer-county
+  python citizen-service/scripts/build_citizen_snapshot.py --log-level DEBUG  # подробный лог геокода/кэша
 
 Требует: скачанные XML (python src/data_loader.py) и зависимости из requirements.txt.
 Для полного снимка также нужен joblib (модели пишутся в artifacts/citizen_model.joblib).
@@ -23,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import os
 import sys
 import time
@@ -66,6 +70,19 @@ ARTIFACTS = ROOT / "citizen-service" / "artifacts"
 GEOCODE_PATH = ROOT / "citizen-service" / "data" / "geocode_cache.json"
 COORD_RESOLVE_PATH = ROOT / "citizen-service" / "data" / "coordinate_resolve_cache.json"
 
+LOG = logging.getLogger("citizen.snapshot")
+
+
+def _opencage_inter_request_delay_sec() -> float:
+    """Пауза между запросами OpenCage (см. county_infer / OPENCAGE_MIN_DELAY_SEC)."""
+    raw = (os.environ.get("OPENCAGE_MIN_DELAY_SEC") or "").strip()
+    if raw:
+        try:
+            return max(0.15, float(raw))
+        except ValueError:
+            pass
+    return 0.55
+
 
 def _load_repo_dotenv() -> None:
     """Подхватить корневой .env (не в git). Явные переменные окружения не перезаписываем."""
@@ -77,6 +94,20 @@ def _load_repo_dotenv() -> None:
     except ImportError:
         return
     load_dotenv(path, override=False)
+
+
+def _prefer_certifi_ca_bundle() -> None:
+    """На части WSL/корпоративных Linux системный CA-пакет пустой — requests/geopy падают по SSL."""
+    if os.environ.get("SSL_CERT_FILE") or os.environ.get("REQUESTS_CA_BUNDLE"):
+        return
+    try:
+        import certifi
+
+        bundle = certifi.where()
+    except ImportError:
+        return
+    os.environ.setdefault("SSL_CERT_FILE", bundle)
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", bundle)
 # Точки на карте: купание, бассейны/СПА, водопровод (питьевая вода по точкам сети)
 MAP_DOMAINS = {"supluskoha", "basseinid", "veevark", "joogivesi"}
 OPENDATA_CATALOG_URL = "https://vtiav.sm.ee/index.php/opendata/"
@@ -179,49 +210,98 @@ def row_measurements(row: pd.Series) -> dict[str, float | int | str]:
     return out
 
 
-def geocode_nominatim(query: str, cache: dict) -> tuple[float, float] | None:
+def geocode_address_simple(
+    query: str,
+    cache: dict,
+    session: requests.Session,
+    *,
+    opencage_key: str | None,
+    http_budget: int,
+) -> tuple[float | None, float | None, str | None, int]:
+    """
+    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе OpenCage.
+    Возвращает (lat, lon, coord_source, число_HTTP); lat/lon None при промахе.
+    """
+    clip = query[:88] + ("…" if len(query) > 88 else "")
     if query in cache:
         c = cache[query]
-        return float(c["lat"]), float(c["lon"])
-    try:
-        from geopy.geocoders import Nominatim
-        from geopy.extra.rate_limiter import RateLimiter
+        if c.get("lat") is not None and c.get("lon") is not None:
+            if not _geocode_resolve.geocode_cache_entry_is_precise_enough(c):
+                LOG.info(
+                    "coords simple-cache-ignore imprecise query=%s match=%s",
+                    clip,
+                    (str(c.get("matched_address") or ""))[:88],
+                )
+                del cache[query]
+            else:
+                src = str(c.get("coord_source") or "geocode_cache")
+                LOG.debug(
+                    "coords verified simple-cache lat=%.5f lon=%.5f source=%s query=%s",
+                    float(c["lat"]),
+                    float(c["lon"]),
+                    src,
+                    clip,
+                )
+                return float(c["lat"]), float(c["lon"]), src, 0
+        elif c.get("miss"):
+            return None, None, None, 0
+    used = 0
+    if http_budget <= 0:
+        return None, None, None, 0
+    if not opencage_key:
+        LOG.warning("coords simple: нет OPENCAGE_API_KEY — пропуск query=%s", clip)
+        cache[query] = {"lat": None, "lon": None, "miss": True}
+        return None, None, None, 0
 
-        nom = Nominatim(user_agent="water-quality-ee-citizen-snapshot")
-        geocode = RateLimiter(nom.geocode, min_delay_seconds=1.1)
-        loc = geocode(query)
-        if loc is None:
-            cache[query] = {"lat": None, "lon": None}
-            return None
-        cache[query] = {"lat": loc.latitude, "lon": loc.longitude}
-        return loc.latitude, loc.longitude
-    except Exception as e:
-        print(f"[geocode] пропуск '{query[:50]}...': {e}")
-        return None
+    if opencage_key and used < http_budget:
+        LOG.info("coords HTTP opencage(simple) query=%s", clip)
+        time.sleep(_opencage_inter_request_delay_sec())
+        used += 1
+        try:
+            res = _geocode_resolve.geocode_opencage(query, opencage_key, session)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            LOG.warning("coords opencage(simple) error: %s", e)
+            res = None
+        if res:
+            cache[query] = {
+                "lat": res["lat"],
+                "lon": res["lon"],
+                "coord_source": "opencage",
+                "matched_address": res.get("matched_address"),
+                "confidence": res.get("confidence"),
+                "oc_type": res.get("oc_type"),
+            }
+            LOG.info(
+                "coords update-cache opencage(simple) lat=%.5f lon=%.5f query=%s",
+                float(res["lat"]),
+                float(res["lon"]),
+                clip,
+            )
+            return float(res["lat"]), float(res["lon"]), "opencage", used
 
-
-def _nominatim_pair(query: str, nom_cache: dict) -> tuple[float, float] | None:
-    geocode_nominatim(query, nom_cache)
-    c = nom_cache.get(query, {})
-    if c.get("lat") is None:
-        return None
-    return float(c["lat"]), float(c["lon"])
+    cache[query] = {"lat": None, "lon": None, "miss": True}
+    LOG.info("coords miss simple (opencage) query=%s", clip)
+    return None, None, None, used
 
 
 def _timer_print(label: str, t_run_start: float, last: list[float]) -> None:
     now = time.perf_counter()
     step = now - last[0]
     total = now - t_run_start
-    print(
-        f"[citizen/timer] {label}: {step:.2f}s (шаг), {total:.2f}s (с начала)",
-        flush=True,
-    )
+    msg = f"[citizen/timer] {label}: {step:.2f}s (шаг), {total:.2f}s (с начала)"
+    print(msg, flush=True)
+    LOG.info("%s", msg)
     last[0] = now
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--geocode-limit", type=int, default=0, help="сколько новых точек геокодировать через Nominatim")
+    ap.add_argument(
+        "--geocode-limit",
+        type=int,
+        default=0,
+        help="лимит новых HTTP к OpenCage на сборку (простой режим и --resolve-coordinates)",
+    )
     ap.add_argument("--no-cache-xml", action="store_true", help="перекачать XML (load_all use_cache=False)")
     ap.add_argument(
         "--map-only",
@@ -231,31 +311,68 @@ def main() -> None:
     ap.add_argument(
         "--infer-county",
         action="store_true",
-        help="дозаполнить county через county_infer (кэш + при необходимости Nominatim; медленнее, точнее карта)",
+        help="дозаполнить county через county_infer (кэш + OpenCage; медленнее, точнее карта)",
     )
     ap.add_argument(
         "--resolve-coordinates",
         action="store_true",
-        help="In-ADS → Google → Nominatim по вариантам адреса; --geocode-limit = лимит HTTP на всю сборку",
+        help="OpenCage по вариантам адреса (нужен OPENCAGE_API_KEY); --geocode-limit = лимит HTTP",
+    )
+    ap.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="уровень логирования (DEBUG — кэш координат в citizen/geocode_resolve; URL с ключами в лог не выводятся)",
+    )
+    ap.add_argument(
+        "--progress-every",
+        type=int,
+        default=50,
+        metavar="N",
+        help="каждые N мест на карте писать строку прогресса в лог (и 1-е и последнее всегда)",
     )
     args = ap.parse_args()
+    logging.basicConfig(
+        level=getattr(logging, args.log_level.upper(), logging.INFO),
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        force=True,
+    )
+    # DEBUG включает urllib3 — в лог попадают полные URL с ?key=… (утечка ключа).
+    for _lg_name in ("urllib3", "urllib3.connectionpool", "urllib3.util.retry", "charset_normalizer"):
+        logging.getLogger(_lg_name).setLevel(logging.WARNING)
+    if args.log_level.upper() == "DEBUG":
+        LOG.warning(
+            "Уровень DEBUG: логи urllib3 отключены (WARNING), чтобы ключи API не попадали в вывод. "
+            "См. geocode_resolve / county_infer для своих DEBUG-сообщений."
+        )
     _load_repo_dotenv()
+    _prefer_certifi_ca_bundle()
 
     t_run = time.perf_counter()
     last = [t_run]
 
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
+    LOG.info(
+        "Старт: map_only=%s resolve_coordinates=%s infer_county=%s geocode_limit=%s log_level=%s",
+        args.map_only,
+        args.resolve_coordinates,
+        args.infer_county,
+        args.geocode_limit,
+        args.log_level,
+    )
+
     df = load_all(
         use_cache=not args.no_cache_xml,
         geocode_county=args.infer_county,
     )
     if args.infer_county:
-        print("[citizen] load_all с --infer-county: попытка восстановить maakond для карты")
+        LOG.info("load_all: --infer-county — OpenCage для всех локаций без county в кэше (лимит HTTP снят)")
     _timer_print("1) load_all — загрузка и парсинг XML → DataFrame", t_run, last)
 
     if args.map_only:
-        print("[citizen] режим --map-only: без матрицы X и без моделей (только meta для карты)")
+        LOG.info("Режим --map-only: без матрицы X и без обучения моделей (только meta для карты)")
         full = build_citizen_meta_frame(df).reset_index(drop=True)
         _timer_print("2) build_citizen_meta_frame — признаки только для meta (без X)", t_run, last)
     else:
@@ -354,7 +471,7 @@ def main() -> None:
     latest = latest[latest["domain"].isin(MAP_DOMAINS)]
     n_dedup = len(full[full["domain"].isin(MAP_DOMAINS)].groupby(["domain", "location"])) - len(latest)
     if n_dedup > 0:
-        print(f"[citizen] дедупликация по нормализованному имени: объединено {n_dedup} дублей (переименования в XML)")
+        LOG.info("Дедупликация по нормализованному имени: объединено %s дублей (переименования в XML)", n_dedup)
     _timer_print(
         "6) dedupe: последняя проба на (domain, norm_location_key) + фильтр map_domains",
         t_run,
@@ -372,12 +489,21 @@ def main() -> None:
             "Accept": "application/json",
         }
     )
-    google_key = os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY")
+    opencage_key = ((os.environ.get("OPENCAGE_API_KEY") or "").strip() or None)
     budget_remain = [max(0, int(args.geocode_limit))]
     api_calls = 0
     rows_out = []
+    n_map = len(latest)
+    LOG.info(
+        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; OpenCage=%s",
+        n_map,
+        args.resolve_coordinates,
+        args.geocode_limit,
+        "да" if opencage_key else "нет",
+    )
+    progress_every = max(1, int(args.progress_every))
 
-    for _, row in latest.iterrows():
+    for idx, (_, row) in enumerate(latest.iterrows(), start=1):
         loc_name = row["location"] or ""
         if isinstance(loc_name, float) and pd.isna(loc_name):
             loc_name = ""
@@ -398,33 +524,60 @@ def main() -> None:
         coord_source = "none"
         geocode_matched: str | None = None
 
-        if args.resolve_coordinates:
+        ola = row.get("official_lat") if "official_lat" in row.index else None
+        olo = row.get("official_lon") if "official_lon" in row.index else None
+        if ola is not None and olo is not None:
+            try:
+                f_lat, f_lon = float(ola), float(olo)
+                if np.isfinite(f_lat) and np.isfinite(f_lon):
+                    lat, lon = f_lat, f_lon
+                    cs = row.get("official_coord_source") if "official_coord_source" in row.index else None
+                    if cs is not None and pd.notna(cs):
+                        coord_source = str(cs)
+                    else:
+                        coord_source = "terviseamet_official"
+            except (TypeError, ValueError):
+                pass
+
+        if lat is None and args.resolve_coordinates:
             queries = _geocode_resolve.build_geocode_queries(
                 str(domain), loc_name, site, fac, str(county) if county else None
             )
             got = _geocode_resolve.resolve_coordinates_cascade(
                 queries,
                 resolve_cache=resolve_cache,
-                nominatim_cache=cache,
                 session=session,
-                google_api_key=google_key,
-                nominatim_fn=_nominatim_pair,
+                opencage_api_key=opencage_key,
                 budget_remaining=budget_remain,
+                log=LOG,
             )
             if got:
                 coord_source, lat, lon, geocode_matched = got
-        else:
+        elif lat is None:
             query = f"{loc_name}, Estonia"
             needs_geo = query not in cache or cache[query].get("lat") is None
-            if needs_geo and api_calls < args.geocode_limit:
-                geocode_nominatim(query, cache)
-                api_calls += 1
-                time.sleep(0.05)
+            rem = max(0, int(args.geocode_limit) - api_calls)
+            if needs_geo and rem > 0:
+                LOG.info(
+                    "coords simple-mode OpenCage %s/%s для места %s/%s",
+                    api_calls + 1,
+                    args.geocode_limit,
+                    idx,
+                    n_map,
+                )
+                _, _, _, nu = geocode_address_simple(
+                    query,
+                    cache,
+                    session,
+                    opencage_key=opencage_key,
+                    http_budget=rem,
+                )
+                api_calls += nu
 
             c = cache.get(query, {})
             if c.get("lat") is not None:
                 lat, lon = float(c["lat"]), float(c["lon"])
-                coord_source = "nominatim"
+                coord_source = str(c.get("coord_source") or "geocode_cache")
 
         if lat is None and county:
             cll = county_to_latlon(str(county))
@@ -466,10 +619,19 @@ def main() -> None:
         if sid:
             row_out["sample_id"] = sid
         rows_out.append(row_out)
+        if idx == 1 or idx % progress_every == 0 or idx == n_map:
+            LOG.info(
+                "Прогресс карты: место %s/%s; HTTP-бюджет осталось=%s; последний coord_source=%s domain=%s",
+                idx,
+                n_map,
+                budget_remain[0] if args.resolve_coordinates else "—",
+                coord_source,
+                domain,
+            )
 
     _timer_print(
         f"7) цикл координат по {len(latest)} точкам "
-        f"({'resolve: In-ADS/Google/Nominatim' if args.resolve_coordinates else 'Nominatim'}; "
+        f"({'resolve: OpenCage' if args.resolve_coordinates else 'OpenCage (simple)'}; "
         f"HTTP остаток лимита: {budget_remain[0] if args.resolve_coordinates else '—'})",
         t_run,
         last,
@@ -478,13 +640,17 @@ def main() -> None:
     if args.resolve_coordinates:
         _geocode_resolve.save_resolve_cache(COORD_RESOLVE_PATH, resolve_cache)
         save_geocode_cache(cache)
-        print(
-            f"[citizen] resolve-кэш: {COORD_RESOLVE_PATH}; Nominatim-кэш обновлён: {GEOCODE_PATH} "
-            f"(HTTP по каскаду использовано: {max(0, args.geocode_limit - budget_remain[0])} из {args.geocode_limit})"
+        used = max(0, args.geocode_limit - budget_remain[0])
+        LOG.info(
+            "Сохранены кэши координат: resolve=%s geocode=%s (HTTP каскада: %s из %s)",
+            COORD_RESOLVE_PATH,
+            GEOCODE_PATH,
+            used,
+            args.geocode_limit,
         )
     elif api_calls > 0:
         save_geocode_cache(cache)
-        print(f"[citizen] Nominatim вызовов: {api_calls}, кэш: {GEOCODE_PATH}")
+        LOG.info("Сохранён geocode_cache: %s (HTTP: %s)", GEOCODE_PATH, api_calls)
 
     if not args.map_only:
         bundle = {
@@ -500,15 +666,18 @@ def main() -> None:
             "models": ["lr", "rf", "gb"] + (["lgbm"] if lgbm_clf is not None else []),
         }
         joblib.dump(bundle, ARTIFACTS / "citizen_model.joblib")
-        print(f"[citizen] модели ({bundle['models']}): {ARTIFACTS / 'citizen_model.joblib'}")
+        LOG.info("Модели записаны: %s (%s)", ARTIFACTS / "citizen_model.joblib", bundle["models"])
         _timer_print("8) joblib.dump(imputer + scaler + 4 clf) → citizen_model.joblib", t_run, last)
     else:
-        print("[citizen] режим --map-only: citizen_model.joblib не перезаписывался (старый файл может остаться с прошлого полного прогона)")
+        LOG.info(
+            "Режим --map-only: citizen_model.joblib не перезаписан (при необходимости полной модели запустите без --map-only)"
+        )
 
     base_disclaimer = (
         "Официальный статус — по полю vastavus в данных Terviseamet. "
-        "Координаты в XML нет; при --resolve-coordinates используются In-ADS (Maa-amet) и при наличии ключа Google Geocoding, "
-        "затем Nominatim. coord_source=inads|google|nominatim — привязка к найденному адресу (см. geocode_matched_address в точке); "
+        "Координаты: при наличии — из справочников opendata Terviseamet (EPSG:3301→WGS84), см. coord_source terviseamet_*; "
+        "иначе при --resolve-coordinates или простом режиме с лимитом — OpenCage (OPENCAGE_API_KEY). "
+        "coord_source=opencage|geocode_cache (в старых снимках возможны google) — привязка к найденному адресу (см. geocode_matched_address в точке); "
         "county_centroid — центроид уезда; approximate_ee — только визуальный разброс по bbox Эстонии, не место объекта."
     )
     model_note = (
@@ -553,12 +722,16 @@ def main() -> None:
     _timer_print("9) запись snapshot.json", t_run, last)
 
     n_pts = len(rows_out)
+    by_src: dict[str, int] = {}
+    for r in rows_out:
+        s = str(r.get("coord_source") or "none")
+        by_src[s] = by_src.get(s, 0) + 1
+    LOG.info("Итог snapshot: мест=%s; coord_source=%s", n_pts, by_src)
     print(f"[citizen] snapshot: {len(rows_out)} мест, с координатами: {n_pts}")
     print(f"[citizen] записано: {ARTIFACTS / 'snapshot.json'}")
-    print(
-        f"[citizen/timer] ИТОГО wall time: {time.perf_counter() - t_run:.2f}s",
-        flush=True,
-    )
+    total_wall = time.perf_counter() - t_run
+    print(f"[citizen/timer] ИТОГО wall time: {total_wall:.2f}s", flush=True)
+    LOG.info("ИТОГО wall time: %.2fs", total_wall)
 
 
 if __name__ == "__main__":

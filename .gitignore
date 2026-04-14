@@ -18,9 +18,7 @@ notebooks/*_executed.ipynb
 .DS_Store
 Thumbs.db
 
-# Модель пересобирается build_citizen_snapshot.py
-citizen-service/artifacts/*.joblib
-
 # Streamlit Cloud / локальные секреты (токены не коммитить)
 .streamlit/secrets.toml
 **/.streamlit/secrets.toml
+.env

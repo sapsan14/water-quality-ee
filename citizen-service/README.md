@@ -30,16 +30,20 @@ pip install -r requirements.txt -r citizen-service/requirements.txt
 python citizen-service/scripts/build_citizen_snapshot.py --map-only
 # полный снимок: то же + прогноз Random Forest и citizen_model.joblib
 python citizen-service/scripts/build_citizen_snapshot.py
-# опционально: точные координаты (медленно)
-python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 150
+# автоматически: OpenCage и уезд (OPENCAGE_API_KEY в .env) — см. GEO_SECRETS.md
+./scripts/refresh_citizen_geo.sh --map-only
 streamlit run citizen-service/app/streamlit_app.py
 ```
+
+Полностью без ручных флагов геокодирования: **GitHub Actions → Citizen snapshot** (cron или ручной запуск) уже собирает снимок с `--resolve-coordinates` и коммитит кэши. Секрет **OPENCAGE_API_KEY**: [GEO_SECRETS.md](GEO_SECRETS.md).
 
 Артефакты:
 
 - `artifacts/snapshot.json` — последняя проба по каждому месту, координаты, официальный статус; при полном прогоне — ещё `model_violation_prob` и поле `has_model_predictions: true` (`--map-only` оставляет `has_model_predictions: false` и без вероятностей по точкам)
 - `artifacts/citizen_model.joblib` — imputer + RF (только после полного прогона, не перезаписывается в режиме `--map-only`)
-- `data/geocode_cache.json` — кэш Nominatim (создаётся при `--geocode-limit > 0`)
+- `data/geocode_cache.json` — кэш простого геокода (создаётся при `--geocode-limit > 0`)
+
+Логи: у скрипта сборки флаг **`--log-level`** (`INFO` / `DEBUG`); в лог пишутся этапы сборки, HTTP-геокод и попадания в кэш координат. Приложение Streamlit при старте страницы логирует сводку по снимку (число точек, разбивка `coord_source`, наличие `citizen_model.joblib`).
 
 ## Объяснение модели
 

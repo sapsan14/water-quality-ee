@@ -2,32 +2,89 @@
 Каскадное получение координат (WGS84) для точек Terviseamet без lat/lon в XML.
 
 Порядок (для каждого варианта запроса из build_geocode_queries):
-  1. In-ADS / gazetteer (Maa-amet) — официальный адресный справочник Эстонии.
-     GET https://inaadress.maaamet.ee/inaadress/gazetteer?address=…&results=8
-     Поля ответа: viitepunkt_b (широта), viitepunkt_l (долгота) в градусах.
-  2. Google Geocoding API — если задана переменная окружения GOOGLE_MAPS_GEOCODING_API_KEY.
-  3. Nominatim (OpenStreetMap) — общий fallback, уважать usage policy и задержки.
+  **OpenCage Geocoding** — если задан OPENCAGE_API_KEY (https://opencagedata.com/).
+
+Google Geocoding, In-ADS и публичный Nominatim не используются.
 
 Кэш JSON: citizen-service/data/coordinate_resolve_cache.json
-Ключи: "inads|…", "google|…", "nominatim|…" (нормализованная строка запроса).
-
-Документация In-ADS: https://geoportaal.maaamet.ee (интегрируемый поиск адресов).
+Ключ: "opencage|…" (нормализованная строка запроса). В старых кэшах могут остаться ключи `google|…` — они не читаются и не обновляются.
+Ответы OpenCage без привязки к месту (только «Eesti», maakond, низкий confidence) отбрасываются и не попадают в кэш.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 import unicodedata
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import requests
 
-INADS_GAZETTEER = "https://inaadress.maaamet.ee/inaadress/gazetteer"
-GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
+_log = logging.getLogger(__name__)
+
+
+def _clip_q(q: str, n: int = 88) -> str:
+    s = " ".join(str(q).split())
+    return s if len(s) <= n else s[: n - 3] + "..."
+
+OPENCAGE_GEOCODE_URL = "https://api.opencagedata.com/geocode/v1/json"
 USER_AGENT = "water-quality-ee-citizen/1.0 (research; contact: repo water-quality-ee)"
+
+EE_LAT = (55.5, 60.5)
+EE_LON = (20.0, 30.0)
+
+# OpenCage: низкий confidence = большой bbox (часто вся страна / maakond).
+# См. https://opencagedata.com/api — не кэшируем «Eesti» и аналогичные ответы без конкретного места.
+OPENCAGE_MIN_CONFIDENCE = 5
+_COARSE_OC_TYPES = frozenset(
+    {"country", "continent", "political_union", "state", "region", "county", "macroregion", "archipelago"}
+)
+_FINE_COMPONENT_KEYS = frozenset(
+    {
+        "road",
+        "house_number",
+        "house",
+        "building",
+        "city",
+        "town",
+        "village",
+        "hamlet",
+        "municipality",
+        "city_district",
+        "suburb",
+        "neighbourhood",
+        "residential",
+        "amenity",
+        "shop",
+        "tourism",
+        "leisure",
+        "office",
+        "industrial",
+    }
+)
+# При confidence 3–4 точка может быть всё ещё полезной, если тип объекта узкий.
+_FINE_OC_TYPES_LOW_CONF = frozenset(
+    {
+        "house",
+        "building",
+        "road",
+        "pedestrian",
+        "amenity",
+        "attraction",
+        "village",
+        "hamlet",
+        "city",
+        "town",
+        "suburb",
+        "neighbourhood",
+        "residential",
+        "locality",
+        "postcode",
+    }
+)
 
 
 def normalize_query_key(q: str) -> str:
@@ -80,67 +137,136 @@ def build_geocode_queries(
     return out
 
 
-def _pick_inads_address(addresses: list[dict]) -> Optional[dict]:
-    if not addresses:
+def _in_estonia_bbox(lat: float, lon: float) -> bool:
+    return EE_LAT[0] < lat < EE_LAT[1] and EE_LON[0] < lon < EE_LON[1]
+
+
+def _opencage_components_type(components: Any) -> Optional[str]:
+    if not isinstance(components, dict):
         return None
-    prim = [a for a in addresses if str(a.get("primary", "")).lower() == "true"]
-    pool = prim if prim else addresses
-    for a in pool:
+    t = components.get("_type")
+    return str(t).strip().lower() if t is not None else None
+
+
+def _opencage_has_fine_place_component(components: dict) -> bool:
+    return bool(_FINE_COMPONENT_KEYS.intersection(components.keys()))
+
+
+def opencage_result_is_precise_enough(first: dict) -> bool:
+    """
+    True — можно ставить точку на карте (не страна / не maakond без населённого пункта и т.п.).
+    """
+    components = first.get("components") if isinstance(first.get("components"), dict) else {}
+    oc_type = _opencage_components_type(components)
+    formatted = (first.get("formatted") or "").strip().lower()
+    if formatted in ("eesti", "estonia"):
+        return False
+    if oc_type in _COARSE_OC_TYPES:
+        return False
+    conf = first.get("confidence")
+    c: Optional[int]
+    try:
+        c = int(conf) if conf is not None and str(conf).strip() != "" else None
+    except (TypeError, ValueError):
+        c = None
+    if c is not None and c < OPENCAGE_MIN_CONFIDENCE:
+        if oc_type in _FINE_OC_TYPES_LOW_CONF and c >= 3:
+            return True
+        return False
+    if not _opencage_has_fine_place_component(components):
+        if oc_type in _FINE_OC_TYPES_LOW_CONF:
+            return True
+        return False
+    return True
+
+
+def geocode_cache_entry_is_precise_enough(ent: dict[str, Any]) -> bool:
+    """Проверка записи кэша (новой или старой без confidence/oc_type)."""
+    if ent.get("miss") or ent.get("lat") is None or ent.get("lon") is None:
+        return False
+    mlow = (str(ent.get("matched_address") or "").strip().lower())
+    if mlow in ("eesti", "estonia"):
+        return False
+    ot_raw = ent.get("oc_type")
+    ot = str(ot_raw).strip().lower() if ot_raw is not None else None
+    if ot in _COARSE_OC_TYPES:
+        return False
+    try:
+        c = (
+            int(ent["confidence"])
+            if ent.get("confidence") is not None and str(ent.get("confidence")).strip() != ""
+            else None
+        )
+    except (TypeError, ValueError):
+        c = None
+    if c is not None and c < OPENCAGE_MIN_CONFIDENCE:
+        if ot in _FINE_OC_TYPES_LOW_CONF and c >= 3:
+            return True
+        return False
+    if c is None and ot is None:
         try:
-            lat = float(a["viitepunkt_b"])
-            lon = float(a["viitepunkt_l"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        if 55.5 < lat < 60.5 and 20.0 < lon < 30.0:
-            return {**a, "_lat": lat, "_lon": lon}
-    return None
+            lat = float(ent["lat"])
+            lon = float(ent["lon"])
+        except (TypeError, ValueError):
+            return False
+        if abs(lat - 59.0) < 0.02 and abs(lon - 26.0) < 0.02:
+            return False
+    return True
 
 
-def geocode_inads(address: str, session: requests.Session) -> Optional[dict]:
+def geocode_opencage(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
     r = session.get(
-        INADS_GAZETTEER,
-        params={"address": address, "results": 8},
+        OPENCAGE_GEOCODE_URL,
+        params={
+            "q": address,
+            "key": api_key,
+            "limit": 1,
+            "countrycode": "ee",
+            "language": "et,en",
+            "no_annotations": 1,
+        },
+        headers={"User-Agent": USER_AGENT},
         timeout=45,
     )
     r.raise_for_status()
     data = r.json()
-    addrs = data.get("addresses")
-    if not isinstance(addrs, list):
-        return None
-    hit = _pick_inads_address(addrs)
-    if not hit:
-        return None
-    return {
-        "lat": hit["_lat"],
-        "lon": hit["_lon"],
-        "matched_address": hit.get("ipikkaadress") or hit.get("pikkaadress"),
-        "kvaliteet": hit.get("kvaliteet"),
-    }
-
-
-def geocode_google(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
-    r = session.get(
-        GOOGLE_GEOCODE_URL,
-        params={"address": address, "key": api_key, "region": "ee"},
-        timeout=45,
-    )
-    r.raise_for_status()
-    data = r.json()
-    if data.get("status") not in ("OK", "ZERO_RESULTS"):
+    st = data.get("status") or {}
+    code = st.get("code")
+    if code != 200:
+        msg = (st.get("message") or "").strip()
+        _log.warning(
+            "OpenCage geocode coordinates: status code=%s%s",
+            code,
+            f" — {msg[:400]}" if msg else "",
+        )
         return None
     results = data.get("results") or []
     if not results:
         return None
-    loc = results[0].get("geometry", {}).get("location") or {}
+    geom = results[0].get("geometry") or {}
     try:
-        lat = float(loc["lat"])
-        lon = float(loc["lng"])
+        lat = float(geom["lat"])
+        lon = float(geom["lng"])
     except (KeyError, TypeError, ValueError):
         return None
+    if not _in_estonia_bbox(lat, lon):
+        return None
+    first = results[0]
+    if not opencage_result_is_precise_enough(first):
+        return None
+    comps = first.get("components") if isinstance(first.get("components"), dict) else {}
+    oc_type = _opencage_components_type(comps)
+    conf = first.get("confidence")
+    try:
+        conf_i = int(conf) if conf is not None and str(conf).strip() != "" else None
+    except (TypeError, ValueError):
+        conf_i = None
     return {
         "lat": lat,
         "lon": lon,
-        "matched_address": results[0].get("formatted_address"),
+        "matched_address": first.get("formatted"),
+        "confidence": conf_i,
+        "oc_type": oc_type,
     }
 
 
@@ -165,101 +291,77 @@ def resolve_coordinates_cascade(
     queries: list[str],
     *,
     resolve_cache: dict[str, Any],
-    nominatim_cache: dict[str, Any],
     session: requests.Session,
-    google_api_key: Optional[str],
-    nominatim_fn: Callable[[str, dict], Optional[tuple[float, float]]],
-    delay_inads: float = 0.12,
-    delay_google: float = 0.05,
-    delay_nominatim: float = 1.05,
+    opencage_api_key: Optional[str],
+    delay_opencage: float = 0.55,
     budget_remaining: list[int],
+    log: Optional[logging.Logger] = None,
 ) -> Optional[tuple[str, float, float, Optional[str]]]:
     """
     Возвращает (source, lat, lon, matched_label) или None.
     budget_remaining — [N]: списывается только при реальном HTTP-запросе.
     """
+    lg = log or _log
     for raw_q in queries:
         nq = normalize_query_key(raw_q)
 
-        ck = f"inads|{nq}"
-        if ck in resolve_cache:
-            ent = resolve_cache[ck]
-            if ent.get("lat") is not None and ent.get("lon") is not None:
-                return (
-                    "inads",
-                    float(ent["lat"]),
-                    float(ent["lon"]),
-                    ent.get("matched_address"),
-                )
-            if ent.get("miss"):
-                pass
-        elif budget_remaining[0] > 0:
-            budget_remaining[0] -= 1
-            time.sleep(delay_inads)
-            try:
-                res = geocode_inads(raw_q, session)
-            except (requests.RequestException, ValueError, json.JSONDecodeError):
-                res = None
-            if res:
-                resolve_cache[ck] = {
-                    "lat": res["lat"],
-                    "lon": res["lon"],
-                    "matched_address": res.get("matched_address"),
-                    "kvaliteet": res.get("kvaliteet"),
-                }
-                return ("inads", res["lat"], res["lon"], res.get("matched_address"))
-            resolve_cache[ck] = {"lat": None, "lon": None, "miss": True}
-
-        gk = f"google|{nq}"
-        if google_api_key:
-            if gk in resolve_cache:
-                ent = resolve_cache[gk]
+        # 1) OpenCage — при наличии ключа (без In-ADS / Nominatim).
+        ok = f"opencage|{nq}"
+        if opencage_api_key:
+            if ok in resolve_cache:
+                ent = resolve_cache[ok]
+                if ent.get("miss"):
+                    lg.debug("coords cache-hit miss opencage query=%s", _clip_q(raw_q))
+                    continue
                 if ent.get("lat") is not None and ent.get("lon") is not None:
-                    return (
-                        "google",
-                        float(ent["lat"]),
-                        float(ent["lon"]),
-                        ent.get("matched_address"),
+                    if geocode_cache_entry_is_precise_enough(ent):
+                        lg.debug(
+                            "coords cache-hit verify opencage lat=%.5f lon=%.5f query=%s",
+                            float(ent["lat"]),
+                            float(ent["lon"]),
+                            _clip_q(raw_q),
+                        )
+                        return (
+                            "opencage",
+                            float(ent["lat"]),
+                            float(ent["lon"]),
+                            ent.get("matched_address"),
+                        )
+                    lg.info(
+                        "coords cache-ignore imprecise opencage query=%s match=%s",
+                        _clip_q(raw_q),
+                        _clip_q(str(ent.get("matched_address") or "")),
                     )
-            elif budget_remaining[0] > 0:
+                    del resolve_cache[ok]
+
+            if budget_remaining[0] > 0:
                 budget_remaining[0] -= 1
-                time.sleep(delay_google)
+                lg.info(
+                    "coords HTTP opencage budget_left=%s query=%s",
+                    budget_remaining[0],
+                    _clip_q(raw_q),
+                )
+                time.sleep(delay_opencage)
                 try:
-                    res = geocode_google(raw_q, google_api_key, session)
+                    res = geocode_opencage(raw_q, opencage_api_key, session)
                 except (requests.RequestException, ValueError, json.JSONDecodeError, KeyError):
                     res = None
                 if res:
-                    resolve_cache[gk] = {
+                    resolve_cache[ok] = {
                         "lat": res["lat"],
                         "lon": res["lon"],
                         "matched_address": res.get("matched_address"),
+                        "confidence": res.get("confidence"),
+                        "oc_type": res.get("oc_type"),
                     }
-                    return ("google", res["lat"], res["lon"], res.get("matched_address"))
-                resolve_cache[gk] = {"lat": None, "lon": None, "miss": True}
-
-        nk = f"nominatim|{nq}"
-        if nk in resolve_cache:
-            ent = resolve_cache[nk]
-            if ent.get("lat") is not None and ent.get("lon") is not None:
-                return (
-                    "nominatim",
-                    float(ent["lat"]),
-                    float(ent["lon"]),
-                    ent.get("matched_address"),
-                )
-            if ent.get("miss"):
-                continue
-        elif raw_q in nominatim_cache and nominatim_cache[raw_q].get("lat") is not None:
-            c = nominatim_cache[raw_q]
-            return ("nominatim", float(c["lat"]), float(c["lon"]), raw_q)
-        elif budget_remaining[0] > 0:
-            budget_remaining[0] -= 1
-            time.sleep(delay_nominatim)
-            got = nominatim_fn(raw_q, nominatim_cache)
-            if got:
-                lat, lon = got
-                resolve_cache[nk] = {"lat": lat, "lon": lon, "matched_address": raw_q}
-                return ("nominatim", lat, lon, raw_q)
-            resolve_cache[nk] = {"lat": None, "lon": None, "miss": True}
+                    lg.info(
+                        "coords update-cache opencage lat=%.5f lon=%.5f match=%s",
+                        float(res["lat"]),
+                        float(res["lon"]),
+                        _clip_q(str(res.get("matched_address") or "")),
+                    )
+                    return ("opencage", res["lat"], res["lon"], res.get("matched_address"))
+                resolve_cache[ok] = {"lat": None, "lon": None, "miss": True}
+                lg.info("coords miss opencage (cached) query=%s", _clip_q(raw_q))
 
     return None

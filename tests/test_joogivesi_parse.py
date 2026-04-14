@@ -6,9 +6,10 @@ SAMPLE_I = b"""<?xml version="1.0" encoding="utf-8"?>
 <joogiveeallika_veeproovid>
   <proovivott>
     <id>99</id>
+    <veeallikas_id>2039</veeallikas_id>
     <veeallikas>Testi j&#xE4;rv</veeallikas>
     <proovivotu_aeg>01.06.2024 12:00</proovivotu_aeg>
-    <proovivotukoht><nimetus>VPJ sissevool</nimetus></proovivotukoht>
+    <proovivotukoht><id>6569</id><nimetus>VPJ sissevool</nimetus></proovivotukoht>
     <katseprotokollid>
       <katseprotokoll>
         <hinnang>Kvaliteediklass I</hinnang>
@@ -28,6 +29,8 @@ SAMPLE_II = SAMPLE_I.replace(b"Kvaliteediklass I", b"Kvaliteediklass II")
 def test_parse_joogivesi_quality_class_i():
     df = parse_joogivesi(SAMPLE_I)
     assert len(df) == 1
+    assert df.iloc[0]["veeallikas_id"] == "2039"
+    assert df.iloc[0]["proovivotukoht_id"] == "6569"
     assert df.iloc[0]["domain"] == "joogivesi"
     loc = str(df.iloc[0]["location"])
     assert "Testi" in loc and "VPJ" in loc

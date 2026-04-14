@@ -10,7 +10,7 @@
 
 ## География (maakond) и справочники в репозитории
 
-- В opendata-XML поле **maakond** часто пустое; для признака `county` и карт используется **`src/county_infer.py`**: переопределения `data/reference/location_county_overrides.csv`, кэш геокодера `data/processed/county_geocode_cache.json`, опционально Nominatim.
+- В opendata-XML поле **maakond** часто пустое; для признака `county` и карт используется **`src/county_infer.py`**: переопределения `data/reference/location_county_overrides.csv`, кэш `data/processed/county_geocode_cache.json`, при `geocode=True` — **OpenCage** (`OPENCAGE_API_KEY`).
 - **Центроиды уездов** для fallback на карте: `citizen-service/county_centroids.py` (упрощённые координаты, не замена точного адреса).
 - Официальные названия уездов (эт/англ) сверяйте с публичными справочниками Эстонии (например классификаторы на [riigiteataja.ee](https://www.riigiteataja.ee) / порталы РИК).
 - В **ноутбуках 03 и 06** кодирование **`county_encoded`** строится **только по обучающей части** выборки; редкие уезды в test маппятся как `unknown`.

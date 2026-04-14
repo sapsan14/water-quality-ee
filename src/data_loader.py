@@ -7,6 +7,7 @@ data_loader.py — Загрузка и парсинг данных о качес
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -314,6 +315,8 @@ def _parse_supluskoha_opendata(tree: etree._Element) -> pd.DataFrame:
         rec = {
             "domain": "supluskoha",
             "sample_id": _text(pv, "id"),
+            "proovivotukoht_id": _proovivotukoht_id(pv),
+            "supluskoht_id": _text(pv, "supluskoht_id"),
             "location": loc,
             "geocode_facility": facility,
             "geocode_site": site,
@@ -389,6 +392,8 @@ def _parse_veevark_opendata(tree: etree._Element) -> pd.DataFrame:
         rec = {
             "domain": "veevark",
             "sample_id": _text(pv, "id"),
+            "proovivotukoht_id": _proovivotukoht_id(pv),
+            "veevark_id": _text(pv, "veevark_id"),
             "location": loc,
             "geocode_facility": facility,
             "geocode_site": site,
@@ -478,6 +483,8 @@ def _parse_basseinid_opendata(tree: etree._Element) -> pd.DataFrame:
         rec = {
             "domain": "basseinid",
             "sample_id": _text(pv, "id"),
+            "proovivotukoht_id": _proovivotukoht_id(pv),
+            "bassein_id": _text(pv, "bassein_id"),
             "location": loc,
             "geocode_facility": facility,
             "geocode_site": site,
@@ -536,6 +543,8 @@ def _parse_joogiveeallika_opendata(tree: etree._Element) -> pd.DataFrame:
         rec = {
             "domain": "joogivesi",
             "sample_id": _text(pv, "id"),
+            "proovivotukoht_id": _proovivotukoht_id(pv),
+            "veeallikas_id": _text(pv, "veeallikas_id"),
             "location": loc,
             "geocode_facility": src,
             "geocode_site": spot,
@@ -703,7 +712,7 @@ def load_domain(
     years: Optional[List[int]] = None,
     infer_county: bool = True,
     geocode_county: bool = False,
-    geocode_limit: Optional[int] = 200,
+    geocode_limit: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Загрузить домен: несколько годов opendata, объединить в один DataFrame.
@@ -712,9 +721,9 @@ def load_domain(
         domain_key: supluskoha | veevark | basseinid | joogivesi
         use_cache: читать data/raw/{domain}_{year}.xml
         years: список лет (по умолчанию текущий и 5 предыдущих)
-        infer_county: заполнить пустой maakond из overrides + кэша (+ опционально Nominatim)
-        geocode_county: HTTP к geopy/Nominatim (медленно; см. geocode_limit)
-        geocode_limit: макс. новых геозапросов за вызов (None = без лимита)
+        infer_county: заполнить пустой maakond из overrides + кэша (+ опционально OpenCage)
+        geocode_county: HTTP к OpenCage (медленно; см. geocode_limit; ключ OPENCAGE_API_KEY из env)
+        geocode_limit: макс. новых геозапросов за вызов (None по умолчанию = все отсутствующие в кэше; для лимита укажите число)
     """
     if domain_key not in PARSERS:
         raise NotImplementedError(
@@ -738,6 +747,11 @@ def load_domain(
             lambda s: normalize_location(s, domain_key)
         )
 
+    if len(df) > 0 and domain_key in ("supluskoha", "veevark", "basseinid", "joogivesi"):
+        from terviseamet_reference_coords import attach_official_coords_to_df
+
+        df = attach_official_coords_to_df(df, domain_key, use_cache=use_cache)
+
     print(
         f"[data_loader] {domain_key}: {len(df)} проб, "
         f"{df['compliant'].notna().sum() if len(df) else 0} с известным статусом"
@@ -749,6 +763,11 @@ def load_domain(
             df,
             geocode=geocode_county,
             geocode_limit=geocode_limit,
+            opencage_api_key=(
+                (os.environ.get("OPENCAGE_API_KEY") or "").strip() or None
+                if geocode_county
+                else None
+            ),
         )
     return df
 
@@ -758,12 +777,13 @@ def load_all(
     use_cache: bool = True,
     infer_county: bool = True,
     geocode_county: bool = False,
-    geocode_limit: Optional[int] = 200,
+    geocode_limit: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Загрузить несколько доменов и объединить в один DataFrame.
 
-    infer_county выполняется один раз по объединённой таблице (общий лимит геокодирования).
+    infer_county выполняется один раз по объединённой таблице. При geocode_county=True и
+    geocode_limit=None (по умолчанию) к OpenCage идут все уникальные локации без county в кэше.
     """
     if domains is None:
         domains = ["supluskoha", "veevark", "basseinid", "joogivesi"]
@@ -792,6 +812,11 @@ def load_all(
             combined,
             geocode=geocode_county,
             geocode_limit=geocode_limit,
+            opencage_api_key=(
+                (os.environ.get("OPENCAGE_API_KEY") or "").strip() or None
+                if geocode_county
+                else None
+            ),
         )
     return combined
 
@@ -835,6 +860,14 @@ def _proovivotukoht_nimetus(pv: etree._Element) -> str:
         return ""
     t = _text(pk, "nimetus")
     return (t or "").strip()
+
+
+def _proovivotukoht_id(pv: etree._Element) -> Optional[str]:
+    """Идентификатор proovivotukoht (для джойна со справочником координат Terviseamet)."""
+    pk = pv.find("proovivotukoht")
+    if pk is None:
+        return None
+    return _text(pk, "id")
 
 
 # ── Быстрая проверка ──────────────────────────────────────────────────────────

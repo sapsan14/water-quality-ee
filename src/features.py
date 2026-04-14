@@ -330,6 +330,9 @@ def _citizen_meta_columns(df_clean: pd.DataFrame) -> List[str]:
     for _geo in ("geocode_site", "geocode_facility"):
         if _geo in df_clean.columns and _geo not in meta_cols:
             meta_cols.append(_geo)
+    for _off in ("official_lat", "official_lon", "official_coord_source"):
+        if _off in df_clean.columns and _off not in meta_cols:
+            meta_cols.append(_off)
     for c in META_EXTRA_NUMERIC:
         if c in df_clean.columns and c not in meta_cols:
             meta_cols.append(c)

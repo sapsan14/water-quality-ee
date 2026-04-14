@@ -39,3 +39,14 @@ def test_build_citizen_meta_frame_matches_meta_part():
         meta.reset_index(drop=True),
         check_dtype=False,
     )
+
+
+def test_official_coords_in_meta_when_present():
+    df = _tiny_frame()
+    df["official_lat"] = [59.4, 58.3]
+    df["official_lon"] = [24.7, 26.7]
+    df["official_coord_source"] = ["terviseamet_proovivotukoht"] * 2
+    _, _, meta = build_dataset_with_meta(df)
+    assert "official_lat" in meta.columns
+    assert "official_lon" in meta.columns
+    assert "official_coord_source" in meta.columns

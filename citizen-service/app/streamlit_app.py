@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,6 +24,51 @@ from streamlit_folium import st_folium
 
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT_PATH = ROOT / "citizen-service" / "artifacts" / "snapshot.json"
+MODEL_PATH = ROOT / "citizen-service" / "artifacts" / "citizen_model.joblib"
+
+_LOG = logging.getLogger("citizen.streamlit")
+
+
+def _ensure_streamlit_logging() -> None:
+    """Одноразовая настройка: логи видны в терминале и в логах Streamlit Cloud."""
+    root = logging.getLogger()
+    if root.handlers:
+        return
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+
+def _log_snapshot_coordinate_health(snap: dict) -> None:
+    """Сводка по снимку: сколько точек, откуда координаты, есть ли модель (каждый запуск страницы)."""
+    _ensure_streamlit_logging()
+    places = snap.get("places") or []
+    n = len(places)
+    by_src: dict[str, int] = {}
+    missing = 0
+    for p in places:
+        lat, lon = p.get("lat"), p.get("lon")
+        if lat is None or lon is None:
+            missing += 1
+        s = str(p.get("coord_source") or "none")
+        by_src[s] = by_src.get(s, 0) + 1
+    mtime = "n/a"
+    if SNAPSHOT_PATH.is_file():
+        mtime = datetime.fromtimestamp(SNAPSHOT_PATH.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    model_on_disk = MODEL_PATH.is_file()
+    _LOG.info(
+        "Снимок проверен: path=%s mtime=%s мест=%s без_lat/lon=%s coord_source=%s "
+        "has_model_predictions=%s citizen_model.joblib=%s",
+        SNAPSHOT_PATH,
+        mtime,
+        n,
+        missing,
+        by_src,
+        snap.get("has_model_predictions"),
+        model_on_disk,
+    )
 
 DOMAIN_LABELS = {
     "supluskoha": "Открытая вода (supluskohad)",
@@ -89,10 +135,19 @@ MODEL_COLORS = {
 
 @st.cache_data(show_spinner=False)
 def load_snapshot() -> dict | None:
+    _ensure_streamlit_logging()
     if not SNAPSHOT_PATH.is_file():
+        _LOG.warning("Файл снимка отсутствует: %s", SNAPSHOT_PATH)
         return None
+    st_sz = SNAPSHOT_PATH.stat().st_size
     with open(SNAPSHOT_PATH, encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    _LOG.info(
+        "Снимок загружен с диска в кэш Streamlit (%s байт, generated_at=%s)",
+        st_sz,
+        (data or {}).get("generated_at"),
+    )
+    return data
 
 
 def _available_models(snap: dict) -> list[str]:
@@ -582,6 +637,8 @@ def main() -> None:
         )
         return
 
+    _log_snapshot_coordinate_health(snap)
+
     has_model = snapshot_has_model_predictions(snap)
     avail_models = _available_models(snap) if has_model else []
     model_labels: dict[str, str] = {**MODEL_LABELS_DEFAULT, **(snap.get("model_labels") or {})}
@@ -887,8 +944,7 @@ baseline (средний риск):         0.30
 
 ### Координаты
 
-Без платных API: **Nominatim** (кэш), **центроид уезда** и **приблизительная точка**
-(`approximate_ee`). Водопроводные точки часто геокодируются грубо.
+Координаты в снимке: **OpenCage** (при сборке с ключом), **кэш**, **центроид уезда** и **приблизительная точка** (`approximate_ee`). Водопроводные точки часто геокодируются грубо.
 
 ### Обновление данных
 

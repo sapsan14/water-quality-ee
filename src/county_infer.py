@@ -5,14 +5,16 @@
 1. Уже заполненный county из XML — без изменений (county_source=xml).
 2. Справочник data/reference/location_county_overrides.csv (нормализованный ключ).
 3. Кэш геокодирования data/processed/county_geocode_cache.json.
-4. Nominatim (geopy), не чаще min_delay_sec запросов; новые ответы пишутся в кэш.
+4. OpenCage Geocoding (если задан opencage_api_key или env OPENCAGE_API_KEY) — из components.
 
-Требует пакет geopy. Без сети: передайте geocode=False — сработают только XML, overrides и существующий кэш.
+Google Geocoding, публичный Nominatim и In-ADS не используются. Нужен requests; без сети: geocode=False — только XML, overrides и кэш.
 """
 
 from __future__ import annotations
 
 import json
+import logging
+import os
 import re
 import time
 import unicodedata
@@ -20,12 +22,15 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
+import requests
+
+_county_log = logging.getLogger(__name__)
 
 DATA_ROOT = Path(__file__).resolve().parent.parent / "data"
 OVERRIDES_CSV = DATA_ROOT / "reference" / "location_county_overrides.csv"
 GEOCODE_CACHE_PATH = DATA_ROOT / "processed" / "county_geocode_cache.json"
 
-NOMINATIM_USER_AGENT = "water-quality-ee/1.0 (TalTech water-quality course project)"
+OPENCAGE_GEOCODE_URL = "https://api.opencagedata.com/geocode/v1/json"
 
 # Англ. названия OSM → официальная форма как в Eesti haldusjaotus
 _COUNTY_EN_TO_ET = {
@@ -105,44 +110,57 @@ def save_geocode_cache(cache: Dict[str, Any]) -> None:
         json.dump(cache, f, ensure_ascii=False, indent=0)
 
 
-def _extract_county_from_nominatim_address(addr: Dict[str, str]) -> Optional[str]:
-    if not addr:
+def _county_from_opencage_components(components: Any) -> Optional[str]:
+    """Вытащить maakond из OpenCage results[].components."""
+    if not isinstance(components, dict):
         return None
-    for key in ("county", "state", "region"):
-        val = addr.get(key)
+    for key in ("state", "county", "region", "state_district"):
+        val = components.get(key)
         if not val:
             continue
-        v = str(val).strip()
-        if "maakond" in v.lower():
-            return _normalize_county_name(v)
-        if "county" in v.lower():
-            return _normalize_county_name(v)
+        s = str(val).strip()
+        if not s:
+            continue
+        if "maakond" in s.lower() or "county" in s.lower():
+            return _normalize_county_name(s)
     return None
 
 
-def _geocode_one(location_display: str) -> Tuple[Optional[str], Optional[str]]:
-    """Вернуть (county, query_used)."""
-    try:
-        from geopy.geocoders import Nominatim
-        from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-    except ImportError:
-        return None, None
-
-    geolocator = Nominatim(user_agent=NOMINATIM_USER_AGENT)
+def _geocode_one_opencage(location_display: str, api_key: str) -> Tuple[Optional[str], Optional[str]]:
+    """Вернуть (county, query_used) через OpenCage Geocoding API."""
     query = f"{location_display}, Estonia"
     try:
-        loc = geolocator.geocode(
-            query,
-            addressdetails=True,
-            language="et,en",
-            timeout=15,
+        r = requests.get(
+            OPENCAGE_GEOCODE_URL,
+            params={
+                "q": query,
+                "key": api_key,
+                "limit": 1,
+                "countrycode": "ee",
+                "language": "et,en",
+                "no_annotations": 1,
+            },
+            timeout=25,
         )
-    except (GeocoderTimedOut, GeocoderServiceError, OSError):
+        r.raise_for_status()
+        data = r.json()
+    except (requests.RequestException, ValueError, KeyError) as e:
+        _county_log.warning("OpenCage county: HTTP/JSON error: %s", e)
         return None, query
-    if loc is None or not getattr(loc, "raw", None):
+    st = data.get("status") or {}
+    if st.get("code") != 200:
+        msg = (st.get("message") or "").strip()
+        _county_log.warning(
+            "OpenCage county: status code=%s%s",
+            st.get("code"),
+            f" — {msg[:400]}" if msg else "",
+        )
         return None, query
-    addr = loc.raw.get("address") or {}
-    county = _extract_county_from_nominatim_address(addr)
+    results = data.get("results") or []
+    if not results:
+        return None, query
+    comps = results[0].get("components") or {}
+    county = _county_from_opencage_components(comps)
     return _normalize_county_name(county), query
 
 
@@ -150,25 +168,41 @@ def enrich_county_column(
     df: pd.DataFrame,
     *,
     geocode: bool = False,
-    geocode_limit: Optional[int] = 200,
-    min_delay_sec: float = 1.1,
+    geocode_limit: Optional[int] = None,
+    opencage_api_key: Optional[str] = None,
+    opencage_delay_sec: float = 0.55,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
     Заполнить пропуски в колонке county; добавить county_source.
 
-    county_source: xml | override | geocache | geocode | unknown
+    county_source: xml | override | geocache | geocache_miss | geocode_opencage | geocode_google (устар.) | unknown
 
     По умолчанию геокодирование выключено: XML, overrides и файл кэша.
-    При geocode=True не более geocode_limit новых HTTP-запросов за вызов
-    (None = без лимита). Между запросами — min_delay_sec.
+    При geocode=True: HTTP к OpenCage для каждой уникальной локации без county в кэше/overrides,
+    пока не исчерпан geocode_limit. **geocode_limit=None** (по умолчанию) — без ограничения числа
+    запросов за вызов. Уже успешные и уже проверенные промахи (**miss** в county_geocode_cache.json)
+    повторно в OpenCage не отправляются.
+    Укажите целое число в geocode_limit, чтобы ограничить расход квоты (например в CI).
+    Пауза между запросами — opencage_delay_sec (по умолчанию ~0.55 с; env OPENCAGE_MIN_DELAY_SEC,
+    не ниже ~0.15; при 429 увеличьте до 1.0).
     """
     if df.empty or "location" not in df.columns:
         return df
 
+    env_oc = os.environ.get("OPENCAGE_MIN_DELAY_SEC", "").strip()
+    if env_oc:
+        try:
+            opencage_delay_sec = max(0.15, float(env_oc))
+        except ValueError:
+            pass
+
     out = df.copy()
     if "county" not in out.columns:
         out["county"] = None
+
+    if verbose:
+        _county_log.info("Обогащение county для %s строк", len(out))
 
     overrides = load_overrides()
     cache = load_geocode_cache()
@@ -196,10 +230,40 @@ def enrich_county_column(
         if nk not in need_keys and loc is not None and str(loc).strip():
             need_keys[nk] = str(loc).strip()
 
+    if verbose:
+        _county_log.info("Уникальных локаций без maakond из XML: %s", len(need_keys))
+
     resolved: Dict[str, Tuple[str, str]] = {}  # norm -> (county, source)
 
     geocode_calls = 0
     lim = geocode_limit if geocode else 0
+
+    ok = (opencage_api_key or os.environ.get("OPENCAGE_API_KEY", "") or "").strip() or None
+    pending_http = 0
+    if geocode and ok:
+        for _nk in need_keys:
+            if _nk in overrides:
+                continue
+            _ent = cache.get(_nk)
+            if isinstance(_ent, dict) and _ent.get("county"):
+                continue
+            if isinstance(_ent, dict) and _ent.get("miss"):
+                continue
+            pending_http += 1
+
+    if verbose and geocode and ok:
+        cap = pending_http if lim is None else min(pending_http, lim)
+        est_min = max(1, int(cap * (opencage_delay_sec + 0.25) / 60))
+        lim_msg = "без лимита (все отсутствующие в кэше)" if lim is None else str(lim)
+        _county_log.info(
+            "Уезд (OpenCage): уникальных без кэша/overrides ≈ %s; за этот вызов HTTP ≤ %s; пауза ~%.2fs; оценка ~%s мин",
+            pending_http,
+            lim_msg,
+            opencage_delay_sec,
+            est_min,
+        )
+    elif verbose and geocode and not ok:
+        _county_log.warning("geocode=True, но нет OPENCAGE_API_KEY — новых HTTP-запросов не будет")
 
     for nk, display in need_keys.items():
         if nk in overrides:
@@ -209,15 +273,29 @@ def enrich_county_column(
         if isinstance(ent, dict) and ent.get("county"):
             resolved[nk] = (str(ent["county"]), "geocache")
             continue
+        if isinstance(ent, dict) and ent.get("miss"):
+            resolved[nk] = (None, "geocache_miss")
+            continue
         if not geocode:
             continue
         if lim is not None and geocode_calls >= lim:
             break
-        county, _q = _geocode_one(display)
-        geocode_calls += 1
-        time.sleep(min_delay_sec)
+
+        county: Optional[str] = None
+        src_geo: Optional[str] = None
+
+        if ok and (lim is None or geocode_calls < lim):
+            county, _oq = _geocode_one_opencage(display, ok)
+            geocode_calls += 1
+            if county:
+                src_geo = "geocode_opencage"
+            time.sleep(opencage_delay_sec)
+            if verbose and geocode_calls % 25 == 0:
+                cap = f"/{lim}" if lim is not None else " (∞)"
+                _county_log.info("County HTTP: запрос %s%s (OpenCage)", geocode_calls, cap)
+
         if county:
-            resolved[nk] = (county, "geocode")
+            resolved[nk] = (county, src_geo or "geocode_opencage")
             cache[nk] = {"county": county, "query": display}
             modified_cache = True
         else:
@@ -243,9 +321,10 @@ def enrich_county_column(
 
     if verbose:
         n_new = (out["county"].notna() & (out["county_source"] != "xml")).sum()
-        print(
-            f"[county_infer] Заполнено county не из XML: {int(n_new)} строк; "
-            f"распределение county_source:\n{out['county_source'].value_counts().to_string()}"
+        _county_log.info(
+            "Заполнено county не из XML: %s строк; распределение county_source:\n%s",
+            int(n_new),
+            out["county_source"].value_counts().to_string(),
         )
 
     return out

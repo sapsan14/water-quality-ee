@@ -2,7 +2,9 @@
 
 ## Предварительно
 
-В репозитории должен быть **`citizen-service/artifacts/snapshot.json`**. Для быстрого деплоя и CI достаточно **`build_citizen_snapshot.py --map-only`**: Streamlit показывает карту и официальные статусы без `citizen_model.joblib`. Полный прогон добавляет прогноз RF. `*.joblib` можно не коммитить.
+В репозитории должен быть **`citizen-service/artifacts/snapshot.json`**. GitHub Actions (**Citizen snapshot**) по расписанию и вручную собирает полный снимок (данные + 4 модели + координаты) и коммитит в `main`: `snapshot.json`, **`citizen_model.joblib`**, кэши в `citizen-service/data/`. Коммиты с `[skip ci]` не запускают тесты повторно. **Streamlit Community Cloud**, если приложение привязано к репо, после такого push обновляет деплой автоматически.
+
+Для быстрого локального снимка без обучения ML: **`build_citizen_snapshot.py --map-only`** — карта и официальные статусы; вероятности моделей в JSON при этом не пересчитываются.
 
 **Токены:** в репозитории нет Streamlit-токенов и нет `secrets.toml` (см. [STREAMLIT_ACCESS.md](STREAMLIT_ACCESS.md)). Подключение к GitHub при деплое делается через OAuth в браузере на [share.streamlit.io](https://share.streamlit.io), а не через строку в коде.
 
@@ -50,5 +52,5 @@ streamlit run citizen-service/app/streamlit_app.py
 ## После деплоя
 
 - При ошибке импорта убедитесь, что в Cloud выбран **`requirements.streamlit.txt`** из корня репо.
-- Обновление карты: пересоберите снимок, закоммитьте новый `snapshot.json`, Cloud подтянет после push (или **Reboot app** в настройках).
+- Обновление карты и моделей: либо запустите workflow **Citizen snapshot** в GitHub Actions (он закоммитит артефакты), либо соберите локально и закоммитьте `snapshot.json` / кэши; Cloud подтянет после push (или **Reboot app**).
 - Файл **`citizen-service/.streamlit/config.toml`** подхватывается автоматически (тема оформления).

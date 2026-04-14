@@ -99,7 +99,7 @@ water-quality-ee/
 │   └── 06_advanced_models.ipynb   # LightGBM, темпоральный split, калибровка, SHAP
 │
 ├── scripts/
-│   └── warm_county_geocode_cache.py  # долгий прогон кэша уездов (Nominatim)
+│   └── warm_county_geocode_cache.py  # долгий прогон кэша уездов (OpenCage)
 │
 ├── src/
 │   ├── data_loader.py    # загрузка и парсинг XML
@@ -129,7 +129,7 @@ water-quality-ee/
 - **scikit-learn** — модели и пайплайны
 - **matplotlib / seaborn** — визуализация
 - **lxml / xml.etree** — парсинг XML
-- **geopy** (опционально) — геокодирование для заполнения `county`, если включить `geocode_county=True`
+- **requests** + **OpenCage** (`OPENCAGE_API_KEY`) — дозаполнение `county` при `geocode_county=True` (см. `county_infer`)
 - **lightgbm / shap** (опционально) — ноутбук `06_advanced_models.ipynb`
 - **Jupyter Notebook** — интерактивный анализ
 

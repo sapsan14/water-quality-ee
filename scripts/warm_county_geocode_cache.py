@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Дозаполнить data/processed/county_geocode_cache.json через Nominatim.
+Дозаполнить data/processed/county_geocode_cache.json через OpenCage (env OPENCAGE_API_KEY).
 
-Запуск из корня репозитория (нужен интернет, ~1 запрос/сек):
+Запуск из корня репозитория (нужен интернет и ключи):
   pip install -r requirements.txt
   python scripts/warm_county_geocode_cache.py
   python scripts/warm_county_geocode_cache.py --limit 500
