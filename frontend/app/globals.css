@@ -1199,6 +1199,31 @@ body.mapFullscreenActive {
   .pointGrid {
     grid-template-columns: 1fr;
   }
+
+  .infoCard {
+    background: #111b2d;
+    border-color: #2b3f5f;
+  }
+
+  .infoCardIcon {
+    background: #1a2b45;
+    border-color: #2b3f5f;
+  }
+
+  .badge.good {
+    background: rgba(19, 155, 85, 0.25);
+    color: #34d399;
+  }
+
+  .badge.bad {
+    background: rgba(220, 53, 69, 0.25);
+    color: #f87171;
+  }
+
+  .badge.warn {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fbbf24;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1313,5 +1338,9 @@ body.mapFullscreenActive {
 
   .mobileBottomSheet.full {
     transform: translateY(calc(3% + var(--sheet-drag-offset)));
+  }
+
+  .infoCardGrid {
+    grid-template-columns: 1fr;
   }
 }
