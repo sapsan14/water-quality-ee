@@ -266,11 +266,13 @@ type ClusterLike = {
 function MarkerClusterLayer({
   places,
   locale,
-  onSelectPoint
+  onSelectPoint,
+  disableHoverPopups = false
 }: {
   places: FrontendPlace[];
   locale: "ru" | "et" | "en";
   onSelectPoint?: (id: string) => void;
+  disableHoverPopups?: boolean;
 }) {
   const map = useMap();
   const [clusterReady, setClusterReady] = useState(false);
@@ -320,8 +322,10 @@ function MarkerClusterLayer({
       } as L.MarkerOptions & { place: FrontendPlace });
       marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
       marker.on("click", () => onSelectPoint?.(place.id));
-      marker.on("mouseover", () => marker.openPopup());
-      marker.on("mouseout", () => marker.closePopup());
+      if (!disableHoverPopups) {
+        marker.on("mouseover", () => marker.openPopup());
+        marker.on("mouseout", () => marker.closePopup());
+      }
       (group as L.LayerGroup).addLayer(marker);
     });
 
@@ -329,7 +333,7 @@ function MarkerClusterLayer({
     return () => {
       map.removeLayer(group as L.Layer);
     };
-  }, [map, places, locale, onSelectPoint, clusterReady]);
+  }, [map, places, locale, onSelectPoint, clusterReady, disableHoverPopups]);
   return null;
 }
 
@@ -341,6 +345,15 @@ type Props = {
   selectedCounty?: string;
   selectedPoint?: FrontendPlace | null;
   userLocation?: { lat: number; lon: number } | null;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  fullscreenLabel?: string;
+  disableHoverPopups?: boolean;
+  onResetView?: () => void;
+  onRecenterUser?: () => void;
+  resetViewLabel?: string;
+  recenterLabel?: string;
+  canRecenter?: boolean;
 };
 
 function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace | null }) {
@@ -365,7 +378,24 @@ function FocusOnUserLocation({ userLocation }: { userLocation?: { lat: number; l
   return null;
 }
 
-export default function MapClient({ places, onSelectPoint, locale = "ru", onSelectCounty, selectedCounty, selectedPoint, userLocation }: Props) {
+export default function MapClient({
+  places,
+  onSelectPoint,
+  locale = "ru",
+  onSelectCounty,
+  selectedCounty,
+  selectedPoint,
+  userLocation,
+  isFullscreen = false,
+  onToggleFullscreen,
+  fullscreenLabel = "Fullscreen",
+  disableHoverPopups = false,
+  onResetView,
+  onRecenterUser,
+  resetViewLabel = "Reset view",
+  recenterLabel = "Near me",
+  canRecenter = true
+}: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
   const countyRisk = useMemo(() => {
     const acc = new Map<string, { sum: number; n: number }>();
@@ -454,6 +484,26 @@ export default function MapClient({ places, onSelectPoint, locale = "ru", onSele
     };
   }, []);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const t = window.setTimeout(() => {
+      mapRef.current?.invalidateSize();
+    }, 220);
+    return () => window.clearTimeout(t);
+  }, [isFullscreen]);
+
+  const resetView = () => {
+    if (onResetView) {
+      onResetView();
+      return;
+    }
+    mapRef.current?.flyTo(center, 7, { duration: 0.6 });
+  };
+
+  const recenter = () => {
+    onRecenterUser?.();
+  };
+
   const countyStyle = (feature?: GeoJSON.Feature) => {
     const countyName = countyFeatureName(feature);
     const avg = countyRisk.get(countyName);
@@ -481,28 +531,48 @@ export default function MapClient({ places, onSelectPoint, locale = "ru", onSele
   };
 
   return (
-    <MapContainer
-      ref={(instance) => {
-        mapRef.current = instance;
-      }}
-      center={center}
-      zoom={7}
-      minZoom={6}
-      maxZoom={15}
-      maxBounds={estoniaBounds}
-      maxBoundsViscosity={0.35}
-      style={{ height: "620px", width: "100%", borderRadius: "12px" }}
-      scrollWheelZoom
-      preferCanvas
-    >
-      <TileLayer
-        attribution='Tiles &copy; Esri, OpenStreetMap contributors'
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-      />
-      <FocusOnUserLocation userLocation={userLocation} />
-      <FocusOnSelectedPoint selectedPoint={selectedPoint} />
-      {countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
-      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} />
-    </MapContainer>
+    <div className={`mapShell ${isFullscreen ? "isFullscreen" : ""}`}>
+      <div className="mapFloatingControls">
+        <button type="button" className="mapFloatingBtn mapResetBtn" onClick={resetView} aria-label={resetViewLabel} title={resetViewLabel}>
+          🧭
+        </button>
+        <button
+          type="button"
+          className="mapFloatingBtn mapRecenterBtn"
+          onClick={recenter}
+          disabled={!canRecenter}
+          aria-label={recenterLabel}
+          title={recenterLabel}
+        >
+          ◎
+        </button>
+      </div>
+      <button type="button" className="mapFloatingBtn mapFullscreenBtn" onClick={onToggleFullscreen} aria-label={fullscreenLabel} title={fullscreenLabel}>
+        ⛶
+      </button>
+      <MapContainer
+        ref={(instance) => {
+          mapRef.current = instance;
+        }}
+        center={center}
+        zoom={7}
+        minZoom={6}
+        maxZoom={15}
+        maxBounds={estoniaBounds}
+        maxBoundsViscosity={0.35}
+        style={{ height: "100%", width: "100%", borderRadius: isFullscreen ? "0" : "12px" }}
+        scrollWheelZoom
+        preferCanvas
+      >
+        <TileLayer
+          attribution='Tiles &copy; Esri, OpenStreetMap contributors'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+        />
+        <FocusOnUserLocation userLocation={userLocation} />
+        <FocusOnSelectedPoint selectedPoint={selectedPoint} />
+        {countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
+      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
+      </MapContainer>
+    </div>
   );
 }

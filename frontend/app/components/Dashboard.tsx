@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 
@@ -15,6 +15,7 @@ const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high"
 const officialOrder = ["all", "compliant", "violation", "unknown"] as const;
 type Lang = "ru" | "et" | "en";
 type TabKey = "alerts" | "domain" | "analytics" | "aboutModel" | "aboutService";
+type MobilePanelState = "collapsed" | "half" | "full";
 const countyKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
 const countyPretty = (value: string | null | undefined) =>
   (value || "")
@@ -184,6 +185,16 @@ export default function Dashboard({ snapshot }: Props) {
   const [simPressure, setSimPressure] = useState(0);
   const [simMicro, setSimMicro] = useState(0);
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
+  const mapPanelRef = useRef<HTMLElement | null>(null);
+  const sheetDragStartY = useRef<number | null>(null);
+  const sheetDragLastY = useRef<number | null>(null);
+  const sheetDragLastTs = useRef<number | null>(null);
+  const sheetDragVelocity = useRef(0);
+  const [sheetDragOffset, setSheetDragOffset] = useState(0);
+  const [sheetDragging, setSheetDragging] = useState(false);
 
   const tr = useMemo(
     () => ({
@@ -914,6 +925,30 @@ export default function Dashboard({ snapshot }: Props) {
   }, [cyrillicFont]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 900px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onFullscreenChange = () => {
+      setIsMapFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.classList.toggle("mapFullscreenActive", isMapFullscreen);
+    return () => document.body.classList.remove("mapFullscreenActive");
+  }, [isMapFullscreen]);
+
+  useEffect(() => {
     track("filters_changed", {
       segment,
       risk,
@@ -1170,6 +1205,92 @@ export default function Dashboard({ snapshot }: Props) {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
+  };
+
+  const selectPointFromMap = (id: string) => {
+    setSelectedId(id);
+    if (isMobile) setMobilePanelState("half");
+  };
+
+  const toggleMapFullscreen = async () => {
+    if (typeof document === "undefined") return;
+    const target = mapPanelRef.current;
+    if (!target) return;
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        setIsMapFullscreen(false);
+      }
+      return;
+    }
+    if (isMapFullscreen) {
+      setIsMapFullscreen(false);
+      return;
+    }
+    if (target.requestFullscreen) {
+      try {
+        await target.requestFullscreen();
+        return;
+      } catch {
+        // Fullscreen API can fail in some Android WebViews, fallback to CSS overlay.
+      }
+    }
+    setIsMapFullscreen(true);
+  };
+
+  const cycleMobilePanelState = () => {
+    setMobilePanelState((prev) => (prev === "collapsed" ? "half" : prev === "half" ? "full" : "collapsed"));
+  };
+
+  const onSheetPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    sheetDragStartY.current = e.clientY;
+    sheetDragLastY.current = e.clientY;
+    sheetDragLastTs.current = performance.now();
+    sheetDragVelocity.current = 0;
+    setSheetDragging(true);
+    setSheetDragOffset(0);
+  };
+
+  const onSheetPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (sheetDragStartY.current === null) return;
+    const delta = e.clientY - sheetDragStartY.current;
+    const now = performance.now();
+    if (sheetDragLastY.current !== null && sheetDragLastTs.current !== null) {
+      const dy = e.clientY - sheetDragLastY.current;
+      const dt = Math.max(1, now - sheetDragLastTs.current);
+      sheetDragVelocity.current = dy / dt;
+    }
+    sheetDragLastY.current = e.clientY;
+    sheetDragLastTs.current = now;
+    setSheetDragOffset(delta);
+  };
+
+  const onSheetPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    setSheetDragging(false);
+    if (sheetDragStartY.current === null) {
+      setSheetDragOffset(0);
+      cycleMobilePanelState();
+      return;
+    }
+    const delta = e.clientY - sheetDragStartY.current;
+    const fling = sheetDragVelocity.current;
+    sheetDragStartY.current = null;
+    sheetDragLastY.current = null;
+    sheetDragLastTs.current = null;
+    sheetDragVelocity.current = 0;
+    setSheetDragOffset(0);
+    if (Math.abs(delta) < 14 && Math.abs(fling) < 0.4) {
+      cycleMobilePanelState();
+      return;
+    }
+    if (delta < -24 || fling < -0.65) {
+      setMobilePanelState((prev) => (prev === "collapsed" ? "half" : "full"));
+    } else if (delta > 24 || fling > 0.65) {
+      setMobilePanelState((prev) => (prev === "full" ? "half" : "collapsed"));
+    } else {
+      cycleMobilePanelState();
+    }
   };
 
   return (
@@ -1443,20 +1564,40 @@ export default function Dashboard({ snapshot }: Props) {
       </aside>
 
       <div className="mainContent">
-      <section className="panel mapTopPanel">
+      <section
+        ref={mapPanelRef}
+        className={`panel mapTopPanel ${isMapFullscreen ? "mapPanelFullscreen" : ""} ${isMobile ? "mobileMapPanel" : ""}`}
+      >
         <h3 className="sectionTitle">{t.mapTitle}</h3>
         <MapClient
           places={filtered.slice(0, 3000)}
-          onSelectPoint={setSelectedId}
+          onSelectPoint={selectPointFromMap}
           onSelectCounty={(c: string) => setCounty((prev) => (countyKey(prev) === countyKey(c) ? "all" : countyKey(c)))}
           selectedCounty={county !== "all" ? countyPretty(county) : undefined}
           locale={lang}
           selectedPoint={selectedPlace}
           userLocation={nearbyOnly ? userCoords : null}
+          isFullscreen={isMapFullscreen}
+          onToggleFullscreen={toggleMapFullscreen}
+          fullscreenLabel={isMapFullscreen ? lruet(lang, "Свернуть карту", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
+          disableHoverPopups={isMobile}
+          onRecenterUser={activateNearMe}
+          recenterLabel={t.nearMe}
+          resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
         />
+        {isMobile ? (
+          <div className="mobileMapQuickActions">
+            <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
+              {t.filters}
+            </button>
+            <button type="button" className="btn btnSmall nearMeFabBtn" onClick={activateNearMe}>
+              {t.nearMe}
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      <section className="panel">
+      <section className={`panel selectedPointDesktop ${isMobile ? "mobileHidden" : ""}`}>
         <h3 className="sectionTitle">{t.selectedPoint}</h3>
         {!selectedPlace ? (
           <p className="hint">{t.noSelectedPoint}</p>
@@ -1620,6 +1761,93 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         )}
       </section>
+
+      {isMobile ? (
+        <section
+          className={`mobileBottomSheet ${mobilePanelState} ${isMapFullscreen ? "fullscreenShift" : ""} ${sheetDragging ? "dragging" : ""}`}
+          style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
+        >
+          <button
+            type="button"
+            className="mobileSheetHandle"
+            onClick={cycleMobilePanelState}
+            onPointerDown={onSheetPointerDown}
+            onPointerMove={onSheetPointerMove}
+            onPointerUp={onSheetPointerUp}
+            onPointerCancel={() => {
+              sheetDragStartY.current = null;
+              sheetDragLastY.current = null;
+              sheetDragLastTs.current = null;
+              sheetDragVelocity.current = 0;
+              setSheetDragging(false);
+              setSheetDragOffset(0);
+            }}
+            aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
+          >
+            <span />
+          </button>
+          <div className="mobileSheetHeader">
+            <strong>{t.selectedPoint}</strong>
+            <div className="mobileSheetActions">
+              <button type="button" className="btn btnSmall" onClick={() => setDrawerOpen(true)}>
+                {t.filters}
+              </button>
+              <button type="button" className="btn btnSmall" onClick={() => setMobilePanelState("collapsed")}>
+                {lruet(lang, "Скрыть", "Peida", "Hide")}
+              </button>
+            </div>
+          </div>
+          {!selectedPlace ? (
+            <p className="hint">{t.noSelectedPoint}</p>
+          ) : (
+            <div className="mobilePointContent">
+              <h4>{selectedPlace.location}</h4>
+              <p className="hint">
+                {selectedPlace.domain} / {selectedPlace.place_kind}
+                <br />
+                {t.county}: {countyPretty(selectedPlace.county || "Unknown")}
+                <br />
+                {lruet(lang, "Проба", "Proov", "Sample")}: {fmtDate(selectedPlace.sample_date)}
+              </p>
+              <div className="mobileBadges">
+                <span className={`badge ${selectedPlace.risk_level === "high" ? "bad" : selectedPlace.risk_level === "medium" ? "warn" : "good"}`}>
+                  {lruet(lang, "Риск", "Risk", "Risk")}: {selectedPlace.risk_level}
+                </span>
+                <span className={`badge ${selectedPlace.official_compliant === 0 ? "bad" : selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
+                  {lruet(lang, "Офиц.", "Ametlik", "Official")}:{" "}
+                  {selectedPlace.official_compliant === 1
+                    ? lruet(lang, "ok", "ok", "ok")
+                    : selectedPlace.official_compliant === 0
+                      ? lruet(lang, "нарушение", "rikkumine", "violation")
+                      : "n/a"}
+                </span>
+              </div>
+              {Object.keys(selectedPlace.measurements || {}).length ? (
+                <div className="tableWrap compact">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{lruet(lang, "Показатель", "Näitaja", "Parameter")}</th>
+                        <th>{lruet(lang, "Значение", "Väärtus", "Value")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(selectedPlace.measurements)
+                        .slice(0, mobilePanelState === "full" ? 18 : 6)
+                        .map(([k, v]) => (
+                          <tr key={`mm-${k}`}>
+                            <td>{labelForParam(k)}</td>
+                            <td>{String(v)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="panel">
         <div className="tabRow">
