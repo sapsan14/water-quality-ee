@@ -33,7 +33,9 @@ type IconName =
   | "star"
   | "star-outline"
   | "signal"
-  | "grid";
+  | "grid"
+  | "globe"
+  | "chevron-down";
 type CyrillicFont = "ibm" | "manrope";
 type ThemeMode = "light" | "dark";
 
@@ -344,6 +346,24 @@ function Icon({ name }: { name: IconName }) {
       </svg>
     );
   }
+  /* ── globe (language) ───────────────────────────────────────── */
+  if (name === "globe") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M3 12h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M12 3c2.5 2.8 3.8 5.9 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-5.9-3.8-9S9.5 5.8 12 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  /* ── chevron-down ───────────────────────────────────────────── */
+  if (name === "chevron-down") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
   /* ── signal bars (risk) ─────────────────────────────────────── */
   if (name === "signal") {
     return (
@@ -446,6 +466,8 @@ export default function Dashboard({ snapshot }: Props) {
   const [sheetDragging, setSheetDragging] = useState(false);
   const mobileFullscreenInitializedRef = useRef(false);
   const [headerCompact, setHeaderCompact] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement | null>(null);
   const [isTabPending, startTabTransition] = useTransition();
   const [visitedTabs, setVisitedTabs] = useState<Record<TabKey, boolean>>({
     alerts: true,
@@ -1301,6 +1323,24 @@ export default function Dashboard({ snapshot }: Props) {
     pushHeaderLang(lang);
   }, [lang]);
 
+  // Close the header language dropdown when clicking outside or pressing Esc.
+  useEffect(() => {
+    if (!langMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (!langMenuRef.current) return;
+      if (!langMenuRef.current.contains(event.target as Node)) setLangMenuOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLangMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [langMenuOpen]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("water.watchlist.v1", JSON.stringify(watchlist));
@@ -1844,10 +1884,58 @@ export default function Dashboard({ snapshot }: Props) {
             {t.tabs.aboutService}
           </button>
           <div className="headerDivider" aria-hidden="true" />
-          {/* Language pills */}
-          <button className={`btn langBtn ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
-          <button className={`btn langBtn ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
-          <button className={`btn langBtn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+          {/* Language dropdown (replaces 3 flat ET/EN/RU pills) */}
+          <div className="langDropdown" ref={langMenuRef}>
+            <button
+              type="button"
+              className={`btn langDropdownBtn ${langMenuOpen ? "langDropdownBtnOpen" : ""}`}
+              onClick={() => setLangMenuOpen((v) => !v)}
+              aria-haspopup="listbox"
+              aria-expanded={langMenuOpen}
+              aria-label={lruet(lang, "Выбрать язык", "Vali keel", "Select language")}
+              title={lruet(lang, "Выбрать язык", "Vali keel", "Select language")}
+            >
+              <span className="langDropdownGlobe" aria-hidden="true">
+                <Icon name="globe" />
+              </span>
+              <span className="langDropdownCurrent">{lang.toUpperCase()}</span>
+              <span className={`langDropdownChevron ${langMenuOpen ? "open" : ""}`} aria-hidden="true">
+                <Icon name="chevron-down" />
+              </span>
+            </button>
+            {langMenuOpen ? (
+              <div className="langDropdownMenu" role="listbox">
+                {(
+                  [
+                    { code: "et", label: "Eesti", short: "ET" },
+                    { code: "en", label: "English", short: "EN" },
+                    { code: "ru", label: "Русский", short: "RU" }
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={`lang-opt-${opt.code}`}
+                    type="button"
+                    className={`langDropdownItem ${lang === opt.code ? "active" : ""}`}
+                    role="option"
+                    aria-selected={lang === opt.code}
+                    onClick={() => {
+                      setLang(opt.code);
+                      pushHeaderLang(opt.code);
+                      setLangMenuOpen(false);
+                    }}
+                  >
+                    <span className="langDropdownItemShort">{opt.short}</span>
+                    <span className="langDropdownItemLabel">{opt.label}</span>
+                    {lang === opt.code ? (
+                      <span className="langDropdownItemTick" aria-hidden="true">
+                        <Icon name="check-circle" />
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -2302,20 +2390,6 @@ export default function Dashboard({ snapshot }: Props) {
       </aside>
 
       <div className="mainContent">
-      {/* FAB — fixed ⚙ button to open/close filter drawer on desktop when unpinned */}
-      {!filtersPinned && !isMobile ? (
-        <button
-          className={`filterFab desktopOnly ${drawerOpen ? "filterFabOpen" : ""}`}
-          onClick={() => setDrawerOpen((v) => !v)}
-          aria-label={drawerOpen ? t.close : t.openFilters}
-          title={drawerOpen ? t.close : t.openFilters}
-        >
-          <span className="btnIcon" aria-hidden="true">
-            <Icon name={drawerOpen ? "filter-x" : "filters"} />
-          </span>
-        </button>
-      ) : null}
-
       <section
         ref={mapPanelRef}
         className={`panel mapTopPanel ${isMapFullscreen ? "mapPanelFullscreen" : ""} ${isMobile ? "mobileMapPanel" : ""}`}
@@ -2323,6 +2397,121 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="mapHeaderRow">
           <h3 className="sectionTitle">{t.mapTitle}</h3>
         </div>
+        {/* On-map filter FAB — large, distinct icon button sitting on the
+            map itself (not glued to the screen edge). Desktop only. */}
+        {!filtersPinned && !isMobile ? (
+          <button
+            className={`filterFab desktopOnly ${drawerOpen ? "filterFabOpen" : ""}`}
+            onClick={() => setDrawerOpen((v) => !v)}
+            aria-label={drawerOpen ? t.close : t.openFilters}
+            title={drawerOpen ? t.close : t.openFilters}
+          >
+            <span className="filterFabIcon" aria-hidden="true">
+              <Icon name={drawerOpen ? "filter-x" : "filters"} />
+            </span>
+          </button>
+        ) : null}
+        {/* On-map filter chips — desktop overlay matching the mobile UX
+            (domain segment, alerts-only, near-me). Sits on the map so
+            users can toggle quick filters without opening the drawer. */}
+        {!isMobile ? (
+          <div className="mapChipBar desktopOnly" role="toolbar" aria-label={t.filters}>
+            {(() => {
+              const allLabel = lruet(lang, "Все", "Kõik", "All");
+              return (
+                <button
+                  type="button"
+                  className={`mapChip ${segment === "all" ? "mapChipActive" : ""}`}
+                  onClick={() => setSegment("all")}
+                  aria-label={allLabel}
+                  title={allLabel}
+                >
+                  <Icon name="grid" />
+                </button>
+              );
+            })()}
+            {(["swimming", "pool_spa", "drinking_water", "drinking_source"] as const).map((k) => {
+              const iconName: IconName =
+                k === "swimming" ? "swim" : k === "pool_spa" ? "pool" : k === "drinking_water" ? "tap" : "drop";
+              const label =
+                k === "swimming"
+                  ? lruet(lang, "Купальные", "Suplusvesi", "Swimming")
+                  : k === "pool_spa"
+                  ? lruet(lang, "Бассейны", "Basseinid", "Pools")
+                  : k === "drinking_water"
+                  ? lruet(lang, "Питьевая", "Joogivesi", "Drinking")
+                  : lruet(lang, "Источники", "Allikad", "Sources");
+              return (
+                <button
+                  key={`mapchip-${k}`}
+                  type="button"
+                  className={`mapChip ${segment === k ? "mapChipActive" : ""}`}
+                  onClick={() => setSegment(segment === k ? "all" : k)}
+                  aria-label={label}
+                  title={label}
+                >
+                  <Icon name={iconName} />
+                </button>
+              );
+            })}
+            <div className="mapChipDivider" aria-hidden="true" />
+            {(() => {
+              const alertsLabel = alertsOnly
+                ? lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")
+                : lruet(lang, "Только тревоги", "Ainult häired", "Alerts only");
+              return (
+                <button
+                  type="button"
+                  className={`mapChip mapChipAlert ${alertsOnly ? "mapChipActive" : ""}`}
+                  onClick={() => setAlertsOnly((v) => !v)}
+                  aria-label={alertsLabel}
+                  aria-pressed={alertsOnly}
+                  title={alertsLabel}
+                >
+                  <Icon name="alert" />
+                </button>
+              );
+            })()}
+            {(() => {
+              const nearLabel = nearbyOnly
+                ? lruet(lang, "Снять фильтр «рядом»", "Eemalda läheduse filter", "Clear near-me filter")
+                : lruet(lang, "Рядом со мной", "Minu lähedal", "Near me");
+              return (
+                <button
+                  type="button"
+                  className={`mapChip ${nearbyOnly ? "mapChipActive" : ""}`}
+                  onClick={() => {
+                    if (nearbyOnly) {
+                      setNearbyOnly(false);
+                      setGeoError(null);
+                    } else if (userCoords) {
+                      setNearbyOnly(true);
+                      setGeoError(null);
+                    } else {
+                      activateNearMe();
+                    }
+                  }}
+                  aria-label={nearLabel}
+                  aria-pressed={nearbyOnly}
+                  title={nearLabel}
+                >
+                  <Icon name="locate" />
+                </button>
+              );
+            })()}
+            {risk !== "all" ? (
+              <button
+                type="button"
+                className="mapChip mapChipActive"
+                onClick={() => setRisk("all")}
+                aria-label={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+                title={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+              >
+                <Icon name="signal" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <MapClient
           places={mapPlaces}
           onSelectPoint={selectPoint}

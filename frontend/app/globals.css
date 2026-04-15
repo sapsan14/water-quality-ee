@@ -331,6 +331,173 @@ a {
   flex-shrink: 0;
 }
 
+/* ── Language dropdown (replaces flat ET/EN/RU pills) ───────── */
+.langDropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.langDropdownBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid #cfddf0;
+  background: #f4f8ff;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.langDropdownBtn:hover {
+  background: #e4eefd;
+  border-color: #9ec3f5;
+  color: var(--brand);
+}
+
+.langDropdownBtn.langDropdownBtnOpen {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.28);
+}
+
+.langDropdownGlobe {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.langDropdownGlobe svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.langDropdownCurrent {
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.langDropdownChevron {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.18s ease;
+}
+
+.langDropdownChevron.open {
+  transform: rotate(180deg);
+}
+
+.langDropdownChevron svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.langDropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 172px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
+  background: var(--panel);
+  border: 1px solid #cfddf0;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(13, 40, 80, 0.18);
+  z-index: 1400;
+}
+
+.langDropdownItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.langDropdownItem:hover {
+  background: #eaf2ff;
+  color: var(--brand);
+}
+
+.langDropdownItem.active {
+  background: rgba(15, 110, 253, 0.12);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.langDropdownItemShort {
+  display: inline-flex;
+  width: 28px;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.langDropdownItem.active .langDropdownItemShort {
+  color: var(--brand);
+}
+
+.langDropdownItemLabel {
+  flex: 1;
+  line-height: 1.1;
+}
+
+.langDropdownItemTick {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  color: var(--brand);
+}
+
+.langDropdownItemTick svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+html[data-theme="dark"] .langDropdownBtn {
+  background: rgba(30, 42, 62, 0.7);
+  border-color: rgba(99, 164, 255, 0.3);
+  color: #c7d6ee;
+}
+
+html[data-theme="dark"] .langDropdownBtn:hover {
+  background: rgba(56, 84, 130, 0.75);
+  color: #eaf2ff;
+}
+
+html[data-theme="dark"] .langDropdownMenu {
+  background: #141d2e;
+  border-color: rgba(99, 164, 255, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .langDropdownItem {
+  color: #e5edf9;
+}
+
+html[data-theme="dark"] .langDropdownItem:hover {
+  background: rgba(56, 84, 130, 0.55);
+}
+
 .sectionTitle {
   margin: 0;
   font-size: 1.25rem;
@@ -389,12 +556,17 @@ a {
   font-weight: 700;
 }
 
-/* ── Map stats row ──────────────────────────────────────────── */
+/* ── Map stats row ──────────────────────────────────────────
+   Always horizontal, single-row, scrolls sideways if needed.
+   Keeps the "at-a-glance numbers" tight below the map without
+   eating vertical space. */
 .mapStatsRow {
   grid-column: 1 / -1;
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 0.55rem 0.9rem;
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(6px);
@@ -402,16 +574,28 @@ a {
   border: 1px solid rgba(191, 211, 234, 0.7);
   border-radius: 12px;
   margin-top: -0.4rem;
+  scrollbar-width: thin;
+}
+
+.mapStatsRow::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mapStatsRow::-webkit-scrollbar-thumb {
+  background: rgba(13, 40, 80, 0.18);
+  border-radius: 3px;
 }
 
 .mapStat {
-  display: flex;
-  flex-direction: column;
-  padding: 0.3rem 0.65rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 8px;
   background: #f6faff;
   border: 1px solid #dce9f8;
-  min-width: 90px;
+  white-space: nowrap;
 }
 
 .mapStat.mapStatGood {
@@ -878,40 +1062,58 @@ a {
   box-shadow: 0 5px 14px rgba(13, 110, 253, 0.2);
 }
 
-/* ── Filter FAB (fixed gear icon, desktop only) ─────────────── */
+/* ── Filter FAB (large round button overlaying the map) ─────
+   Positioned absolutely inside .mapTopPanel so it sits ON the
+   map area, not at the screen edge. The map panel is made
+   position:relative to anchor it. */
 .filterFab {
-  position: fixed;
+  position: absolute;
   left: 1rem;
-  top: calc(var(--topbar-h) + 1rem);
-  z-index: 1250;
-  width: 44px;
-  height: 44px;
+  top: 3.5rem;
+  z-index: 650;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #e9f2ff 0%, #dcecff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%);
   border: 2px solid #6ea8fe;
   color: #0a58ca;
-  box-shadow: 0 3px 12px rgba(13, 110, 253, 0.22);
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.28), 0 1px 3px rgba(13, 110, 253, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, background 0.15s ease;
+  transition: box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
 .filterFab:hover {
-  box-shadow: 0 5px 16px rgba(13, 110, 253, 0.35);
-  background: linear-gradient(180deg, #ddeaff 0%, #cce0ff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(13, 110, 253, 0.4);
+  background: linear-gradient(180deg, #f6faff 0%, #d9e9ff 100%);
+}
+
+.filterFab:active {
+  transform: translateY(0);
 }
 
 .filterFab.filterFabOpen {
   background: linear-gradient(180deg, #0a58ca 0%, #0369a1 100%);
   border-color: #0a58ca;
   color: #fff;
+  box-shadow: 0 8px 22px rgba(10, 88, 202, 0.45);
 }
 
-.filterFab .btnIcon {
-  width: 22px;
-  height: 22px;
+.filterFab .filterFabIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}
+
+.filterFab .filterFabIcon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* ---- Compact date range picker ---- */
@@ -1031,6 +1233,112 @@ a {
 
 .mapTopPanel {
   padding: 0.85rem 0.85rem 0.75rem;
+  position: relative;
+}
+
+/* ── Desktop on-map chip bar (filter icons overlaying the map) ── */
+.mapChipBar {
+  position: absolute;
+  top: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 650;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(13, 110, 253, 0.18);
+  box-shadow: 0 6px 20px rgba(13, 40, 80, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: calc(100% - 10rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mapChipBar::-webkit-scrollbar {
+  display: none;
+}
+
+.mapChip {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: #f4f8ff;
+  color: #5a6880;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  padding: 0;
+}
+
+.mapChip:hover {
+  background: #e7f0ff;
+  color: var(--brand);
+  border-color: #bcd4f6;
+}
+
+.mapChip svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.mapChip.mapChipActive {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.35);
+}
+
+.mapChip.mapChipAlert.mapChipActive {
+  background: #ea4335;
+  border-color: #ea4335;
+  box-shadow: 0 2px 8px rgba(234, 67, 53, 0.35);
+}
+
+.mapChipDivider {
+  width: 1px;
+  height: 26px;
+  background: rgba(13, 40, 80, 0.12);
+  flex-shrink: 0;
+  margin: 0 0.15rem;
+}
+
+html[data-theme="dark"] .mapChipBar {
+  background: rgba(17, 27, 44, 0.9);
+  border-color: rgba(99, 164, 255, 0.25);
+}
+
+html[data-theme="dark"] .mapChip {
+  background: rgba(30, 42, 62, 0.7);
+  color: #c7d6ee;
+}
+
+html[data-theme="dark"] .mapChip:hover {
+  background: rgba(56, 84, 130, 0.75);
+  color: #eaf2ff;
+}
+
+html[data-theme="dark"] .mapChipDivider {
+  background: rgba(148, 175, 210, 0.25);
+}
+
+html[data-theme="dark"] .filterFab {
+  background: linear-gradient(180deg, #1e2a3e 0%, #162233 100%);
+  border-color: #3b7bd0;
+  color: #cfe0ff;
+}
+
+html[data-theme="dark"] .filterFab.filterFabOpen {
+  background: linear-gradient(180deg, #1d4ed8 0%, #0b3a86 100%);
+  color: #fff;
 }
 
 .mapHeaderRow {
@@ -2474,6 +2782,7 @@ html[data-theme="dark"] .dateRangeSep {
   }
 
   .topBarControls .langBtn,
+  .topBarControls .langDropdown,
   .topBarControls .headerInfoNav,
   .topBarControls .headerDivider {
     display: none;
