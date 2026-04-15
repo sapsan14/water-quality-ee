@@ -1012,22 +1012,18 @@ export default function Dashboard({ snapshot }: Props) {
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
 
   // Auto-fit map to visible places whenever filters produce a meaningful subset.
-  const [fitBoundsVersion, setFitBoundsVersion] = useState(0);
+  // Derived as a string key (no setState in effect) — FitBoundsOnVersion reacts to key changes.
+  const fitBoundsKey = useMemo(() => {
+    if (filtered.length === 0 || filtered.length === snapshot.places.length) return "";
+    const firstId = filtered[0]?.id ?? "";
+    const lastId = filtered[filtered.length - 1]?.id ?? "";
+    return `${filtered.length}:${firstId}:${lastId}`;
+  }, [filtered, snapshot.places.length]);
+
   const fitBoundsPlaces = useMemo<[number, number][]>(
     () => filtered.map((p) => [p.lat, p.lon]),
     [filtered]
   );
-  const fitBoundsInitRef = useRef(false);
-  useEffect(() => {
-    if (!fitBoundsInitRef.current) {
-      // Skip first render — initial Estonia bounds are handled by isFullscreen effect in MapClient
-      fitBoundsInitRef.current = true;
-      return;
-    }
-    // Only auto-fit when filters narrow the result set (not when showing all places)
-    if (filtered.length === 0 || filtered.length === snapshot.places.length) return;
-    setFitBoundsVersion((v) => v + 1);
-  }, [filtered, snapshot.places.length]);
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
@@ -1429,10 +1425,12 @@ export default function Dashboard({ snapshot }: Props) {
     });
   };
 
-  // Auto-collapse sheet when in place mode but nothing is selected
+  // Auto-collapse sheet when in place mode but nothing is selected.
+  // Deferred via setTimeout to avoid calling setState synchronously in an effect body.
   useEffect(() => {
     if (mobilePanelState !== "collapsed" && sheetMode === "place" && !selectedPlace) {
-      setMobilePanelState("collapsed");
+      const t = window.setTimeout(() => setMobilePanelState("collapsed"), 0);
+      return () => window.clearTimeout(t);
     }
   }, [mobilePanelState, sheetMode, selectedPlace]);
 
@@ -1919,7 +1917,7 @@ export default function Dashboard({ snapshot }: Props) {
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
           showCountyOverlay={!isMobile}
-          fitBoundsVersion={fitBoundsVersion}
+          fitBoundsKey={fitBoundsKey}
           fitBoundsPlaces={fitBoundsPlaces}
         />
       </section>
@@ -2183,10 +2181,10 @@ export default function Dashboard({ snapshot }: Props) {
                     <select id="gm-risk-select" value={risk} onChange={(e) => setRisk(e.target.value)}>
                       {riskOrder.map((r) => (
                         <option key={r} value={r}>
-                          {r === "all" ? lruet(lang, "Все", "Kõik", "All")
-                          : r === "low" ? lruet(lang, "Низкий", "Madal", "Low")
-                          : r === "medium" ? lruet(lang, "Средний", "Keskmine", "Medium")
-                          : r === "high" ? lruet(lang, "Высокий", "Kõrge", "High")
+                          {(r as string) === "all" ? lruet(lang, "Все", "Kõik", "All")
+                          : (r as string) === "low" ? lruet(lang, "Низкий", "Madal", "Low")
+                          : (r as string) === "medium" ? lruet(lang, "Средний", "Keskmine", "Medium")
+                          : (r as string) === "high" ? lruet(lang, "Высокий", "Kõrge", "High")
                           : lruet(lang, "Неизвестно", "Teadmata", "Unknown")}
                         </option>
                       ))}
