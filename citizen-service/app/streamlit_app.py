@@ -553,13 +553,19 @@ def _compute_map_stats(filtered: list[dict], prob_col: str) -> dict:
     health = int(round((1 - n_viol / n_val) * 100)) if n_val else None
 
     if avg_p is not None:
-        if avg_p > 0.55:   fc, fcc = "Критично", "#ef4444"
-        elif avg_p > 0.25: fc, fcc = "Умеренно", "#d97706"
-        else:              fc, fcc = "Хорошо",   "#16a34a"
+        if avg_p > 0.55:
+            fc, fcc = "Критично", "#ef4444"
+        elif avg_p > 0.25:
+            fc, fcc = "Умеренно", "#d97706"
+        else:
+            fc, fcc = "Хорошо", "#16a34a"
     elif health is not None:
-        if health < 60:    fc, fcc = "Критично", "#ef4444"
-        elif health < 85:  fc, fcc = "Умеренно", "#d97706"
-        else:              fc, fcc = "Хорошо",   "#16a34a"
+        if health < 60:
+            fc, fcc = "Критично", "#ef4444"
+        elif health < 85:
+            fc, fcc = "Умеренно", "#d97706"
+        else:
+            fc, fcc = "Хорошо", "#16a34a"
     else:
         fc, fcc = "н/д", "#64748b"
 
@@ -1459,11 +1465,16 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
 
     # ── derive filter state from session_state ─────────────────────────────────
     kinds_filter: set[str] = set()
-    if st.session_state.get("f_swimming",        True):  kinds_filter.add("swimming")
-    if st.session_state.get("f_pool_spa",         True):  kinds_filter.add("pool_spa")
-    if st.session_state.get("f_drinking_water",   True):  kinds_filter.add("drinking_water")
-    if st.session_state.get("f_drinking_source",  True):  kinds_filter.add("drinking_source")
-    if st.session_state.get("f_other",            False): kinds_filter.add("other")
+    if st.session_state.get("f_swimming", True):
+        kinds_filter.add("swimming")
+    if st.session_state.get("f_pool_spa", True):
+        kinds_filter.add("pool_spa")
+    if st.session_state.get("f_drinking_water", True):
+        kinds_filter.add("drinking_water")
+    if st.session_state.get("f_drinking_source", True):
+        kinds_filter.add("drinking_source")
+    if st.session_state.get("f_other", False):
+        kinds_filter.add("other")
     if not kinds_filter:
         kinds_filter.add("swimming")
 
