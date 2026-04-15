@@ -33,7 +33,7 @@
   --bad: #dc3545;
   --warn: #e38f00;
   --font-cyrillic-ui: var(--font-cyrillic-ibm);
-  --topbar-h: 62px; /* approximate sticky header height — used to offset drawer */
+  --topbar-h: 78px; /* approximate sticky header height — used to offset drawer */
 }
 
 * {
@@ -170,10 +170,13 @@ a {
 .drawer {
   position: fixed;
   left: -390px;
-  top: calc(var(--topbar-h) + 4px);
-  height: calc(100vh - var(--topbar-h) - 4px);
+  top: calc(var(--topbar-h) + 12px);
+  height: calc(100vh - var(--topbar-h) - 12px);
   width: min(360px, 92vw);
-  z-index: 1200;
+  /* Must sit ABOVE the sticky topBar (.topBar z-index: 1300) so the
+     drawer header (“Filters” title + pin/close buttons) stays visible
+     and the drawer is never clipped under the translucent heading. */
+  z-index: 1400;
   border-radius: 0 14px 14px 0;
   transition: left 0.24s ease;
   background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
@@ -237,6 +240,10 @@ a {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  /* Force a single-row layout so the info-nav buttons can't wrap under
+     the brand block on narrow desktop widths. */
+  flex-wrap: nowrap;
+  justify-content: space-between;
 }
 
 /* Keep the brand block on the left and let it shrink if the subtitle is
@@ -250,6 +257,10 @@ a {
   flex: 0 0 auto;
   margin-left: auto;
   flex-wrap: nowrap;
+  /* Explicit right alignment — belt-and-suspenders with `margin-left:auto`
+     so the nav buttons + language dropdown always land at the far right
+     corner of the heading, never stacked under the brand. */
+  justify-content: flex-end;
 }
 
 .unifiedTopBar.compact {
@@ -314,8 +325,9 @@ a {
 
 /* ── Header info-nav buttons (About Model / About Service) ─── */
 .headerInfoNav {
-  font-size: 0.82rem;
-  padding: 0.28rem 0.7rem;
+  font-size: 0.74rem;
+  padding: 0.22rem 0.55rem;
+  min-height: 28px;
   border-radius: 999px;
   border: 1px solid #cfddf0;
   background: #f4f8ff;
@@ -355,9 +367,10 @@ a {
 .langDropdownBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.65rem 0.3rem 0.55rem;
-  font-size: 0.82rem;
+  gap: 0.3rem;
+  padding: 0.22rem 0.55rem 0.22rem 0.48rem;
+  min-height: 28px;
+  font-size: 0.74rem;
   font-weight: 600;
   border-radius: 999px;
   border: 1px solid #cfddf0;
@@ -1215,14 +1228,17 @@ html[data-theme="dark"] .langDropdownItem:hover {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
   padding: 0;
   background: transparent;
   border: none;
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  max-width: calc(100% - 10rem);
+  /* Leave only a small side margin so the full row fits in a single
+     line even when every optional chip (clear filters, clear risk) is
+     rendered — was `- 10rem` which clipped chips on narrower maps. */
+  max-width: calc(100% - 2rem);
 }
 
 .mapChip {
@@ -1266,6 +1282,11 @@ html[data-theme="dark"] .langDropdownItem:hover {
   background: #ea4335;
   border-color: #ea4335;
   box-shadow: 0 2px 8px rgba(234, 67, 53, 0.45);
+}
+
+.mapChip.mapChipClear:hover svg {
+  transform: rotate(-18deg);
+  transition: transform 160ms ease;
 }
 
 .mapChipDivider {
@@ -2393,9 +2414,9 @@ html[data-theme="dark"] .modalCloseBtn {
   .drawer.pinned {
     position: fixed;
     left: 0;
-    top: calc(var(--topbar-h) + 4px);
+    top: calc(var(--topbar-h) + 12px);
     width: min(360px, 92vw);
-    max-height: calc(100vh - var(--topbar-h) - 4px);
+    max-height: calc(100vh - var(--topbar-h) - 12px);
   }
 
   .reportsGrid {
