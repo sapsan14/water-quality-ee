@@ -409,51 +409,60 @@ type Props = {
 };
 
 /**
- * Pan the selected point so it stays above the bottom-sheet header and the
- * on-screen keyboard, instead of vanishing under either overlay.
+ * Keep the selected point centred in the *visible* strip of the map, i.e.
+ * the area not covered by the top search/chip bar nor the bottom sheet or
+ * on-screen keyboard. Re-runs whenever the selected point identity changes
+ * OR an overlay height changes (sheet snap state, keyboard open/close),
+ * so the pin stays in view as the UI expands/collapses around it.
  *
- * `bottomOverlayPx` = pixels obscured at the bottom (sheet peek/half + IME).
+ * `bottomOverlayPx` = pixels obscured at the bottom (sheet peek/half/full + IME).
+ * `topOverlayPx`    = pixels obscured at the top (search bar + chip bar).
  *
- * Only fires when the selected point identity changes — NOT when
- * `bottomOverlayPx` changes alone (e.g., sheet drag).  This prevents the
- * double-pan that made the map appear to "jump away" after a pin tap.
+ * During a sheet drag the overlay value does NOT change (it's derived from
+ * the discrete snap state, not the live drag offset), so this effect does
+ * not cause jitter while the user is dragging.
  */
 function FocusOnSelectedPoint({
   selectedPoint,
-  bottomOverlayPx = 0
+  bottomOverlayPx = 0,
+  topOverlayPx = 0
 }: {
   selectedPoint?: FrontendPlace | null;
   bottomOverlayPx?: number;
+  topOverlayPx?: number;
 }) {
   const map = useMap();
   const prevIdRef = useRef<string | null>(null);
-  // Capture the latest bottomOverlayPx without adding it to the effect deps.
-  const overlayRef = useRef(bottomOverlayPx);
-  useEffect(() => { overlayRef.current = bottomOverlayPx; });
 
   useEffect(() => {
     if (!selectedPoint) { prevIdRef.current = null; return; }
-    // Skip re-pan if it's the same point (only overlay height changed).
-    if (selectedPoint.id === prevIdRef.current) return;
+    const idChanged = selectedPoint.id !== prevIdRef.current;
     prevIdRef.current = selectedPoint.id;
 
     const target: [number, number] = [selectedPoint.lat, selectedPoint.lon];
     const targetZoom = Math.max(map.getZoom(), 11);
-    const overlay = overlayRef.current;
-    if (overlay > 0) {
-      // The bottom sheet hides the lower `overlay` pixels of the viewport.
-      // To keep the marker centred in the *visible* strip (top half), the map
-      // centre must sit geographically SOUTH of the marker — i.e. its world
-      // pixel y must be LARGER than the marker's. Leaflet's pixel space has y
-      // growing downward, so we ADD overlay/2.
-      const point = map.project(target, targetZoom);
-      point.y += overlay / 2;
-      const adjusted = map.unproject(point, targetZoom);
+
+    // The visible strip is [topOverlayPx, viewportHeight - bottomOverlayPx].
+    // Its centre is (top + (height - bottom)) / 2. The map's geographic
+    // centre sits at viewportHeight / 2 in screen pixels. For the marker to
+    // appear at the visible-strip centre, the geographic centre must be
+    // offset from the marker by (bottomOverlayPx - topOverlayPx) / 2 pixels
+    // in world space. Leaflet's pixel y grows southward → ADD the delta.
+    const offset = (bottomOverlayPx - topOverlayPx) / 2;
+    const point = map.project(target, targetZoom);
+    point.y += offset;
+    const adjusted = map.unproject(point, targetZoom);
+
+    // On a fresh selection, fly with the usual cinematic duration. When only
+    // an overlay changed (e.g. sheet dragged to a new snap state for the
+    // same pin), pan more briskly so the pin tracks the visible strip
+    // without a slow re-zoom animation.
+    if (idChanged) {
       map.flyTo(adjusted, targetZoom, { duration: 0.6 });
-      return;
+    } else {
+      map.panTo(adjusted, { animate: true, duration: 0.35 });
     }
-    map.flyTo(target, targetZoom, { duration: 0.6 });
-  }, [map, selectedPoint]);
+  }, [map, selectedPoint, bottomOverlayPx, topOverlayPx]);
   return null;
 }
 
@@ -719,7 +728,11 @@ function MapClient({
           keepBuffer={isMobile ? 2 : 5}
         />
         <FocusOnUserLocation userLocation={userLocation} />
-        <FocusOnSelectedPoint selectedPoint={selectedPoint} bottomOverlayPx={bottomOverlayPx} />
+        <FocusOnSelectedPoint
+          selectedPoint={selectedPoint}
+          bottomOverlayPx={bottomOverlayPx}
+          topOverlayPx={topOverlayPx}
+        />
         <FitBoundsOnVersion
           fitBoundsKey={fitBoundsKey}
           places={fitBoundsPlaces}
