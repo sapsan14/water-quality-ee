@@ -2209,7 +2209,14 @@ export default function Dashboard({ snapshot }: Props) {
                 {lruet(lang, "Прогноз выбранной модели", "Valitud mudeli prognoos", "Selected model prediction")}:{" "}
                 {selectedPlace.model_violation_prob !== null ? selectedPlace.model_violation_prob.toFixed(2) : "n/a"}
                 <br />
-                LR/RF/GB/LGBM:{" "}
+                <span className="modelAbbr" data-tooltip={lruet(lang, "Logistic Regression — линейная вероятностная модель", "Logistic Regression — lineaarne tõenäosusmudel", "Logistic Regression — linear probability model")}>LR</span>
+                {"/"}
+                <span className="modelAbbr" data-tooltip={lruet(lang, "Random Forest — ансамбль деревьев", "Random Forest — puuansambel", "Random Forest — ensemble of decision trees")}>RF</span>
+                {"/"}
+                <span className="modelAbbr" data-tooltip={lruet(lang, "Gradient Boosting — деревья последовательно исправляют ошибки", "Gradient Boosting — puud parandavad järjest vigu", "Gradient Boosting — trees sequentially correct errors")}>GB</span>
+                {"/"}
+                <span className="modelAbbr" data-tooltip={lruet(lang, "LightGBM — быстрый boosting на деревьях", "LightGBM — kiire puupõhine boosting", "LightGBM — fast histogram-based gradient boosting")}>LGBM</span>
+                {": "}
                 {[
                   selectedPlace.lr_violation_prob,
                   selectedPlace.rf_violation_prob,
@@ -2218,12 +2225,6 @@ export default function Dashboard({ snapshot }: Props) {
                 ]
                   .map((v) => (typeof v === "number" ? v.toFixed(2) : "n/a"))
                   .join(" / ")}
-                <br />
-                <span className="hint">
-                  {lang === "ru"
-                    ? "LR = Logistic Regression (линейная вероятностная модель), RF = Random Forest (ансамбль деревьев), GB = Gradient Boosting (деревья последовательно исправляют ошибки), LGBM = LightGBM (быстрый boosting на деревьях)."
-                    : "LR = Logistic Regression, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM."}
-                </span>
               </p>
             </div>
             <div className="panel reportPanel">
