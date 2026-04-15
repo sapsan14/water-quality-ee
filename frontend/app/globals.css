@@ -806,12 +806,15 @@ body.mapFullscreenActive {
   transform: translateY(calc(100% - 62px + var(--sheet-drag-offset)));
 }
 
+/* Half: sheet occupies ~50% of screen, leaving map fully usable above */
 .mobileBottomSheet.half {
-  transform: translateY(calc(42% + var(--sheet-drag-offset)));
+  transform: translateY(calc(48% + var(--sheet-drag-offset)));
 }
 
+/* Full: stops below search bar + chips so they stay reachable.
+   safe-area-inset-top + 52px search + 34px chips + 10px gap ≈ 6.2rem + safe-area */
 .mobileBottomSheet.full {
-  transform: translateY(calc(3% + var(--sheet-drag-offset)));
+  transform: translateY(calc(env(safe-area-inset-top, 0px) + 6.2rem + var(--sheet-drag-offset)));
 }
 
 .mobileMapQuickActions {
@@ -1952,21 +1955,6 @@ body.mapFullscreenActive {
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
     /* Keep above the collapsed bottom sheet (62px) */
     bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .mobileBottomSheet.collapsed {
-    transform: translateY(calc(100% - 62px + var(--sheet-drag-offset)));
-  }
-
-  /* Half: sheet occupies ~50% of screen from the bottom, leaving map fully usable above */
-  .mobileBottomSheet.half {
-    transform: translateY(calc(48% + var(--sheet-drag-offset)));
-  }
-
-  /* Full: sheet stops below the chip bar so search+chips are always reachable.
-     env(safe-area-inset-top) + search bar (52px) + chip bar (34px) + gap (10px) = ~100px+safe-area */
-  .mobileBottomSheet.full {
-    transform: translateY(calc(env(safe-area-inset-top, 0px) + 6.2rem + var(--sheet-drag-offset)));
   }
 
   .infoCardGrid {
