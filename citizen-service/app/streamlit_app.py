@@ -135,6 +135,57 @@ MODEL_COLORS = {
     "lgbm": "#15803d",
 }
 
+TRANSLATIONS: dict[str, dict[str, str]] = {
+    "RU": {
+        "page_title": "Качество воды (гражданский вид)",
+        "title": "Качество воды — Эстония",
+        "caption_model": "Данные Terviseamet (открытый XML). Прогнозы — отдельные ML-модели ({models}); это не официальное заключение Terviseamet.",
+        "caption_nomodel": "Данные Terviseamet (открытый XML). Карта и официальные статусы; прогнозы моделей появятся после полной сборки снимка (без флага --map-only).",
+        "tab_map": "Карта",
+        "tab_table": "Таблица",
+        "tab_compare": "Сравнение моделей",
+        "nav_diagnostics": "Диагностика",
+        "nav_about_model": "О модели",
+        "nav_about_service": "О сервисе",
+        "last_measured": "Последнее измерение",
+        "no_snap": "Нет файла снимка данных.",
+        "snap_info": "Снимок: `{ts}`.",
+        "points_on_map": "Точек на карте: {n} (всего в снимке: {total}).",
+    },
+    "EN": {
+        "page_title": "Water Quality (citizen view)",
+        "title": "Water Quality — Estonia",
+        "caption_model": "Data: Terviseamet (open XML). Predictions — separate ML models ({models}); not an official Terviseamet assessment.",
+        "caption_nomodel": "Data: Terviseamet (open XML). Map and official statuses only; model predictions available after full snapshot build (without --map-only).",
+        "tab_map": "Map",
+        "tab_table": "Table",
+        "tab_compare": "Model Compare",
+        "nav_diagnostics": "Diagnostics",
+        "nav_about_model": "About Model",
+        "nav_about_service": "About Service",
+        "last_measured": "Last measured",
+        "no_snap": "No snapshot file found.",
+        "snap_info": "Snapshot: `{ts}`.",
+        "points_on_map": "Points on map: {n} (total in snapshot: {total}).",
+    },
+    "ET": {
+        "page_title": "Vee kvaliteet (kodanikuvaade)",
+        "title": "Vee kvaliteet — Eesti",
+        "caption_model": "Andmed: Terviseamet (avatud XML). Prognoosid — eraldi ML-mudelid ({models}); ei ole Terviseameti ametlik hinnang.",
+        "caption_nomodel": "Andmed: Terviseamet (avatud XML). Kaart ja ametlikud staatused; mudelite prognoosid on saadaval pärast täielikku hetktõmmist (ilma --map-only).",
+        "tab_map": "Kaart",
+        "tab_table": "Tabel",
+        "tab_compare": "Mudelite võrdlus",
+        "nav_diagnostics": "Diagnostika",
+        "nav_about_model": "Mudeli kohta",
+        "nav_about_service": "Teenuse kohta",
+        "last_measured": "Viimati mõõdetud",
+        "no_snap": "Hetktõmmise fail puudub.",
+        "snap_info": "Hetktõmmis: `{ts}`.",
+        "points_on_map": "Punkte kaardil: {n} (kokku hetktõmmises: {total}).",
+    },
+}
+
 
 @st.cache_data(show_spinner=False)
 def load_snapshot() -> dict | None:
@@ -206,8 +257,9 @@ def _place_kind(p: dict) -> str:
 
 
 def _measurements_html(m: dict) -> str:
+    """Returns an HTML table of measurements, or empty string if no data."""
     if not m:
-        return "<i>Нет числовых параметров в этой записи снимка</i>"
+        return ""
     lines = []
     for key in sorted(m.keys()):
         label = MEASUREMENT_LABELS_RU.get(key, key)
@@ -386,6 +438,7 @@ def build_map(
     map_center: tuple[float, float] | None = None,
     map_zoom: int = 7,
     debug_focus_name: str | None = None,
+    last_measured_label: str = "Last measured",
 ) -> folium.Map:
     available_models = available_models or []
     model_labels = model_labels or MODEL_LABELS_DEFAULT
@@ -473,6 +526,18 @@ def build_map(
         if debug_focus_name and str(p.get("location") or "") == debug_focus_name:
             focus_badge = "<br/><small style='color:#1d4ed8'><b>DEBUG focus</b></small>"
 
+        meas_html = _measurements_html(meas)
+        if meas_html:
+            meas_date_display = sample_date_str[:10] if sample_date_str else ""
+            meas_heading = f"{html.escape(last_measured_label)}: {html.escape(meas_date_display)}" if meas_date_display else html.escape(last_measured_label)
+            meas_section = (
+                f"<hr style='margin:6px 0'/>"
+                f"<b style='font-size:12px'>{meas_heading}</b><br/>"
+                f"{meas_html}"
+            )
+        else:
+            meas_section = ""
+
         popup_html = f"""
         <div style="max-width:340px;font-size:13px">
         <b>{html.escape(str(p.get("location") or "—"))}</b><br/>
@@ -489,9 +554,7 @@ def build_map(
         <small><a href="{catalog_href}" target="_blank" rel="noopener">Каталог opendata Terviseamet</a></small>
         <hr style="margin:6px 0"/>
         {models_html}
-        <hr style="margin:6px 0"/>
-        <b>Параметры пробы (последняя)</b><br/>
-        {_measurements_html(meas)}
+        {meas_section}
         </div>
         """
 
@@ -698,28 +761,278 @@ def _render_diagnostics(places: list, has_model: bool, snap: dict) -> None:
             )
 
 
+def _render_about_model() -> None:
+    """Standalone page: how the model works and how to read predictions."""
+    st.markdown("## Как работает модель и как читать прогноз")
+
+    st.markdown(
+        """
+Прогноз модели — это **вероятность нарушения** (от 0 до 1) для каждой точки на карте.
+Чем ближе к **1** — тем выше риск нарушения; чем ближе к **0** — тем модель увереннее,
+что вода соответствует нормам.
+
+---
+
+### 4 уровня оценки ML-модели
+
+В этом проекте мы используем **4 уровня** для понимания качества модели:
+
+| Уровень | Вопрос | Метрика |
+|---------|--------|---------|
+| 1 | Умеет ли модель **вообще** разделять чистую и грязную воду? | **ROC-AUC** (0.988 — отлично) |
+| 2 | Какие **ошибки** она делает? | **Recall** (0.956) — пропускает 4.4% нарушений |
+| 3 | Можно ли **доверять** вероятностям? | **Калибровка** (isotonic regression) |
+| 4 | **Почему** она приняла решение? | **SHAP** — вклад каждого параметра |
+"""
+    )
+
+    with st.expander("ROC-AUC — разделение классов", expanded=False):
+        st.markdown(
+            """
+**ROC-AUC** (Area Under the ROC Curve) отвечает на вопрос:
+*«Умеет ли модель отличать нарушения от норм — лучше, чем случайно?»*
+
+- AUC = **0.5** — модель угадывает случайно
+- AUC = **1.0** — идеальное разделение
+- AUC LightGBM: **0.988** — почти идеальное
+
+**Что это значит:** если взять случайную точку с нарушением и случайную без — с вероятностью 98.8% модель поставит нарушению более высокий риск.
+"""
+        )
+
+    with st.expander("Precision / Recall — баланс ошибок", expanded=False):
+        st.markdown(
+            """
+Два типа ошибок:
+
+- **False Positive (FP)** — модель говорит «нарушение», но официально всё хорошо → лишние тревоги
+- **False Negative (FN)** — модель говорит «норма», но на самом деле нарушение → **опасно**
+
+Для воды важнее **не пропускать нарушения** → оптимизируем **Recall**:
+
+| Метрика | Значение |
+|---------|---------|
+| Precision | 0.881 (88% тревог обоснованы) |
+| Recall | 0.956 (ловим 95.6% нарушений) |
+
+Порог (threshold) выбран через `best_threshold_max_recall_at_precision()`.
+"""
+        )
+
+    with st.expander("Калибровка вероятностей", expanded=False):
+        st.markdown(
+            """
+**Калибровка** — это соответствие между предсказанной вероятностью и реальной частотой нарушений.
+
+Если модель говорит «риск 0.8» — значит, среди таких точек ~80% реально нарушают нормы.
+
+Используется **isotonic regression** (неубывающее монотонное преобразование) поверх сырых вероятностей.
+Сырые вероятности RF могут быть занижены из-за структуры деревьев.
+"""
+        )
+
+    with st.expander("SHAP — объяснение решений модели", expanded=False):
+        st.markdown(
+            """
+**SHAP** (SHapley Additive exPlanations) отвечает на вопрос:
+*«Сколько каждый параметр **внёс** в конкретное предсказание?»*
+
+Пример разложения:
+```
+baseline (средний риск):         0.30
++ iron (железо высокое)        → +0.28
++ coliforms (бактерии)         → +0.18
++ turbidity (мутность)         → +0.12
+− ph (pH в норме)              → −0.06
+= итого                        → 0.82
+```
+
+#### Главные предикторы нарушений (SHAP, LightGBM)
+
+| Параметр | Влияние | Что это значит |
+|----------|---------|----------------|
+| **Железо** (iron) | Самый сильный | Высокое → нарушение (водопровод) |
+| **Цветность** (color) | Очень сильный | Высокая → нарушение |
+| **Колиформы** (coliforms) | Сильный | Фекальное загрязнение |
+| **pH** | Средний | Отклонение от нормы 6.5–9.5 |
+| **Энтерококки** (enterococci) | Средний | Кишечные бактерии |
+| **Мутность** (turbidity) | Средний | Взвешенные частицы |
+| **Месяц** (month) | Заметный | Лето → повышенный риск |
+
+*Визуализации SHAP (beeswarm plot, bar plot) — в ноутбуке `06_advanced_models.ipynb`.*
+"""
+        )
+
+    st.markdown("---")
+    st.markdown(
+        """
+### О модели на карте
+
+Модель на карте — это **Random Forest** (120 деревьев), обученный на всех доступных
+данных Terviseamet для быстрого деплоя. Это **упрощённая** версия: основная модель
+проекта — **LightGBM** с темпоральным split, калибровкой и SHAP (см. ноутбук 06).
+
+**Как читать цвет маркера (режим «прогноз модели»):**
+- 🟢 Зелёный — модель оценивает риск нарушения как **низкий**
+- 🟡 Жёлтый — **средний** уровень риска
+- 🔴 Красный — модель оценивает риск как **высокий**
+
+> ⚠️ Прогноз модели — **не** официальное заключение Terviseamet.
+> Это ориентир на основе машинного обучения.
+
+Подробнее: [`docs/ml_metrics_guide.md`](https://github.com/user/water-quality-ee/blob/main/docs/ml_metrics_guide.md)
+"""
+    )
+
+
+def _render_about_service() -> None:
+    """Standalone page: what this service is and how it works."""
+    st.markdown(
+        """
+## О сервисе
+
+### Зачем этот сервис
+
+На карте — **отдельные точки**: купальные места, **бассейны / СПА**, **водопровод** (`veevärk`),
+**источники питьевой воды** (`joogiveeallikas`). У каждой точки — дата пробы, статус,
+прогнозы **четырёх моделей** и **параметры** последней пробы.
+
+**Минеральная вода** (`mineraalvesi`): годовых XML в opendata Terviseamet нет — в снимок не попадает.
+
+### Четыре модели
+
+| Модель | Описание |
+|--------|----------|
+| **Logistic Regression** | Линейный базовый классификатор. Интерпретируемый, быстрый. |
+| **Random Forest** | Ансамбль деревьев. Устойчивый к выбросам и пропускам. |
+| **Gradient Boosting** | Последовательный бустинг. Обычно точнее на несбалансированных данных. |
+| **LightGBM** | Градиентный бустинг Microsoft. Быстрее, нативная обработка NaN. |
+
+Все модели обучены на **одних данных** (все годы). Значение `P(нарушение)` — вероятность класса "нарушение" (0 = безопасно, 1 = точно нарушение). Порог по умолчанию: 0.5.
+
+Расхождение между моделями — признак **пограничного случая**: одни параметры сигнализируют о нарушении, другие — нет.
+
+### Координаты
+
+Координаты в снимке: **OpenCage** (при сборке с ключом), **кэш**, **центроид уезда** и **приблизительная точка** (`approximate_ee`). Водопроводные точки часто геокодируются грубо.
+
+### Обновление данных
+
+GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам 05:00 UTC и 1-е число 04:00 UTC).
+"""
+    )
+
+
 def main() -> None:
-    st.set_page_config(page_title="Качество воды (гражданский вид)", layout="wide")
+    # ── session state defaults ─────────────────────────────────────────────
+    if "lang" not in st.session_state:
+        st.session_state["lang"] = "RU"
+    if "info_page" not in st.session_state:
+        st.session_state["info_page"] = None
+
+    lang: str = st.session_state["lang"]
+    T = TRANSLATIONS.get(lang, TRANSLATIONS["RU"])
+
+    st.set_page_config(page_title=T["page_title"], layout="wide")
+
+    # ── global CSS: IBM Plex Sans + header/nav styling ─────────────────────
     st.markdown(
         """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
 html, body, [class*="css"], [data-testid="stAppViewContainer"] {
-  font-family: "Proxima Nova", "ProximaNova", "Segoe UI", Roboto, sans-serif !important;
+  font-family: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* ── title ────────────────────────────────────────────────────────── */
+.wq-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0c4a6e;
+  margin: 0;
+  padding: 0.2rem 0;
+}
+
+/* ── language radio → compact pill buttons ────────────────────────── */
+div[data-testid="stRadio"][data-key="lang_radio"] > div {
+  flex-direction: row;
+  gap: 4px;
+  justify-content: flex-end;
+}
+div[data-testid="stRadio"][data-key="lang_radio"] label {
+  border: 1.5px solid #0369a1;
+  border-radius: 20px;
+  padding: 2px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  color: #0369a1;
+  background: transparent;
+  white-space: nowrap;
+}
+div[data-testid="stRadio"][data-key="lang_radio"] label:has(input:checked) {
+  background: #0369a1;
+  color: #fff;
+}
+div[data-testid="stRadio"][data-key="lang_radio"] label:hover:not(:has(input:checked)) {
+  background: #e0f2fe;
+}
+div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
+
+/* ── info-page nav buttons (Diagnostics / About Model / About Service) */
+.info-nav-row div[data-testid="column"] > div { text-align: right; }
+.info-nav-row .stButton > button {
+  background: transparent !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  color: #475569 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  padding: 4px 14px !important;
+  transition: border-color 0.15s, color 0.15s, background 0.15s !important;
+  white-space: nowrap;
+}
+.info-nav-row .stButton > button:hover {
+  border-color: #0369a1 !important;
+  color: #0369a1 !important;
+  background: #f0f9ff !important;
+}
+.info-nav-active .stButton > button {
+  background: #0369a1 !important;
+  border-color: #0369a1 !important;
+  color: #fff !important;
 }
 </style>
 """,
         unsafe_allow_html=True,
     )
+
+    # ── header row: title (left) + language pills (right) ─────────────────
+    hcol_t, hcol_l = st.columns([8, 2])
+    with hcol_t:
+        st.markdown(f"<h1 class='wq-title'>💧 {T['title']}</h1>", unsafe_allow_html=True)
+    with hcol_l:
+        new_lang = st.radio(
+            "language",
+            ["ET", "EN", "RU"],
+            index=["ET", "EN", "RU"].index(lang),
+            horizontal=True,
+            label_visibility="collapsed",
+            key="lang_radio",
+        )
+        if new_lang != lang:
+            st.session_state["lang"] = new_lang
+            st.rerun()
+
+    # ── load data ──────────────────────────────────────────────────────────
     snap = load_snapshot()
 
-    st.title("Качество воды в Эстонии — точки на карте")
-
     if snap is None:
-        st.error(
-            "Нет файла снимка данных. Соберите его из корня репозитория:\n\n"
-            "`python citizen-service/scripts/build_citizen_snapshot.py --map-only` — только карта (быстро).\n\n"
-            "`python citizen-service/scripts/build_citizen_snapshot.py` — полный снимок + 4 модели (LR, RF, GB, LightGBM)."
-        )
+        st.error(T["no_snap"] + "\n\n"
+            "`python citizen-service/scripts/build_citizen_snapshot.py --map-only`\n\n"
+            "`python citizen-service/scripts/build_citizen_snapshot.py`")
         return
 
     _log_snapshot_coordinate_health(snap)
@@ -730,15 +1043,9 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
 
     if has_model:
         models_str = ", ".join(model_labels.get(m, m) for m in avail_models)
-        st.caption(
-            f"Данные Terviseamet (открытый XML). Прогнозы — отдельные ML-модели ({models_str}); "
-            "это не официальное заключение Terviseamet."
-        )
+        st.caption(T["caption_model"].format(models=models_str))
     else:
-        st.caption(
-            "Данные Terviseamet (открытый XML). Карта и официальные статусы; "
-            "прогнозы моделей появятся после полной сборки снимка (без флага --map-only)."
-        )
+        st.caption(T["caption_nomodel"])
 
     st.info(snap.get("disclaimer", ""))
 
@@ -762,8 +1069,49 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
         rows_for_df.append(d)
     df_full = pd.json_normalize(rows_for_df, sep="_")
 
-    tabs_list = ["Карта", "Таблица", "Сравнение моделей", "Диагностика", "О модели", "О сервисе"]
-    tab_map, tab_table, tab_compare, tab_diag, tab_model, tab_about = st.tabs(tabs_list)
+    # ── info-page nav buttons (slim row, right-aligned in header area) ─────
+    info_page: str | None = st.session_state.get("info_page")
+
+    st.markdown('<div class="info-nav-row">', unsafe_allow_html=True)
+    _spacer, nb1, nb2, nb3 = st.columns([5.5, 1.5, 1.5, 1.5])
+    with nb1:
+        diag_cls = "info-nav-active" if info_page == "diagnostics" else ""
+        st.markdown(f'<div class="{diag_cls}">', unsafe_allow_html=True)
+        if st.button(T["nav_diagnostics"], key="btn_diag", use_container_width=True):
+            st.session_state["info_page"] = None if info_page == "diagnostics" else "diagnostics"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    with nb2:
+        model_cls = "info-nav-active" if info_page == "about_model" else ""
+        st.markdown(f'<div class="{model_cls}">', unsafe_allow_html=True)
+        if st.button(T["nav_about_model"], key="btn_model", use_container_width=True):
+            st.session_state["info_page"] = None if info_page == "about_model" else "about_model"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    with nb3:
+        svc_cls = "info-nav-active" if info_page == "about_service" else ""
+        st.markdown(f'<div class="{svc_cls}">', unsafe_allow_html=True)
+        if st.button(T["nav_about_service"], key="btn_svc", use_container_width=True):
+            st.session_state["info_page"] = None if info_page == "about_service" else "about_service"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── route to info page OR main tabs ───────────────────────────────────
+    if info_page == "diagnostics":
+        _render_diagnostics(places, has_model, snap)
+        return
+    if info_page == "about_model":
+        _render_about_model()
+        return
+    if info_page == "about_service":
+        _render_about_service()
+        return
+
+    # ── main tabs: Map / Table / Compare (slim — 3 items only) ────────────
+    tab_map, tab_table, tab_compare = st.tabs(
+        [T["tab_map"], T["tab_table"], T["tab_compare"]]
+    )
 
     with tab_map:
         c1, c2, c3 = st.columns([2, 1, 1])
@@ -870,6 +1218,7 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
             map_center=map_center,
             map_zoom=map_zoom,
             debug_focus_name=debug_focus_name if debug_enabled else None,
+            last_measured_label=T["last_measured"],
         )
         st_folium(m_map, width=None, height=560, returned_objects=[])
 
@@ -881,8 +1230,8 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
             and p.get("lon") is not None
         )
         st.markdown(
-            f"**Точек на карте:** {n_on_map} (всего в снимке: {len(places)}). "
-            f"Снимок: `{snap.get('generated_at', '?')}`."
+            T["points_on_map"].format(n=n_on_map, total=len(places))
+            + "  " + T["snap_info"].format(ts=snap.get("generated_at", "?"))
         )
         if color_mode != "official" and has_model:
             st.markdown(
@@ -918,172 +1267,6 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
 
     with tab_compare:
         _render_model_comparison_tab(places, avail_models, model_labels)
-
-    with tab_diag:
-        _render_diagnostics(places, has_model, snap)
-
-    with tab_model:
-        st.markdown("## Как работает модель и как читать прогноз")
-
-        st.markdown(
-            """
-Прогноз модели — это **вероятность нарушения** (от 0 до 1) для каждой точки на карте.
-Чем ближе к **1** — тем выше риск нарушения; чем ближе к **0** — тем модель увереннее,
-что вода соответствует нормам.
-
----
-
-### 4 уровня оценки ML-модели
-
-В этом проекте мы используем **4 уровня** для понимания качества модели:
-
-| Уровень | Вопрос | Метрика |
-|---------|--------|---------|
-| 1 | Умеет ли модель **вообще** разделять чистую и грязную воду? | **ROC-AUC** (0.988 — отлично) |
-| 2 | Какие **ошибки** она делает? | **Recall** (0.956) — пропускает 4.4% нарушений |
-| 3 | Можно ли **доверять** вероятностям? | **Калибровка** (isotonic regression) |
-| 4 | **Почему** она приняла решение? | **SHAP** — вклад каждого параметра |
-"""
-        )
-
-        with st.expander("ROC-AUC — разделение классов", expanded=False):
-            st.markdown(
-                """
-**ROC-AUC** показывает, насколько хорошо модель **ранжирует** пробы: грязные должны
-получать высокий score, чистые — низкий.
-
-- **AUC = 0.5** — случайное угадывание (монетка)
-- **AUC = 0.9+** — отлично
-- **AUC = 0.988** (наш LightGBM) — в 98.8% случаев модель правильно ранжирует пару
-  «грязная проба + чистая проба»
-
-*ROC-кривая и числа — в ноутбуке `06_advanced_models.ipynb`.*
-"""
-            )
-
-        with st.expander("Precision / Recall — баланс ошибок", expanded=False):
-            st.markdown(
-                """
-Два вида ошибок:
-
-| Тип | Что это | Последствия |
-|-----|---------|-------------|
-| **False Positive** (ложная тревога) | Чистую воду назвали грязной | Лишняя проверка |
-| **False Negative** (пропуск) | Грязную воду назвали чистой | **Люди в опасности!** |
-
-- **Precision** = из всего «нарушение» — сколько реально нарушений? (0.881)
-- **Recall** = из всех реальных нарушений — сколько нашли? (**0.956**)
-
-Для безопасности воды **Recall важнее**: лучше ложная тревога, чем пропущенное загрязнение.
-
-**Порог принятия решения** подбирается функцией `best_threshold_max_recall_at_precision()`:
-максимальный Recall при Precision ≥ 0.70.
-"""
-            )
-
-        with st.expander("Калибровка вероятностей", expanded=False):
-            st.markdown(
-                """
-Если модель говорит P(нарушение) = 0.90, это должно значить: в ~90% таких случаев
-реально будет нарушение.
-
-Без калибровки LightGBM **занижает** вероятности нарушений (среднее P ≈ 0.045 для
-реальных нарушений). После **isotonic regression**: P ≈ 0.114 — ближе к реальной доле
-нарушений (~7.9%).
-
-Калиброванные вероятности позволяют **осознанно** выбирать порог алерта:
-- «поднять Recall до 0.97+ при Precision ≈ 0.70» — это реально достижимо.
-
-*Графики калибровки (reliability diagrams) — в ноутбуке `06_advanced_models.ipynb`.*
-"""
-            )
-
-        with st.expander("SHAP — объяснение решений модели", expanded=False):
-            st.markdown(
-                """
-**SHAP** (SHapley Additive exPlanations) отвечает на вопрос:
-*«Сколько каждый параметр **внёс** в конкретное предсказание?»*
-
-Пример разложения:
-```
-baseline (средний риск):         0.30
-+ iron (железо высокое)        → +0.28
-+ coliforms (бактерии)         → +0.18
-+ turbidity (мутность)         → +0.12
-− ph (pH в норме)              → −0.06
-= итого                        → 0.82
-```
-
-#### Главные предикторы нарушений (SHAP, LightGBM)
-
-| Параметр | Влияние | Что это значит |
-|----------|---------|----------------|
-| **Железо** (iron) | Самый сильный | Высокое → нарушение (водопровод) |
-| **Цветность** (color) | Очень сильный | Высокая → нарушение |
-| **Колиформы** (coliforms) | Сильный | Фекальное загрязнение |
-| **pH** | Средний | Отклонение от нормы 6.5–9.5 |
-| **Энтерококки** (enterococci) | Средний | Кишечные бактерии |
-| **Мутность** (turbidity) | Средний | Взвешенные частицы |
-| **Месяц** (month) | Заметный | Лето → повышенный риск |
-
-*Визуализации SHAP (beeswarm plot, bar plot) — в ноутбуке `06_advanced_models.ipynb`.*
-"""
-            )
-
-        st.markdown("---")
-        st.markdown(
-            """
-### О модели на карте
-
-Модель на карте — это **Random Forest** (120 деревьев), обученный на всех доступных
-данных Terviseamet для быстрого деплоя. Это **упрощённая** версия: основная модель
-проекта — **LightGBM** с темпоральным split, калибровкой и SHAP (см. ноутбук 06).
-
-**Как читать цвет маркера (режим «прогноз модели»):**
-- 🟢 Зелёный — модель оценивает риск нарушения как **низкий**
-- 🟡 Жёлтый — **средний** уровень риска
-- 🔴 Красный — модель оценивает риск как **высокий**
-
-> ⚠️ Прогноз модели — **не** официальное заключение Terviseamet.
-> Это ориентир на основе машинного обучения.
-
-Подробнее: [`docs/ml_metrics_guide.md`](https://github.com/user/water-quality-ee/blob/main/docs/ml_metrics_guide.md)
-"""
-        )
-
-    with tab_about:
-        st.markdown(
-            """
-### Зачем этот сервис
-
-На карте — **отдельные точки**: купальные места, **бассейны / СПА**, **водопровод** (`veevärk`),
-**источники питьевой воды** (`joogiveeallikas`). У каждой точки — дата пробы, статус,
-прогнозы **четырёх моделей** и **параметры** последней пробы.
-
-**Минеральная вода** (`mineraalvesi`): годовых XML в opendata Terviseamet нет — в снимок не попадает.
-
-### Четыре модели
-
-| Модель | Описание |
-|--------|----------|
-| **Logistic Regression** | Линейный базовый классификатор. Интерпретируемый, быстрый. |
-| **Random Forest** | Ансамбль деревьев. Устойчивый к выбросам и пропускам. |
-| **Gradient Boosting** | Последовательный бустинг. Обычно точнее на несбалансированных данных. |
-| **LightGBM** | Градиентный бустинг Microsoft. Быстрее, нативная обработка NaN. |
-
-Все модели обучены на **одних данных** (все годы). Значение `P(нарушение)` — вероятность класса "нарушение" (0 = безопасно, 1 = точно нарушение). Порог по умолчанию: 0.5.
-
-Расхождение между моделями — признак **пограничного случая**: одни параметры сигнализируют о нарушении, другие — нет.
-
-### Координаты
-
-Координаты в снимке: **OpenCage** (при сборке с ключом), **кэш**, **центроид уезда** и **приблизительная точка** (`approximate_ee`). Водопроводные точки часто геокодируются грубо.
-
-### Обновление данных
-
-GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам 05:00 UTC и 1-е число 04:00 UTC).
-"""
-        )
 
 
 if __name__ == "__main__":
