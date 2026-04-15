@@ -1168,7 +1168,10 @@ body.mapFullscreenActive {
 }
 
 .mobileBottomSheet.collapsed {
-  transform: translateY(calc(100% - 64px - env(safe-area-inset-bottom, 0px) + var(--sheet-drag-offset)));
+  /* Show enough vertical space for the drag handle + the peek count text
+     without clipping descenders on the last line. 64px was too tight on
+     devices with no safe-area inset (Android Chrome). */
+  transform: translateY(calc(100% - 84px - env(safe-area-inset-bottom, 0px) + var(--sheet-drag-offset)));
 }
 
 /* Half: sheet occupies ~50% of screen, leaving map fully usable above */
@@ -1316,7 +1319,7 @@ body.mapFullscreenActive {
   /* Generous bottom padding so the last row (last history entry, last
      button) is never clipped by the OS home indicator, the browser
      bottom chrome bar, or the rounded sheet corners. */
-  padding-bottom: calc(4.2rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Compact typography for controls inside the mobile bottom sheet —
@@ -2473,9 +2476,20 @@ html[data-theme="dark"] .dateRangeSep {
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    /* Ensure the map fills the viewport with no gap from the page chrome. */
+    overflow: hidden;
   }
 
   .mobileMapPanel .sectionTitle {
+    display: none;
+  }
+
+  /* The map header row holds the (now hidden) section title. With its
+     children gone the row collapses to 0 height, but its margin-bottom
+     (0.45rem) still leaves a thin white strip above the map — visible as
+     a subtle border. Hide the row entirely so the leaflet canvas hugs the
+     top edge of the viewport. */
+  .mobileMapPanel .mapHeaderRow {
     display: none;
   }
 
@@ -3010,6 +3024,22 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   background: #ea4335;
   border-color: #ea4335;
   box-shadow: 0 2px 6px rgba(234, 67, 53, 0.35);
+}
+
+/* Icon-only chips (mobile chip bar) — circular, fixed 40px tap target. */
+.gmChip.gmChipIcon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  gap: 0;
+}
+
+.gmChip.gmChipIcon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 /* ---- Drawer lang row (also inside filter sheet) ---- */
