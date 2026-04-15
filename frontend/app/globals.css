@@ -170,23 +170,32 @@ a {
 
 .drawer {
   position: fixed;
-  left: -390px;
+  left: 1rem;
   top: calc(var(--topbar-h) + 1.1rem);
-  height: calc(100vh - var(--topbar-h) - 1.5rem);
+  height: calc(100vh - var(--topbar-h) - 2rem);
   width: min(360px, 92vw);
   /* Sit BELOW the sticky topBar (.topBar z-index: 1300) so the solid
      heading always stays on top and the drawer never visually crosses
      into the header area. The drawer opens beneath the heading. */
   z-index: 1200;
-  border-radius: 0 14px 14px 0;
-  transition: left 0.24s ease;
-  background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
-  border-right: 1px solid #cddff4;
-  box-shadow: 4px 0 24px rgba(14, 40, 80, 0.10);
+  border-radius: 18px;
+  transform: translateX(calc(-100% - 1.5rem));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.22, 0.9, 0.32, 1),
+              opacity 0.22s ease;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(246,250,255,0.94) 100%);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  box-shadow: 0 22px 60px rgba(14, 40, 80, 0.22),
+              0 4px 14px rgba(14, 40, 80, 0.08);
 }
 
 .drawer.open {
-  left: 0;
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .drawer.pinned {
@@ -199,13 +208,26 @@ a {
   border-radius: 14px;
   width: 100%;
   grid-column: 1;
+  /* Reset floating-drawer transform so the pinned column lays out
+     normally inside the dashboard grid. */
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .drawerBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 32, 55, 0.2);
+  background: rgba(12, 22, 40, 0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   z-index: 1100;
+  animation: drawerBackdropFade 220ms ease-out;
+}
+
+@keyframes drawerBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .drawerHeader {
@@ -353,6 +375,53 @@ a {
   background: var(--brand);
   border-color: var(--brand);
   color: #fff;
+}
+
+/* Primary info entry — replaces the trio of header info buttons.
+   Slightly larger and uses the brand colour so it reads as the
+   single canonical "About / Info" affordance in the top bar. */
+.headerInfoNavPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.78rem;
+  min-height: 32px;
+  background: linear-gradient(180deg, #eaf2ff 0%, #d8e8ff 100%);
+  border-color: #9ec3f5;
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(15, 110, 253, 0.12);
+}
+
+.headerInfoNavPrimary:hover {
+  background: linear-gradient(180deg, #d8e8ff 0%, #c4daff 100%);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.headerInfoNavIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerInfoNavIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+html[data-theme="dark"] .headerInfoNavPrimary {
+  background: linear-gradient(180deg, #1d2f4e 0%, #16243d 100%);
+  border-color: #3d6ab0;
+  color: #9cc4ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .headerInfoNavPrimary:hover {
+  background: linear-gradient(180deg, #243a5e 0%, #1a2b48 100%);
+  border-color: #5b8bd6;
+  color: #b9d3ff;
 }
 
 .headerDivider {
@@ -590,17 +659,17 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 /* ── Map stats row ──────────────────────────────────────────
-   Horizontally centred label strip below the map. Wraps onto a
-   second line on narrow viewports so every stat stays readable
-   without a horizontal scrollbar. */
+   Compact label strip below the map. Sized so the full stat
+   set fits a single line on standard desktop widths and only
+   wraps when the viewport is genuinely narrow. */
 .mapStatsRow {
   grid-column: 1 / -1;
   display: flex;
-  gap: 0.9rem 1rem;
+  gap: 0.4rem 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
-  padding: 0.75rem 1.1rem;
+  padding: 0.55rem 0.7rem;
   background: var(--panel);
   border: 1px solid rgba(191, 211, 234, 0.7);
   border-radius: 12px;
@@ -611,14 +680,14 @@ html[data-theme="dark"] .langDropdownItem:hover {
 .mapStat {
   display: inline-flex;
   flex: 0 0 auto;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.95rem;
-  border-radius: 10px;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.32rem 0.6rem;
+  border-radius: 8px;
   background: #f6faff;
   border: 1px solid #dce9f8;
   white-space: nowrap;
-  min-height: 42px;
+  min-height: 32px;
 }
 
 .mapStat.mapStatGood {
@@ -638,15 +707,18 @@ html[data-theme="dark"] .langDropdownItem:hover {
 
 .mapStatK {
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 0.66rem;
   line-height: 1.2;
   letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .mapStatV {
-  font-size: 1.02rem;
+  font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
 .mapStatBadText {
@@ -1213,25 +1285,28 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 /* ── Desktop on-map chip bar (filter icons overlaying the map) ──
-   A transparent, borderless horizontal row of filter chips floating
-   above the map tiles. `display: inline-flex` + `flex-wrap: nowrap`
-   keep every chip on a single line; each chip's own circular hover/
-   active background provides the per-icon legibility. */
+   A frosted-glass pill that floats below the map title. The pill
+   gives every icon a legible backdrop against arbitrary map tiles
+   and lifts the row away from the title bar so it never collides
+   with the pinned filters drawer or the section heading. */
 .mapChipBar {
   position: absolute;
-  top: 0.9rem;
+  top: 4.4rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 650;
   display: inline-flex;
   flex-wrap: nowrap !important;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.55rem;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  gap: 0.18rem;
+  padding: 0.32rem 0.55rem;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(191, 211, 234, 0.7);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(13, 40, 80, 0.16),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+  backdrop-filter: saturate(160%) blur(10px);
   width: max-content;
   max-width: calc(100% - 2rem);
   white-space: nowrap;
@@ -1241,8 +1316,8 @@ html[data-theme="dark"] .langDropdownItem:hover {
 .mapChip {
   position: relative;
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1px solid transparent;
   background: transparent;
@@ -1256,7 +1331,7 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 .mapChip:hover {
-  background: rgba(15, 110, 253, 0.08);
+  background: rgba(15, 110, 253, 0.12);
   color: var(--brand);
   transform: translateY(-1px);
 }
@@ -1339,9 +1414,10 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 html[data-theme="dark"] .mapChipBar {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+  background: rgba(14, 24, 39, 0.74);
+  border-color: rgba(92, 121, 165, 0.5);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 html[data-theme="dark"] .mapChip {
@@ -1349,7 +1425,7 @@ html[data-theme="dark"] .mapChip {
 }
 
 html[data-theme="dark"] .mapChip:hover {
-  background: rgba(99, 164, 255, 0.15);
+  background: rgba(99, 164, 255, 0.18);
   color: #9cc4ff;
 }
 
@@ -1493,12 +1569,18 @@ body.mapFullscreenActive {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  /* Explicit height so translateY percentages are always relative to 92dvh,
-     not to the auto content size. */
-  height: 92dvh;
+  /* Explicit height so translateY percentages are always relative to the
+     viewport, not to the auto content size. Order matters: put the static
+     `vh` units first as a fallback for browsers that don't understand
+     `dvh`, and the dynamic `dvh` units last so modern browsers use the
+     *visible* viewport (which tracks window.innerHeight as URL bars
+     collapse). With the previous order, `vh` won on every browser and the
+     sheet — together with the fullscreen map below — was sized against the
+     large viewport, breaking the pin-centring math which uses innerHeight. */
   height: 92vh;
-  max-height: 92dvh;
+  height: 92dvh;
   max-height: 92vh;
+  max-height: 92dvh;
 }
 
 @media (max-width: 900px) {
@@ -2711,8 +2793,15 @@ html[data-theme="dark"] .valueViolated {
 }
 
 html[data-theme="dark"] .infoPageOverlay {
-  background: #0b1220;
+  background: #0f1828;
+  border-color: rgba(92, 121, 165, 0.5);
   color: var(--text);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55),
+              0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .infoPageBackdrop {
+  background: rgba(2, 6, 14, 0.7);
 }
 
 html[data-theme="dark"] .infoPageHeader {
@@ -2772,8 +2861,11 @@ html[data-theme="dark"] .dateRangeSep {
   html,
   body {
     overflow: hidden;
-    height: 100dvh;
+    /* `vh` first as fallback, `dvh` second so modern browsers use the
+       dynamic (visible) viewport — matches the convention used by
+       `.mobileBottomSheet` / `.mapShell`. */
     height: 100vh;
+    height: 100dvh;
   }
 
   .page {
@@ -2893,13 +2985,19 @@ html[data-theme="dark"] .dateRangeSep {
   /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
      position:fixed + inset:0 on mobile (see above), so the shell must
      be 100vh to match — otherwise the leaflet canvas would still size
-     to 58vh and leave an empty strip at the bottom of the viewport
-     during SSR / before hydration. */
+     to a smaller height and leave an empty strip at the bottom of the
+     viewport during SSR / before hydration.
+
+     Unit order follows the project convention documented on
+     `.mobileBottomSheet`: `vh` first as fallback, `dvh` second so
+     modern browsers use the dynamic (visible) viewport, matching
+     window.innerHeight. */
   .mapShell,
   .mapPanelFullscreen .mapShell {
-    height: 100dvh;
     height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .mobileBottomSheet {
@@ -3090,21 +3188,45 @@ html[data-theme="dark"] .dateRangeSep {
   border-color: #4d75ab;
 }
 
-/* ---- Info page overlay ---- */
-.infoPageOverlay {
+/* ---- Info pane (floating modal) ---- */
+.infoPageBackdrop {
   position: fixed;
   inset: 0;
   z-index: 2800;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg);
-  animation: infoPageSlideIn 280ms cubic-bezier(0.22, 0.9, 0.32, 1);
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: rgba(8, 16, 32, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: infoPageBackdropFade 220ms ease-out;
 }
 
-@keyframes infoPageSlideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+@keyframes infoPageBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.infoPageOverlay {
+  position: relative;
+  z-index: 2810;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: min(960px, 100%);
+  max-height: min(86vh, 820px);
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  box-shadow: 0 28px 80px rgba(8, 16, 32, 0.45),
+              0 6px 20px rgba(8, 16, 32, 0.18);
+  animation: infoPagePop 280ms cubic-bezier(0.22, 0.9, 0.32, 1);
+}
+
+@keyframes infoPagePop {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .infoPageHeader {

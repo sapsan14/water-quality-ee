@@ -1373,14 +1373,26 @@ export default function Dashboard({ snapshot }: Props) {
 
   // Combined "obscured pixels at the bottom" = sheet height + keyboard.
   // Used by the map to keep selected markers above sheet / IME.
+  //
+  // These constants MUST stay in sync with `.mobileBottomSheet` in
+  // globals.css — otherwise FocusOnSelectedPoint will over/under-shoot and
+  // the selected pin slides out of view when the sheet opens.
+  //   - own height:           92dvh        (≈ 0.92 × innerHeight)
+  //   - half translateY:      46% of own   (→ visible = 54% of own)
+  //   - full translateY:      6rem + safe-area-inset-top
+  //   - collapsed translateY: 100% - 84px - safe-area-inset-bottom
+  // Previous values (0.5*vh for half, 0.55*vh for full, 72 for collapsed)
+  // were ballpark — the "full" one was off by ~30 percentage points of vh,
+  // hiding the pin behind the expanded sheet.
   const mobileBottomOverlayPx = useMemo(() => {
     if (!isMobile) return 0;
+    const sheetOwnHeight = viewportHeight * 0.92;
     const sheetPx =
       mobilePanelState === "full"
-        ? Math.round(viewportHeight * 0.55)
+        ? Math.max(0, Math.round(sheetOwnHeight - 96))
         : mobilePanelState === "half"
-          ? Math.round(viewportHeight * 0.5)
-          : 72;
+          ? Math.round(sheetOwnHeight * 0.54)
+          : 84;
     return sheetPx + keyboardOffset;
   }, [isMobile, mobilePanelState, viewportHeight, keyboardOffset]);
 
@@ -1794,26 +1806,18 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          {/* Info nav buttons — all open the info-page popup overlay so that
-              the main page stays focused on the map. About Model / About
-              Service / Diagnostics live only in the popup on desktop. */}
+          {/* Single info entry point — opens the floating info pane that
+              hosts all three informational tabs (About Model / About
+              Service / Diagnostics). Keeping the header lean prevents
+              the buttons from competing with the map for attention. */}
           <button
-            className="btn headerInfoNav"
+            className="btn headerInfoNav headerInfoNavPrimary"
             onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutModel"); }}
           >
+            <span className="headerInfoNavIcon" aria-hidden="true">
+              <Icon name="info" />
+            </span>
             {t.tabs.aboutModel}
-          </button>
-          <button
-            className="btn headerInfoNav"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutService"); }}
-          >
-            {t.tabs.aboutService}
-          </button>
-          <button
-            className="btn headerInfoNav"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
-          >
-            {t.tabs.analytics}
           </button>
           <div className="headerDivider" aria-hidden="true" />
           {/* Language dropdown (replaces 3 flat ET/EN/RU pills) */}
@@ -3322,7 +3326,17 @@ export default function Dashboard({ snapshot }: Props) {
       </div>
 
       {infoPageOpen ? (
-        <div className="infoPageOverlay">
+        <div
+          className="infoPageBackdrop"
+          onClick={() => setInfoPageOpen(false)}
+          role="presentation"
+        >
+        <div
+          className="infoPageOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="infoPageHeader">
             <h3 className="infoPageTitle">H2O Atlas</h3>
             <button
@@ -3621,6 +3635,7 @@ export default function Dashboard({ snapshot }: Props) {
               )}
             </p>
           </div>
+        </div>
         </div>
       ) : null}
 
