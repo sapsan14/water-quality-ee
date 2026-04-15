@@ -1233,6 +1233,7 @@ body.mapFullscreenActive {
 .gmQuickToggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   border: 1.5px solid #c7d5ea;
   background: var(--panel-soft, #f4f8ff);
@@ -1244,20 +1245,41 @@ body.mapFullscreenActive {
   cursor: pointer;
   min-height: 42px;
   width: 100%;
-  text-align: left;
+  text-align: center;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggle {
+    justify-content: flex-start;
+    text-align: left;
+  }
 }
 
 .gmQuickToggle .gmQuickToggleIcon {
   display: inline-flex;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   color: inherit;
 }
 
+@media (min-width: 901px) {
+  .gmQuickToggle .gmQuickToggleIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .gmQuickToggle .gmQuickToggleIcon svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggle .gmQuickToggleIcon svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .gmQuickToggleLabel {
@@ -1266,6 +1288,14 @@ body.mapFullscreenActive {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Hidden on mobile — buttons show icon + count only */
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggleLabel {
+    display: inline;
+  }
 }
 
 .gmQuickToggleCount {
@@ -1563,6 +1593,14 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
 .gmSheetPlaceContent .tableWrap.compact .table td {
   padding: 0.35rem 0.45rem;
   line-height: 1.35;
+}
+
+/* Inside the bottom sheet the parent already scrolls — remove the inner
+   max-height so the last history row is never clipped. */
+.gmSheetPlaceContent .tableWrap,
+.gmSheetPlaceContent .tableWrap.compact {
+  max-height: none;
+  overflow: visible;
 }
 
 /* Measurement row with norm violation highlight */

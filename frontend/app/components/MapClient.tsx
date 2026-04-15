@@ -413,6 +413,10 @@ type Props = {
  * on-screen keyboard, instead of vanishing under either overlay.
  *
  * `bottomOverlayPx` = pixels obscured at the bottom (sheet peek/half + IME).
+ *
+ * Only fires when the selected point identity changes — NOT when
+ * `bottomOverlayPx` changes alone (e.g., sheet drag).  This prevents the
+ * double-pan that made the map appear to "jump away" after a pin tap.
  */
 function FocusOnSelectedPoint({
   selectedPoint,
@@ -422,21 +426,31 @@ function FocusOnSelectedPoint({
   bottomOverlayPx?: number;
 }) {
   const map = useMap();
+  const prevIdRef = useRef<string | null>(null);
+  // Capture the latest bottomOverlayPx without adding it to the effect deps.
+  const overlayRef = useRef(bottomOverlayPx);
+  useEffect(() => { overlayRef.current = bottomOverlayPx; });
+
   useEffect(() => {
-    if (!selectedPoint) return;
+    if (!selectedPoint) { prevIdRef.current = null; return; }
+    // Skip re-pan if it's the same point (only overlay height changed).
+    if (selectedPoint.id === prevIdRef.current) return;
+    prevIdRef.current = selectedPoint.id;
+
     const target: [number, number] = [selectedPoint.lat, selectedPoint.lon];
     const targetZoom = Math.max(map.getZoom(), 11);
-    if (bottomOverlayPx > 0) {
-      // Project, shift up by half the overlay height so the marker centers
-      // in the visible portion of the map, then unproject and fly.
+    const overlay = overlayRef.current;
+    if (overlay > 0) {
+      // Project, shift up so the marker sits in the visible strip above the sheet.
       const point = map.project(target, targetZoom);
-      point.y -= bottomOverlayPx / 2;
+      point.y -= overlay / 2;
       const adjusted = map.unproject(point, targetZoom);
       map.flyTo(adjusted, targetZoom, { duration: 0.6 });
       return;
     }
     map.flyTo(target, targetZoom, { duration: 0.6 });
-  }, [map, selectedPoint, bottomOverlayPx]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, selectedPoint]);
   return null;
 }
 
@@ -690,7 +704,7 @@ function MapClient({
         zoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
-        style={{ height: "100%", width: "100%", borderRadius: isFullscreen ? "0" : "12px" }}
+        style={{ height: "100%", width: "100%", borderRadius: (isFullscreen || isMobile) ? "0" : "12px" }}
         scrollWheelZoom
         preferCanvas
       >

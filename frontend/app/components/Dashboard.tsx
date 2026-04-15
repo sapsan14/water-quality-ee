@@ -2705,12 +2705,6 @@ export default function Dashboard({ snapshot }: Props) {
                               `${lruet(lang, "Уровень риска", "Riskitase", "Risk level")}: ${selectedPlace.risk_level}`,
                               `P(violation): ${selectedPlace.model_violation_prob !== null ? selectedPlace.model_violation_prob.toFixed(2) : "n/a"}`,
                               `LR/RF/GB/LGBM: ${[selectedPlace.lr_violation_prob, selectedPlace.rf_violation_prob, selectedPlace.gb_violation_prob, selectedPlace.lgbm_violation_prob].map(v => (typeof v === "number" ? v.toFixed(2) : "n/a")).join(" / ")}`,
-                              "",
-                              lruet(lang,
-                                "LR = Логистическая регрессия, RF = Случайный лес, GB = Gradient Boosting, LGBM = LightGBM. Значения — вероятность нарушения от 0 до 1.",
-                                "LR = Logistiline regressioon, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM. Väärtused — rikkumise tõenäosus 0–1.",
-                                "LR = Logistic Regression, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM. Values are violation probability 0–1."
-                              )
                             ].join("\n")
                           )}
                         >
