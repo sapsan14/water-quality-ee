@@ -1931,15 +1931,27 @@ export default function Dashboard({ snapshot }: Props) {
               and easy to tap. Each chip carries an aria-label/title with the
               localized name so screen readers and long-press tooltips still
               surface the meaning. */}
-          <div className="gmChipBar">
+          <div className="gmChipBar" role="toolbar" aria-label={t.filters}>
             {(() => {
               const allLabel = lruet(lang, "Все", "Kõik", "All");
+              const countText = lruet(
+                lang,
+                `Все точки: ${filtered.length}`,
+                `Kõik punktid: ${filtered.length}`,
+                `All points: ${filtered.length}`
+              );
               return (
                 <button
+                  type="button"
                   className={`gmChip gmChipIcon ${segment === "all" ? "gmChipActive" : ""}`}
-                  onClick={() => setSegment("all")}
+                  onClick={() => {
+                    setSegment("all");
+                    showCountBubble(countText);
+                  }}
                   aria-label={allLabel}
+                  aria-pressed={segment === "all"}
                   title={allLabel}
+                  data-tooltip={allLabel}
                 >
                   <Icon name="grid" />
                 </button>
@@ -1956,29 +1968,40 @@ export default function Dashboard({ snapshot }: Props) {
                   : k === "drinking_water"
                   ? lruet(lang, "Питьевая", "Joogivesi", "Drinking")
                   : lruet(lang, "Источники", "Allikad", "Sources");
+              const domainCount = snapshot.places.filter((p) => p.place_kind === k).length;
               return (
                 <button
                   key={`chip-${k}`}
+                  type="button"
                   className={`gmChip gmChipIcon ${segment === k ? "gmChipActive" : ""}`}
-                  onClick={() => setSegment(segment === k ? "all" : k)}
+                  onClick={() => {
+                    const next = segment === k ? "all" : k;
+                    setSegment(next);
+                    showCountBubble(`${label}: ${domainCount}`);
+                  }}
                   aria-label={label}
+                  aria-pressed={segment === k}
                   title={label}
+                  data-tooltip={label}
                 >
                   <Icon name={iconName} />
                 </button>
               );
             })}
             {(() => {
-              // Mobile alerts icon: tapping it does NOT toggle a filter
-              // (those drawer buttons were removed as visually redundant
-              // with this chip). Instead it flashes a small count bubble
-              // showing how many alerts are currently visible on the map.
-              const alertsLabel = lruet(lang, "Тревоги на карте", "Häired kaardil", "Alerts on map");
+              // Mobile alerts icon: toggles the `alertsOnly` filter (parity
+              // with the desktop chip bar). Active state reflects whether
+              // the filter is currently on, and a count bubble flashes the
+              // number of alerts currently visible on the map.
+              const alertsLabel = alertsOnly
+                ? lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")
+                : lruet(lang, "Только тревоги", "Ainult häired", "Alerts only");
               return (
                 <button
                   type="button"
-                  className="gmChip gmChipIcon gmChipAlert"
-                  onClick={() =>
+                  className={`gmChip gmChipIcon gmChipAlert ${alertsOnly ? "gmChipActive" : ""}`}
+                  onClick={() => {
+                    setAlertsOnly((v) => !v);
                     showCountBubble(
                       lruet(
                         lang,
@@ -1986,27 +2009,38 @@ export default function Dashboard({ snapshot }: Props) {
                         `Häireid kaardil: ${mapAlertsCount}`,
                         `Alerts on map: ${mapAlertsCount}`
                       )
-                    )
-                  }
+                    );
+                  }}
                   aria-label={alertsLabel}
+                  aria-pressed={alertsOnly}
                   title={alertsLabel}
+                  data-tooltip={alertsLabel}
                 >
                   <Icon name="alert" />
                 </button>
               );
             })()}
             {(() => {
-              // Mobile near-me icon: same treatment as the alerts chip —
-              // it only flashes a count bubble. If the user hasn't granted
-              // location yet, we request it first (the count becomes
-              // meaningful only once `userCoords` is known).
-              const nearLabel = lruet(lang, "Рядом на карте", "Lähedal kaardil", "Near me on map");
+              // Mobile near-me icon: toggles `nearbyOnly` filter (parity
+              // with the desktop chip bar). If the user hasn't granted
+              // location yet, we request it first and show the appropriate
+              // bubble; otherwise we toggle the filter and flash a count
+              // bubble with how many points remain within the radius.
+              const nearLabel = nearbyOnly
+                ? lruet(lang, "Снять фильтр «рядом»", "Eemalda läheduse filter", "Clear near-me filter")
+                : lruet(lang, "Рядом со мной", "Minu lähedal", "Near me");
               return (
                 <button
                   type="button"
-                  className="gmChip gmChipIcon"
+                  className={`gmChip gmChipIcon ${nearbyOnly ? "gmChipActive" : ""}`}
                   onClick={() => {
-                    if (!userCoords) {
+                    if (nearbyOnly) {
+                      setNearbyOnly(false);
+                      setGeoError(null);
+                    } else if (userCoords) {
+                      setNearbyOnly(true);
+                      setGeoError(null);
+                    } else {
                       activateNearMe();
                       showCountBubble(
                         lruet(
@@ -2029,7 +2063,9 @@ export default function Dashboard({ snapshot }: Props) {
                     );
                   }}
                   aria-label={nearLabel}
+                  aria-pressed={nearbyOnly}
                   title={nearLabel}
+                  data-tooltip={nearLabel}
                 >
                   <Icon name="locate" />
                 </button>
@@ -2037,14 +2073,26 @@ export default function Dashboard({ snapshot }: Props) {
             })()}
             {risk !== "all" ? (
               <button
+                type="button"
                 className="gmChip gmChipIcon gmChipActive"
                 onClick={() => setRisk("all")}
                 aria-label={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
                 title={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+                data-tooltip={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
               >
                 <Icon name="signal" />
               </button>
             ) : null}
+            <button
+              type="button"
+              className="gmChip gmChipIcon gmChipClear"
+              onClick={clearFilters}
+              aria-label={t.clearFilters}
+              title={t.clearFilters}
+              data-tooltip={t.clearFilters}
+            >
+              <Icon name="filter-x" />
+            </button>
           </div>
         </>
 

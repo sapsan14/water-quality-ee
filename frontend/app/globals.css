@@ -3490,6 +3490,64 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   margin: 0;
 }
 
+/* Clear-all chip on the mobile chip bar — subtle rotate on hover/focus
+   so it visually echoes the desktop `.mapChipClear` affordance. */
+.gmChip.gmChipClear:hover svg,
+.gmChip.gmChipClear:focus-visible svg {
+  transform: rotate(-18deg);
+  transition: transform 160ms ease;
+}
+
+/* Hover / focus bubble tooltip for mobile chips — mirrors the desktop
+   `.mapChip[data-tooltip]` styling so icon chips surface their label on
+   pointer hover (mouse-equipped mobile browsers) and keyboard focus. */
+.gmChip[data-tooltip] {
+  position: relative;
+}
+
+.gmChip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 2810;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+}
+
+.gmChip[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 0.05rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.92);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 2810;
+}
+
+.gmChip[data-tooltip]:hover::after,
+.gmChip[data-tooltip]:focus-visible::after,
+.gmChip[data-tooltip]:hover::before,
+.gmChip[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* ---- Drawer lang row (also inside filter sheet) ---- */
 .drawerLangRow {
   display: flex;
