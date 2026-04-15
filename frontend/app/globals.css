@@ -664,6 +664,8 @@ a {
   border: 2px solid rgba(220, 53, 69, 0.55);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
   transition: transform 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  padding: 0.2rem 0.55rem;
+  line-height: normal;
 }
 
 .clickableBadge:hover,
