@@ -2743,6 +2743,34 @@ html[data-theme="dark"] .dateRangeSep {
   margin: 0;
 }
 
+/* Icon-only close button in the info page overlay header (replaces the
+   previous btn+label layout). Matches the round modalCloseBtn style so
+   users recognise it as a "dismiss" affordance regardless of language. */
+.infoPageCloseBtn {
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.infoPageCloseBtn .btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.infoPageCloseBtn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .infoPageTabRow {
   display: flex;
   gap: 0;
@@ -2997,6 +3025,13 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   right: 0;
   z-index: 2800;
   display: none;
+  /* Centre the chip row on mobile — on narrow screens the 7 icons
+     don't fill the width, and flex-start would leave them hugging
+     the left edge. justify-content:center keeps them horizontally
+     centred; when the row is wider than the viewport it falls back
+     to scroll starting from flex-start thanks to `justify-content`
+     gracefully clamping with the overflow. */
+  justify-content: center;
   gap: 0.4rem;
   padding: 0 0.4rem;
   overflow-x: auto;
@@ -3015,6 +3050,7 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
   height: 32px;
   padding: 0 0.78rem;
@@ -3027,6 +3063,7 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
+  line-height: 1;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
@@ -3043,20 +3080,27 @@ html[data-theme="dark"] .gmSearchInfoBtn {
   box-shadow: 0 2px 6px rgba(234, 67, 53, 0.35);
 }
 
-/* Icon-only chips (mobile chip bar) — circular, fixed 40px tap target. */
+/* Icon-only chips (mobile chip bar) — circular, fixed 40px tap target.
+   Uses explicit flex centring on both axes and line-height:0 so the
+   22×22 svg always sits in the optical centre of the circle regardless
+   of font metrics. */
 .gmChip.gmChipIcon {
   width: 40px;
   height: 40px;
   padding: 0;
   border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   gap: 0;
+  line-height: 0;
 }
 
 .gmChip.gmChipIcon svg {
   width: 22px;
   height: 22px;
   display: block;
+  margin: 0;
 }
 
 /* ---- Drawer lang row (also inside filter sheet) ---- */

@@ -983,6 +983,18 @@ export default function Dashboard({ snapshot }: Props) {
       ruDesc: "Видимая глубина воды по шкале Секки в метрах. Используется для купальных зон. Снижение прозрачности указывает на цветение водорослей, взвесь или загрязнение.",
       etDesc: "Sekchi sügavus meetrites. Kasutatakse supluskohtades. Läbipaistvuse vähenemine viitab vetikate õitsengule või reostusele.",
       enDesc: "Secchi depth in metres. Used for bathing areas. Decreasing transparency indicates algal blooms, suspended matter or other contamination."
+    },
+    oxidizability: {
+      ruLabel: "Окисляемость (мг O₂/л)", etLabel: "Oksüdeeritavus (mg O₂/l)", enLabel: "Oxidisability (mg O₂/L)",
+      ruDesc: "Интегральный показатель содержания легкоокисляемых органических веществ (перманганатная окисляемость). Повышенные значения говорят о большей органической нагрузке и риске образования побочных продуктов хлорирования.",
+      etDesc: "Integraalne näitaja kergesti oksüdeeruvate orgaaniliste ainete sisalduse kohta. Kõrged väärtused viitavad suuremale orgaanilisele koormusele ja kloorimise kõrvalsaaduste tekkeohule.",
+      enDesc: "Integrated measure of easily oxidisable organic matter (permanganate oxidisability). Higher values mean greater organic load and a higher risk of chlorination by-products."
+    },
+    colonies_37c: {
+      ruLabel: "Колонии при 37 °C (КОЕ/мл)", etLabel: "Kolooniad 37 °C juures (PMÜ/ml)", enLabel: "Colonies at 37 °C (CFU/mL)",
+      ruDesc: "Общее микробное число при температуре тела — суммарная бактериальная нагрузка. Резкий рост указывает на сбой дезинфекции или формирование биоплёнки в системе; сам по себе не указывает на конкретный патоген.",
+      etDesc: "Üldine mikroobide arv kehatemperatuuril — bakterite üldhulk. Järsk tõus viitab desinfektsiooni häirele või biokile tekkele; ei näita konkreetset patogeeni.",
+      enDesc: "Heterotrophic plate count at body temperature — total bacterial load. A sharp rise indicates failing disinfection or biofilm growth; it does not point at a specific pathogen."
     }
   };
 
@@ -3920,9 +3932,14 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="infoPageOverlay">
           <div className="infoPageHeader">
             <h3 className="infoPageTitle">H2O Atlas</h3>
-            <button className="btn btnSmall" onClick={() => setInfoPageOpen(false)}>
+            <button
+              className="btn btnSmall infoPageCloseBtn"
+              type="button"
+              onClick={() => setInfoPageOpen(false)}
+              aria-label={t.close}
+              title={t.close}
+            >
               <span className="btnIcon" aria-hidden="true"><Icon name="close" /></span>
-              <span>{t.close}</span>
             </button>
           </div>
           <div className="infoPageTabRow">
