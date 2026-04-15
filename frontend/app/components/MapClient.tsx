@@ -116,7 +116,8 @@ function markerIcon(place: FrontendPlace) {
     className: "",
     html: markerBadgeHtml(color, glyph, pulse),
     iconSize: [44, 56],
-    iconAnchor: [22, 56]
+    iconAnchor: [22, 56],
+    popupAnchor: [0, -58]
   });
 }
 
@@ -332,9 +333,32 @@ function MarkerClusterLayer({
       } as L.MarkerOptions & { place: FrontendPlace });
       // On mobile (disableHoverPopups=true): skip popup entirely — bottom sheet shows details
       if (!disableHoverPopups) {
-        marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
-        marker.on("mouseover", () => marker.openPopup());
-        marker.on("mouseout", () => marker.closePopup());
+        marker.bindPopup(popupHtml(place, locale), { maxWidth: 360, autoPan: false });
+
+        // Use a short close-delay so moving from the pin into the popup doesn't
+        // cause flicker (mouseover → popup opens over pin → mouseout fires → popup
+        // closes → back to marker → repeat). The popup's own mouseenter/mouseleave
+        // cancel / reschedule the timer so the popup stays open while hovered.
+        let closeTimer: ReturnType<typeof setTimeout> | null = null;
+        const cancelClose = () => {
+          if (closeTimer !== null) { clearTimeout(closeTimer); closeTimer = null; }
+        };
+        const scheduleClose = () => {
+          cancelClose();
+          closeTimer = setTimeout(() => { marker.closePopup(); }, 150);
+        };
+
+        marker.on("mouseover", () => { cancelClose(); marker.openPopup(); });
+        marker.on("mouseout", scheduleClose);
+
+        marker.on("popupopen", () => {
+          const el = marker.getPopup()?.getElement();
+          if (!el) return;
+          el.removeEventListener("mouseenter", cancelClose);
+          el.removeEventListener("mouseleave", scheduleClose);
+          el.addEventListener("mouseenter", cancelClose);
+          el.addEventListener("mouseleave", scheduleClose);
+        });
       }
       marker.on("click", () => {
         onSelectPoint?.(place.id);
