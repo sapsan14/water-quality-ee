@@ -376,7 +376,7 @@ type Props = {
   canRecenter?: boolean;
   isMobile?: boolean;
   showCountyOverlay?: boolean;
-  fitBoundsVersion?: number;
+  fitBoundsKey?: string;
   fitBoundsPlaces?: [number, number][];
 };
 
@@ -392,15 +392,17 @@ function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace
 }
 
 function FitBoundsOnVersion({
-  version,
+  fitBoundsKey,
   places
 }: {
-  version?: number;
+  fitBoundsKey?: string;
   places?: [number, number][];
 }) {
   const map = useMap();
+  const prevKeyRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (version === undefined || !places || places.length === 0) return;
+    if (!fitBoundsKey || fitBoundsKey === prevKeyRef.current || !places || places.length === 0) return;
+    prevKeyRef.current = fitBoundsKey;
     if (places.length === 1) {
       map.flyTo(places[0], Math.max(map.getZoom(), 11), { duration: 0.6 });
       return;
@@ -412,8 +414,7 @@ function FitBoundsOnVersion({
       paddingBottomRight: [10, 70],
       maxZoom: 13
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
+  }, [fitBoundsKey, places, map]);
   return null;
 }
 
@@ -447,7 +448,7 @@ function MapClient({
   canRecenter = true,
   isMobile = false,
   showCountyOverlay = true,
-  fitBoundsVersion,
+  fitBoundsKey,
   fitBoundsPlaces
 }: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
@@ -638,7 +639,7 @@ function MapClient({
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint selectedPoint={selectedPoint} />
-        <FitBoundsOnVersion version={fitBoundsVersion} places={fitBoundsPlaces} />
+        <FitBoundsOnVersion fitBoundsKey={fitBoundsKey} places={fitBoundsPlaces} />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
