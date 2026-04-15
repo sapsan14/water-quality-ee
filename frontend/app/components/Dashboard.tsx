@@ -1434,7 +1434,6 @@ export default function Dashboard({ snapshot }: Props) {
   const low = filtered.filter((x) => x.risk_level === "low").length;
   const high = filtered.filter((x) => x.risk_level === "high").length;
   const violations = filtered.filter((x) => x.official_compliant === 0).length;
-  const withModel = filtered.filter((x) => x.model_violation_prob !== null).length;
 
   const avgProb = useMemo(() => {
     const vals = filtered.map((x) => x.model_violation_prob).filter((v): v is number => v !== null);
@@ -1830,7 +1829,13 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          {/* Info nav buttons — About Model + About Service */}
+          {/* Info nav buttons — Diagnostics + About Model + About Service */}
+          <button
+            className="btn headerInfoNav"
+            onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
+          >
+            {t.tabs.analytics}
+          </button>
           <button
             className={`btn headerInfoNav ${activeTab === "aboutModel" ? "btnActive" : ""}`}
             onClick={() => switchTab("aboutModel")}
@@ -2072,34 +2077,6 @@ export default function Dashboard({ snapshot }: Props) {
               <Icon name="locate" />
             </span>
           </button>
-          {nearbyOnly && userCoords ? (
-            <div className="nearbyPanel">
-              <label htmlFor="nearby-radius">
-                {t.nearRadius}: <b>{nearbyRadiusKm} km</b>
-              </label>
-              <input
-                id="nearby-radius"
-                type="range"
-                min={1}
-                max={50}
-                step={1}
-                value={nearbyRadiusKm}
-                onChange={(e) => setNearbyRadiusKm(Number(e.target.value))}
-              />
-              <button
-                type="button"
-                className="btn btnSmall"
-                onClick={() => {
-                  setUserCoords(null);
-                  setNearbyOnly(false);
-                  setGeoError(null);
-                }}
-              >
-                {t.clearNearMe}
-              </button>
-            </div>
-          ) : null}
-          {geoError ? <p className="hint">{geoError}</p> : null}
           <button
             type="button"
             className="btn clearFiltersBtn iconBtn"
@@ -2112,6 +2089,34 @@ export default function Dashboard({ snapshot }: Props) {
             </span>
           </button>
         </div>
+        {nearbyOnly && userCoords ? (
+          <div className="nearbyPanel">
+            <label htmlFor="nearby-radius">
+              {t.nearRadius}: <b>{nearbyRadiusKm} km</b>
+            </label>
+            <input
+              id="nearby-radius"
+              type="range"
+              min={1}
+              max={50}
+              step={1}
+              value={nearbyRadiusKm}
+              onChange={(e) => setNearbyRadiusKm(Number(e.target.value))}
+            />
+            <button
+              type="button"
+              className="btn btnSmall"
+              onClick={() => {
+                setUserCoords(null);
+                setNearbyOnly(false);
+                setGeoError(null);
+              }}
+            >
+              {t.clearNearMe}
+            </button>
+          </div>
+        ) : null}
+        {geoError ? <p className="hint">{geoError}</p> : null}
         <div className="field">
           <label htmlFor="search-input">{t.search}</label>
           <input
@@ -2123,20 +2128,22 @@ export default function Dashboard({ snapshot }: Props) {
           />
         </div>
         {isMobile ? (
-          <div className="drawerLangRow">
-            <span className="drawerLangLabel">{lruet(lang, "Язык", "Keel", "Language")}</span>
-            <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
-            <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
-            <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
-          </div>
+          <>
+            <div className="drawerLangRow">
+              <span className="drawerLangLabel">{lruet(lang, "Язык", "Keel", "Language")}</span>
+              <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+              <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+              <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+            </div>
+            <div className="drawerLangRow">
+              <span className="drawerLangLabel">{lruet(lang, "Шрифт", "Font", "Font")}</span>
+              <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
+                <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>IBM</button>
+                <button className={`btn btnSmall ${cyrillicFont === "manrope" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("manrope")}>MAN</button>
+              </div>
+            </div>
+          </>
         ) : null}
-        <div className="drawerLangRow">
-          <span className="drawerLangLabel">{lruet(lang, "Шрифт", "Font", "Font")}</span>
-          <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
-            <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>IBM</button>
-            <button className={`btn btnSmall ${cyrillicFont === "manrope" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("manrope")}>MAN</button>
-          </div>
-        </div>
         <div className="field">
           <label htmlFor="segment-select">{lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}</label>
           <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">
@@ -2240,36 +2247,6 @@ export default function Dashboard({ snapshot }: Props) {
             ) : null}
           </div>
           <p className="hint">{t.latestSampleDateHint}</p>
-        </div>
-
-        <div className="stats">
-          <div className="stat">
-            <div className="k">{lruet(lang, "Видимых", "Nähtav", "Visible")}</div>
-            <div className="v">{filtered.length}</div>
-          </div>
-          <div className="stat">
-            <div className="k">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</div>
-            <div className="v">{high}</div>
-          </div>
-          <div className="stat">
-            <div className="k">{lruet(lang, "Низкий риск", "Madal risk", "Low risk")}</div>
-            <div className="v">{low}</div>
-          </div>
-          <div className="stat">
-            <div className="k">{lruet(lang, "Офиц. нарушения", "Ametlik rikkumine", "Official violations")}</div>
-            <div className="v">{violations}</div>
-          </div>
-          <div className="stat">
-            <div className="k">{lruet(lang, "С моделью", "Mudeli katvus", "With model")}</div>
-            <div className="v">{withModel}</div>
-          </div>
-        </div>
-
-        <div className="panel reportPanel">
-          <div className="k">{lruet(lang, "Индекс здоровья", "Tervise indeks", "Health index")}</div>
-          <div className={`healthIndex ${healthIndex >= 75 ? "good" : healthIndex >= 50 ? "warn" : "bad"}`}>{healthIndex}/100</div>
-          <div className="hint">{lruet(lang, "Прогноз", "Prognoos", "Outlook")}: {prognosis}</div>
-          <div className="hint">{lruet(lang, "Средняя P(нарушения)", "Keskmine P(rikkumine)", "Avg P(violation)")}: {avgProb === null ? "n/a" : avgProb.toFixed(2)}</div>
         </div>
 
         <div className="panel reportPanel">
@@ -2954,10 +2931,12 @@ export default function Dashboard({ snapshot }: Props) {
           <button className={`tabBtn ${activeTab === "alerts" ? "tabBtnActive" : ""}`} onClick={() => switchTab("alerts")}>
             {t.tabs.alerts}
           </button>
-          <button className={`tabBtn ${activeTab === "domain" ? "tabBtnActive" : ""}`} onClick={() => switchTab("domain")}>
-            {t.tabs.domain}
-          </button>
-          <button className={`tabBtn ${activeTab === "analytics" ? "tabBtnActive" : ""}`} onClick={() => switchTab("analytics")}>
+          {/* Domains tab removed — its data is covered by the Alerts tab's Domain health report.
+              Diagnostics moved to the header (desktop) and info-page overlay. */}
+          <button
+            className="tabBtn mobileOnly"
+            onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
+          >
             {t.tabs.analytics}
           </button>
           {/* aboutModel and aboutService are accessible via header info-nav buttons on desktop;
@@ -3027,36 +3006,12 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         ) : null}
 
-        {activeTab === "domain" ? (
-          <div className="reportsGrid">
-            <div className="panel reportPanel">
-              <h4>{lruet(lang, "Отчёт по доменам", "Domeenide aruanne", "Domain report")}</h4>
-              <div className={`tableWrap ${isMobile ? "mobileResponsiveTable" : ""}`}>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>{lruet(lang, "Домен", "Domeen", "Domain")}</th>
-                      <th>{lruet(lang, "Всего", "Kokku", "Total")}</th>
-                      <th>{lruet(lang, "Нарушений", "Rikkumised", "Violations")}</th>
-                      <th>{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {domainStats.map(([d, s]) => (
-                      <tr key={`d2-${d}`}>
-                        <td>{d}</td>
-                        <td>{s.total}</td>
-                        <td>{s.violations}</td>
-                        <td>{s.highRisk}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {/* Domains inline tab removed — now covered by the Alerts tab. */}
 
+        {/* Analytics inline tab no longer reachable from the tabRow — users open it
+            via the header Diagnostics button, which shows the info-page overlay.
+            The block below is retained but gated on activeTab === "analytics" and
+            so will not render unless explicitly switched to. */}
         {activeTab === "analytics" ? (
           <div className="reportsGrid">
           <div className="panel reportPanel">
