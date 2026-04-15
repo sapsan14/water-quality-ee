@@ -3540,7 +3540,7 @@ export default function Dashboard({ snapshot }: Props) {
                     <small style={{ fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.01em" }}>P(v)</small>
                   </span>
                 </th>
-                <th className="iconCol">
+                <th className="dateCol">
                   <span
                     className="iconTooltip"
                     data-tip={lruet(lang, "Дата последней пробы", "Viimase proovi kuupäev", "Latest sample date")}
@@ -3627,7 +3627,7 @@ export default function Dashboard({ snapshot }: Props) {
                     <td className="iconCol" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {p.model_violation_prob !== null ? p.model_violation_prob.toFixed(2) : "—"}
                     </td>
-                    <td>{fmtDate(p.sample_date)}</td>
+                    <td className="dateCol">{fmtDate(p.sample_date)}</td>
                     <td className="iconCol">
                       <button
                         className="starBtn iconTooltip"
