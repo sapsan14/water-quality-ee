@@ -96,29 +96,157 @@ KIND_OUTLINE = {
     "other": "#64748b",
 }
 
-MEASUREMENT_LABELS_RU = {
-    "e_coli": "E. coli, КОЕ/100 мл",
-    "enterococci": "Энтерококки, КОЕ/100 мл",
-    "coliforms": "Колиформы, КОЕ/100 мл",
-    "ph": "pH",
-    "transparency": "Прозрачность",
-    "turbidity": "Мутность (NTU)",
-    "color": "Цветность",
-    "nitrates": "Нитраты, мг/л",
-    "nitrites": "Нитриты, мг/л",
-    "ammonium": "Аммоний, мг/л",
-    "fluoride": "Фторид, мг/л",
-    "manganese": "Марганец, мг/л",
-    "iron": "Железо, мг/л",
-    "chlorides": "Хлориды, мг/л",
-    "sulfates": "Сульфаты, мг/л",
-    "free_chlorine": "Свободный хлор",
-    "combined_chlorine": "Связанный хлор",
-    "pseudomonas": "Pseudomonas",
-    "staphylococci": "Staphylococcus",
-    "oxidizability": "Окисляемость",
-    "colonies_37c": "Колонии при 37 °C",
+# ── Параметры качества воды: метки и описания (RU / EN / ET) ──────────────────
+# Покрывают все 21 параметр из src/features.py NUMERIC_PARAMS.
+# Метки идут в всплывашку маркера; описания — короткая подсказка (tooltip + видимый
+# текст под значением), чтобы и десктоп, и мобильные пользователи понимали параметр.
+
+MEASUREMENT_LABELS: dict[str, dict[str, str]] = {
+    "RU": {
+        "e_coli": "E. coli, КОЕ/100 мл",
+        "enterococci": "Энтерококки, КОЕ/100 мл",
+        "coliforms": "Колиформы, КОЕ/100 мл",
+        "ph": "pH",
+        "transparency": "Прозрачность, м",
+        "turbidity": "Мутность, NTU",
+        "color": "Цветность, мг Pt/л",
+        "nitrates": "Нитраты, мг/л",
+        "nitrites": "Нитриты, мг/л",
+        "ammonium": "Аммоний, мг/л",
+        "fluoride": "Фторид, мг/л",
+        "manganese": "Марганец, мг/л",
+        "iron": "Железо, мг/л",
+        "chlorides": "Хлориды, мг/л",
+        "sulfates": "Сульфаты, мг/л",
+        "free_chlorine": "Свободный хлор, мг/л",
+        "combined_chlorine": "Связанный хлор, мг/л",
+        "pseudomonas": "Pseudomonas, КОЕ/100 мл",
+        "staphylococci": "Staphylococcus, КОЕ/100 мл",
+        "oxidizability": "Окисляемость, мг O₂/л",
+        "colonies_37c": "Колонии при 37 °C, КОЕ/мл",
+    },
+    "EN": {
+        "e_coli": "E. coli, CFU/100 mL",
+        "enterococci": "Enterococci, CFU/100 mL",
+        "coliforms": "Coliforms, CFU/100 mL",
+        "ph": "pH",
+        "transparency": "Transparency, m",
+        "turbidity": "Turbidity, NTU",
+        "color": "Colour, mg Pt/L",
+        "nitrates": "Nitrates, mg/L",
+        "nitrites": "Nitrites, mg/L",
+        "ammonium": "Ammonium, mg/L",
+        "fluoride": "Fluoride, mg/L",
+        "manganese": "Manganese, mg/L",
+        "iron": "Iron, mg/L",
+        "chlorides": "Chlorides, mg/L",
+        "sulfates": "Sulphates, mg/L",
+        "free_chlorine": "Free chlorine, mg/L",
+        "combined_chlorine": "Combined chlorine, mg/L",
+        "pseudomonas": "Pseudomonas, CFU/100 mL",
+        "staphylococci": "Staphylococcus, CFU/100 mL",
+        "oxidizability": "Oxidisability, mg O₂/L",
+        "colonies_37c": "Colonies at 37 °C, CFU/mL",
+    },
+    "ET": {
+        "e_coli": "E. coli, CFU/100 ml",
+        "enterococci": "Enterokokid, CFU/100 ml",
+        "coliforms": "Kolibakterid, CFU/100 ml",
+        "ph": "pH",
+        "transparency": "Läbipaistvus, m",
+        "turbidity": "Hägusus, NTU",
+        "color": "Värvus, mg Pt/l",
+        "nitrates": "Nitraadid, mg/l",
+        "nitrites": "Nitritid, mg/l",
+        "ammonium": "Ammoonium, mg/l",
+        "fluoride": "Fluoriid, mg/l",
+        "manganese": "Mangaan, mg/l",
+        "iron": "Raud, mg/l",
+        "chlorides": "Kloriidid, mg/l",
+        "sulfates": "Sulfaadid, mg/l",
+        "free_chlorine": "Vaba kloor, mg/l",
+        "combined_chlorine": "Seotud kloor, mg/l",
+        "pseudomonas": "Pseudomonas, CFU/100 ml",
+        "staphylococci": "Stafülokokid, CFU/100 ml",
+        "oxidizability": "Oksüdeeritavus, mg O₂/l",
+        "colonies_37c": "Kolooniad 37 °C juures, CFU/ml",
+    },
 }
+
+MEASUREMENT_DESCRIPTIONS: dict[str, dict[str, str]] = {
+    "RU": {
+        "e_coli": "Бактерия-индикатор фекального загрязнения. Норма питьевой воды: 0; купание ≤ 500 КОЕ/100 мл.",
+        "enterococci": "Кишечные энтерококки — устойчивее к хлору, маркер фекального загрязнения. Купание ≤ 200 КОЕ/100 мл.",
+        "coliforms": "Группа бактерий из почвы и кишечника. Может указывать на недостаточную дезинфекцию.",
+        "ph": "Кислотность воды. Норма питьевой 6.5–9.5; купание 6.0–9.0; бассейны 6.5–8.5.",
+        "transparency": "Глубина видимости диска Секки на пляжах. Низкая прозрачность → цветение или загрязнение.",
+        "turbidity": "Взвешенные частицы. Снижают эффективность дезинфекции. Норма ≤ 4 NTU; бассейн ≤ 0.5.",
+        "color": "Жёлто-коричневый оттенок от гуминовых кислот (торф). Норма ≤ 20 мг Pt/л.",
+        "nitrates": "Из удобрений и сточных вод. Опасны для младенцев. Норма питьевой ≤ 50 мг/л.",
+        "nitrites": "Промежуточный продукт нитрификации. Токсичнее нитратов. Норма ≤ 0.5 мг/л.",
+        "ammonium": "Признак органического загрязнения. Снижает эффективность хлорирования. Норма ≤ 0.5 мг/л.",
+        "fluoride": "Защищает зубы в малых дозах; избыток вызывает флюороз. Норма ≤ 1.5 мг/л.",
+        "manganese": "Природный металл подземных вод Эстонии. Окрашивает воду в бурый. Норма ≤ 0.05 мг/л.",
+        "iron": "Распространён в подземных водах. Металлический привкус и рыжий цвет. Норма ≤ 0.2 мг/л.",
+        "chlorides": "Природная соль. Избыток → солоноватый вкус и коррозия труб. Норма ≤ 250 мг/л.",
+        "sulfates": "Из природных пород (гипс). Избыток вызывает горький вкус. Норма ≤ 250 мг/л.",
+        "free_chlorine": "Активный хлор для дезинфекции бассейна. Диапазон 0.2–0.6 мг/л.",
+        "combined_chlorine": "Связанный хлор (хлорамины). Раздражает глаза. Норма бассейна ≤ 0.4 мг/л.",
+        "pseudomonas": "Pseudomonas aeruginosa — патогенная бактерия бассейнов. Норма: не обнаружено.",
+        "staphylococci": "Staphylococcus aureus — индикатор гигиены купальщиков. Норма бассейна ≤ 20 КОЕ/100 мл.",
+        "oxidizability": "Содержание органических веществ. Высокие значения → риск побочных продуктов хлорирования.",
+        "colonies_37c": "Общее микробное число при 37 °C — суммарная бактериальная нагрузка.",
+    },
+    "EN": {
+        "e_coli": "Indicator of faecal contamination. Drinking water: 0; bathing ≤ 500 CFU/100 mL.",
+        "enterococci": "Intestinal enterococci — chlorine-resistant faecal indicator. Bathing limit ≤ 200 CFU/100 mL.",
+        "coliforms": "Bacteria from soil and intestines. May indicate insufficient disinfection.",
+        "ph": "Water acidity. Drinking water 6.5–9.5; bathing 6.0–9.0; pools 6.5–8.5.",
+        "transparency": "Secchi disk visibility depth at beaches. Low values → algal bloom or pollution.",
+        "turbidity": "Suspended particles. Reduce disinfection efficiency. Limit ≤ 4 NTU; pools ≤ 0.5.",
+        "color": "Yellow-brown tint from humic acids (peat). Drinking water limit ≤ 20 mg Pt/L.",
+        "nitrates": "From fertilisers and sewage. Risk for infants. Drinking water limit ≤ 50 mg/L.",
+        "nitrites": "Intermediate of nitrification. More toxic than nitrates. Limit ≤ 0.5 mg/L.",
+        "ammonium": "Sign of organic contamination. Reduces chlorination efficiency. Limit ≤ 0.5 mg/L.",
+        "fluoride": "Protects teeth in small amounts; excess causes fluorosis. Limit ≤ 1.5 mg/L.",
+        "manganese": "Natural metal in Estonian groundwater. Colours water brown. Limit ≤ 0.05 mg/L.",
+        "iron": "Widespread in groundwater. Metallic taste and rusty colour. Limit ≤ 0.2 mg/L.",
+        "chlorides": "Natural salt. Excess → salty taste and pipe corrosion. Limit ≤ 250 mg/L.",
+        "sulfates": "From natural rocks (gypsum). Excess causes a bitter taste. Limit ≤ 250 mg/L.",
+        "free_chlorine": "Active chlorine for pool disinfection. Pool range 0.2–0.6 mg/L.",
+        "combined_chlorine": "Combined chlorine (chloramines). Irritates eyes. Pool limit ≤ 0.4 mg/L.",
+        "pseudomonas": "Pseudomonas aeruginosa — pathogenic pool bacterium. Standard: not detected.",
+        "staphylococci": "Staphylococcus aureus — bather hygiene indicator. Pool limit ≤ 20 CFU/100 mL.",
+        "oxidizability": "Organic matter content. High values → risk of chlorination by-products.",
+        "colonies_37c": "Heterotrophic plate count at 37 °C — total bacterial load.",
+    },
+    "ET": {
+        "e_coli": "Fekaalse saastumise indikaator. Joogivees: 0; suplus ≤ 500 CFU/100 ml.",
+        "enterococci": "Soolepäritolu enterokokid — kloorile vastupidav fekaalse saaste indikaator. Suplus ≤ 200 CFU/100 ml.",
+        "coliforms": "Pinnasest ja sooltest pärit bakterid. Võib viidata ebapiisavale desinfitseerimisele.",
+        "ph": "Vee happesus. Joogivesi 6.5–9.5; suplus 6.0–9.0; bassein 6.5–8.5.",
+        "transparency": "Secchi ketta nähtavussügavus randades. Madal → vetikaõitseng või reostus.",
+        "turbidity": "Hõljuvad osakesed. Vähendavad desinfitseerimise tõhusust. Piir ≤ 4 NTU; bassein ≤ 0.5.",
+        "color": "Kollakaspruun toon humiinhapetest (turvas). Joogivee piir ≤ 20 mg Pt/l.",
+        "nitrates": "Väetistest ja reoveest. Risk imikutele. Joogivee piir ≤ 50 mg/l.",
+        "nitrites": "Nitrifikatsiooni vaheprodukt. Mürgisem kui nitraadid. Piir ≤ 0.5 mg/l.",
+        "ammonium": "Orgaanilise reostuse tunnus. Vähendab kloorimise tõhusust. Piir ≤ 0.5 mg/l.",
+        "fluoride": "Väikestes annustes kaitseb hambaid; üledoos põhjustab fluoroosi. Piir ≤ 1.5 mg/l.",
+        "manganese": "Eesti põhjavee looduslik metall. Värvib vee pruuniks. Piir ≤ 0.05 mg/l.",
+        "iron": "Põhjavees levinud. Metallimaitse ja roostekarva. Piir ≤ 0.2 mg/l.",
+        "chlorides": "Looduslik sool. Liig → soolane maitse ja torude korrosioon. Piir ≤ 250 mg/l.",
+        "sulfates": "Looduslikest kivimitest (kips). Liig põhjustab kibedat maitset. Piir ≤ 250 mg/l.",
+        "free_chlorine": "Aktiivne kloor basseini desinfitseerimiseks. Vahemik 0.2–0.6 mg/l.",
+        "combined_chlorine": "Seotud kloor (kloraminid). Ärritab silmi. Basseini piir ≤ 0.4 mg/l.",
+        "pseudomonas": "Pseudomonas aeruginosa — patogeenne basseinibakter. Norm: ei tuvastata.",
+        "staphylococci": "Staphylococcus aureus — suplejate hügieeni näitaja. Basseini piir ≤ 20 CFU/100 ml.",
+        "oxidizability": "Orgaanilise aine sisaldus. Kõrged väärtused → kloorimise kõrvalsaaduste oht.",
+        "colonies_37c": "Üldmikroobide arv 37 °C juures — bakterite üldhulk.",
+    },
+}
+
+# Обратная совместимость (используется в ноутбуках / потенциально в скриптах).
+MEASUREMENT_LABELS_RU = MEASUREMENT_LABELS["RU"]
 
 MODEL_KEYS = ["lr", "rf", "gb", "lgbm"]
 MODEL_PROB_COLS = {k: f"{k}_violation_prob" for k in MODEL_KEYS}
@@ -448,19 +576,48 @@ def _place_kind(p: dict) -> str:
     return "other"
 
 
-def _measurements_html(m: dict) -> str:
-    """Returns an HTML table of measurements, or empty string if no data."""
+def _measurements_html(m: dict, lang: str = "RU") -> str:
+    """Returns an HTML table of measurements, or empty string if no data.
+
+    Каждый параметр локализован (RU/EN/ET): метка показывается жирным значением,
+    под ним — короткое описание (что измеряется + норматив). Описание видно
+    одновременно и на десктопе, и на мобильных — никаких hover-only тултипов.
+    Если язык неизвестен — fallback на RU.
+    """
     if not m:
         return ""
+    label_map = MEASUREMENT_LABELS.get(lang, MEASUREMENT_LABELS["RU"])
+    desc_map = MEASUREMENT_DESCRIPTIONS.get(lang, MEASUREMENT_DESCRIPTIONS["RU"])
+    fallback_label = MEASUREMENT_LABELS["RU"]
+    fallback_desc = MEASUREMENT_DESCRIPTIONS["RU"]
+
     lines = []
     for key in sorted(m.keys()):
-        label = MEASUREMENT_LABELS_RU.get(key, key)
+        label = label_map.get(key, fallback_label.get(key, key))
+        desc = desc_map.get(key, fallback_desc.get(key, ""))
         val = html.escape(str(m[key]))
+        label_esc = html.escape(label)
+        if desc:
+            desc_esc = html.escape(desc)
+            label_cell = (
+                f"<abbr title='{desc_esc}' "
+                f"style='text-decoration:none;border-bottom:1px dotted #94a3b8;cursor:help'>"
+                f"{label_esc}</abbr>"
+            )
+            desc_row = (
+                f"<tr><td colspan='2' style='padding:0 8px 6px 0;"
+                f"font-size:11px;color:#64748b;font-style:italic;line-height:1.3'>"
+                f"{desc_esc}</td></tr>"
+            )
+        else:
+            label_cell = label_esc
+            desc_row = ""
         lines.append(
-            f"<tr><td style='padding:2px 8px 2px 0'>{html.escape(label)}</td>"
-            f"<td><b>{val}</b></td></tr>"
+            f"<tr><td style='padding:2px 8px 0 0;vertical-align:top'>{label_cell}</td>"
+            f"<td style='padding:2px 0 0 0;vertical-align:top'><b>{val}</b></td></tr>"
+            f"{desc_row}"
         )
-    return "<table style='font-size:12px;border-collapse:collapse'>" + "".join(lines) + "</table>"
+    return "<table style='font-size:12px;border-collapse:collapse;width:100%'>" + "".join(lines) + "</table>"
 
 
 def _matched_addr_html(p: dict) -> str:
@@ -699,6 +856,7 @@ def build_map(
     map_zoom: int = 7,
     debug_focus_name: str | None = None,
     last_measured_label: str = "Last measured",
+    lang: str = "RU",
 ) -> folium.Map:
     available_models = available_models or []
     model_labels = model_labels or MODEL_LABELS_DEFAULT
@@ -786,7 +944,7 @@ def build_map(
         if debug_focus_name and str(p.get("location") or "") == debug_focus_name:
             focus_badge = "<br/><small style='color:#1d4ed8'><b>DEBUG focus</b></small>"
 
-        meas_html = _measurements_html(meas)
+        meas_html = _measurements_html(meas, lang=lang)
         if meas_html:
             meas_date_display = sample_date_str[:10] if sample_date_str else ""
             meas_heading = (
@@ -1611,6 +1769,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
             map_zoom=map_zoom,
             debug_focus_name=debug_focus_name if debug_enabled else None,
             last_measured_label=T["last_measured"],
+            lang=lang,
         )
         st_folium(m_map, width=None, height=580, returned_objects=[])
 
