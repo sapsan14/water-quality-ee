@@ -333,7 +333,20 @@ function MarkerClusterLayer({
       } as L.MarkerOptions & { place: FrontendPlace });
       // On mobile (disableHoverPopups=true): skip popup entirely — bottom sheet shows details
       if (!disableHoverPopups) {
-        marker.bindPopup(popupHtml(place, locale), { maxWidth: 360, autoPan: false });
+        // Desktop: let Leaflet auto-pan the map when a popup would be
+        // clipped by map borders or covered by the floating UI buttons.
+        // Padding clears:
+        //  - top-right:   mapFullscreenBtn (~46–56px tall, ~140px wide incl. label)
+        //  - bottom-right: mapFloatingControls stack — recenter + reset
+        //                  (~100px tall, ~66px wide)
+        // Extra top padding also keeps the popup tip (popupAnchor -58)
+        // from being cropped at the top edge.
+        marker.bindPopup(popupHtml(place, locale), {
+          maxWidth: 360,
+          autoPan: true,
+          autoPanPaddingTopLeft: L.point(20, 90),
+          autoPanPaddingBottomRight: L.point(90, 110)
+        });
 
         // Use a short close-delay so moving from the pin into the popup doesn't
         // cause flicker (mouseover → popup opens over pin → mouseout fires → popup
