@@ -1480,6 +1480,28 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       ) : null}
 
+      {isMobile ? (
+        <div className={`mobileSearchBar ${isMapFullscreen && mobilePanelState === "collapsed" ? "mobileSearchBarVisible" : ""}`}>
+          <svg className="mobileSearchIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+          </svg>
+          <input
+            className="mobileSearchInput"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={lruet(lang, "Поиск места...", "Otsi kohta...", "Search place...")}
+            aria-label="Search places"
+          />
+          {query ? (
+            <button className="mobileSearchClear" onClick={() => setQuery("")} aria-label="Clear search">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
       <aside className={`drawer panel ${drawerOpen || filtersPinned ? "open" : ""} ${filtersPinned ? "pinned" : ""}`}>
         <div className="drawerHeader">
@@ -1515,6 +1537,14 @@ export default function Dashboard({ snapshot }: Props) {
             aria-label="Search places by location or county"
           />
         </div>
+        {isMobile ? (
+          <div className="drawerLangRow">
+            <span className="drawerLangLabel">{lruet(lang, "Язык", "Keel", "Language")}</span>
+            <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+            <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+            <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+          </div>
+        ) : null}
         <div className="field">
           <label htmlFor="segment-select">{lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}</label>
           <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">

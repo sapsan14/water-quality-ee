@@ -83,20 +83,26 @@ function placeKindGlyph(kind: string) {
   return "📍";
 }
 
-const markerBadgeHtml = (color: string, glyph: string) => `
-  <span style="
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:30px;
-    height:30px;
-    border-radius:10px;
-    background:${color};
-    border:2px solid rgba(255,255,255,0.9);
-    box-shadow:0 2px 10px rgba(0,0,0,0.35);
-    font-size:16px;
-    line-height:1;
-  ">${glyph}</span>
+const markerBadgeHtml = (color: string, glyph: string, pulse = false) => `
+  <div style="
+    position:relative;
+    width:44px;
+    height:56px;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,0.45));
+  ">
+    <div style="
+      width:44px;height:44px;border-radius:50%;background:${color};
+      border:3px solid rgba(255,255,255,0.95);display:flex;align-items:center;
+      justify-content:center;font-size:22px;line-height:1;
+      ${pulse ? "animation:pinPulse 1.8s ease-in-out infinite;" : ""}
+    ">${glyph}</div>
+    <div style="
+      position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+      width:0;height:0;
+      border-left:9px solid transparent;border-right:9px solid transparent;
+      border-top:14px solid ${color};
+    "></div>
+  </div>
 `;
 
 function markerIcon(place: FrontendPlace) {
@@ -105,11 +111,12 @@ function markerIcon(place: FrontendPlace) {
     place.official_compliant === 1 ? "#22c55e" : place.official_compliant === 0 ? "#ef4444" : "#94a3b8";
   const color = place.model_violation_prob !== null ? colorByRisk : fallbackByOfficial;
   const glyph = placeKindGlyph(place.place_kind);
+  const pulse = place.risk_level === "high" && place.model_violation_prob !== null;
   return L.divIcon({
     className: "",
-    html: markerBadgeHtml(color, glyph),
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
+    html: markerBadgeHtml(color, glyph, pulse),
+    iconSize: [44, 56],
+    iconAnchor: [22, 56]
   });
 }
 
@@ -308,10 +315,12 @@ function MarkerClusterLayer({
         const avg = probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : 0.5;
         const color = clusterColor(avg);
         const count = c.getChildCount();
+        const size = count > 99 ? 52 : count > 9 ? 48 : 44;
         return L.divIcon({
-          html: `<div style="background:${color};color:#fff;border-radius:999px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,0.25)">${count}</div>`,
+          html: `<div style="background:${color};color:#fff;border-radius:999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,0.95);font-weight:700;font-size:${count > 99 ? 13 : 15}px;box-shadow:0 3px 12px rgba(0,0,0,0.35)">${count}</div>`,
           className: "",
-          iconSize: [42, 42]
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2]
         });
       }
     });
@@ -321,16 +330,16 @@ function MarkerClusterLayer({
         icon: markerIcon(place),
         place
       } as L.MarkerOptions & { place: FrontendPlace });
-      marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
-      marker.on("click", () => {
-        // On mobile disableHoverPopups=true — bottom sheet shows details, no popup needed
-        if (!disableHoverPopups) marker.openPopup();
-        onSelectPoint?.(place.id);
-      });
+      // On mobile (disableHoverPopups=true): skip popup entirely — bottom sheet shows details
       if (!disableHoverPopups) {
+        marker.bindPopup(popupHtml(place, locale), { maxWidth: 360 });
         marker.on("mouseover", () => marker.openPopup());
         marker.on("mouseout", () => marker.closePopup());
       }
+      marker.on("click", () => {
+        onSelectPoint?.(place.id);
+        if (!disableHoverPopups) marker.openPopup();
+      });
       (group as L.LayerGroup).addLayer(marker);
     });
 

@@ -97,7 +97,6 @@ def _lest97_to_wgs84(northing: float, easting: float) -> Optional[tuple[float, f
     y = northing - _LEST97_FN
 
     e2 = _LEST97_E2
-    e = math.sqrt(e2)
     n = (1 - math.sqrt(1 - e2)) / (1 + math.sqrt(1 - e2))
     a = _LEST97_A
 
