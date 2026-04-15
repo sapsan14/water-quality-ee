@@ -602,21 +602,43 @@ function MapClient({
 
   useEffect(() => {
     if (!showCountyOverlay) return;
+    // Skip refetch if we already have the data cached in state.
+    if (countyGeoJson) return;
     let alive = true;
-    fetch("/data/estonia_counties_simplified.geojson")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!alive) return;
-        setCountyGeoJson(d);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setCountyGeoJson(null);
-      });
+    // Defer the 12 MB GeoJSON fetch until the browser is idle so it does not
+    // compete with Leaflet tile downloads on the critical path. Mobile users
+    // see the map first; overlay paints in ~1s later on 4G.
+    const idle = (cb: () => void) => {
+      const ric = (window as unknown as { requestIdleCallback?: (fn: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+      if (typeof ric === "function") return ric(cb, { timeout: 2000 });
+      return window.setTimeout(cb, 300);
+    };
+    const cancelIdle = (id: number) => {
+      const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (typeof cic === "function") cic(id);
+      else window.clearTimeout(id);
+    };
+    const handle = idle(() => {
+      if (!alive) return;
+      // force-cache lets the Cloudflare _headers immutable directive dedupe
+      // repeat visits. Once we ship a pre-simplified + hashed file the
+      // service-worker-free caching story becomes fully correct.
+      fetch("/data/estonia_counties_simplified.geojson", { cache: "force-cache" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!alive) return;
+          setCountyGeoJson(d);
+        })
+        .catch(() => {
+          if (!alive) return;
+          setCountyGeoJson(null);
+        });
+    });
     return () => {
       alive = false;
+      cancelIdle(handle);
     };
-  }, [showCountyOverlay]);
+  }, [showCountyOverlay, countyGeoJson]);
 
   useEffect(() => {
     if (!mapRef.current) return;

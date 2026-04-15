@@ -396,6 +396,31 @@ export default function Dashboard({ snapshot }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const [infoTitle, setInfoTitle] = useState("");
   const [infoText, setInfoText] = useState("");
+  const infoCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Info modal accessibility: Escape to close, body scroll lock while open,
+  // autofocus the close button, restore focus to the trigger on close.
+  useEffect(() => {
+    if (!infoOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setInfoOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // Defer focus until the button is mounted.
+    const t = window.setTimeout(() => infoCloseBtnRef.current?.focus(), 0);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      window.clearTimeout(t);
+      previouslyFocused?.focus?.();
+    };
+  }, [infoOpen]);
   const [query, setQuery] = useState("");
   const [segment, setSegment] = useState("all");
   const [risk, setRisk] = useState("all");
@@ -1859,10 +1884,16 @@ export default function Dashboard({ snapshot }: Props) {
             </svg>
             <input
               className="gmSearchInput"
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={lruet(lang, "Поиск места...", "Otsi kohta...", "Search place...")}
-              aria-label="Search"
+              aria-label={lruet(lang, "Поиск места", "Otsi kohta", "Search place")}
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             {query ? (
               <button className="gmSearchClearBtn" onClick={() => setQuery("")} aria-label="Clear">
@@ -2104,10 +2135,21 @@ export default function Dashboard({ snapshot }: Props) {
           <label htmlFor="search-input">{t.search}</label>
           <input
             id="search-input"
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={lruet(lang, "например: Tallinn, Harku, rand", "nt Tallinn, Harku, rand", "e.g. Tallinn, Harku, beach")}
-            aria-label="Search places by location or county"
+            aria-label={lruet(
+              lang,
+              "Поиск мест по названию или уезду",
+              "Otsi kohti nime või maakonna järgi",
+              "Search places by location or county"
+            )}
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </div>
         {isMobile ? (
@@ -4213,10 +4255,17 @@ export default function Dashboard({ snapshot }: Props) {
 
       {infoOpen ? (
         <div className="modalBackdrop" onClick={() => setInfoOpen(false)}>
-          <div className="modalCard panel" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modalCard panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="info-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modalHeader">
-              <h3 className="sectionTitle">{infoTitle}</h3>
+              <h3 className="sectionTitle" id="info-modal-title">{infoTitle}</h3>
               <button
+                ref={infoCloseBtnRef}
                 type="button"
                 className="modalCloseBtn"
                 onClick={() => setInfoOpen(false)}
