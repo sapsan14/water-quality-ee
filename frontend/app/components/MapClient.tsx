@@ -409,6 +409,46 @@ type Props = {
 };
 
 /**
+ * Compute the map-container y coordinate where the selected marker should
+ * appear: the centre of the visible strip between the top chrome and the
+ * bottom sheet, clamped with a ~72px margin on each side so the pin never
+ * hugs either edge. In the degenerate "sheet covers almost everything"
+ * case (e.g. full drawer on a short phone) the clamp still guarantees the
+ * pin sits above the sheet top rather than vanishing underneath it.
+ *
+ * Coordinates are in *map container* pixels — i.e. the same frame Leaflet
+ * uses for `project` / `unproject`. `topOverlayPx` / `bottomOverlayPx` are
+ * measured from the respective edges of the **visible viewport** (window.
+ * innerHeight), which normally matches the map container height but may
+ * differ on mobile browsers where `100vh` / large-viewport units leak
+ * extra pixels below the URL bar. We correct for that below.
+ */
+function computeVisibleTargetY(
+  mapHeight: number,
+  viewportHeight: number,
+  topOverlayPx: number,
+  bottomOverlayPx: number
+): number {
+  // Sheet top / chrome bottom in map-container coords. The container's y=0
+  // aligns with the visible viewport's top (fullscreen map is
+  // `position: fixed; inset: 0`), so overlay measurements carry over
+  // directly; we only need to clamp to the container's own bottom.
+  const sheetTopY = Math.max(0, viewportHeight - bottomOverlayPx);
+  const chromeBottomY = Math.min(mapHeight, Math.max(0, topOverlayPx));
+  const MARGIN = 72;
+  const safeTop = chromeBottomY + MARGIN;
+  const safeBottom = Math.min(mapHeight, sheetTopY) - MARGIN;
+  if (safeBottom <= safeTop) {
+    // Visible strip is narrower than 2×MARGIN; prefer keeping the pin above
+    // the sheet so the user can still see it, even if we crowd the top
+    // chrome a bit.
+    return Math.max(MARGIN, Math.min(mapHeight - MARGIN, sheetTopY - MARGIN));
+  }
+  const centre = (chromeBottomY + Math.min(mapHeight, sheetTopY)) / 2;
+  return Math.max(safeTop, Math.min(safeBottom, centre));
+}
+
+/**
  * Keep the selected point centred in the *visible* strip of the map, i.e.
  * the area not covered by the top search/chip bar nor the bottom sheet or
  * on-screen keyboard. Re-runs whenever the selected point identity changes
@@ -442,15 +482,28 @@ function FocusOnSelectedPoint({
     const target: [number, number] = [selectedPoint.lat, selectedPoint.lon];
     const targetZoom = Math.max(map.getZoom(), 11);
 
-    // The visible strip is [topOverlayPx, viewportHeight - bottomOverlayPx].
-    // Its centre is (top + (height - bottom)) / 2. The map's geographic
-    // centre sits at viewportHeight / 2 in screen pixels. For the marker to
-    // appear at the visible-strip centre, the geographic centre must be
-    // offset from the marker by (bottomOverlayPx - topOverlayPx) / 2 pixels
-    // in world space. Leaflet's pixel y grows southward → ADD the delta.
-    const offset = (bottomOverlayPx - topOverlayPx) / 2;
+    // Use actual map container dimensions (not window.innerHeight) so the
+    // math is correct even when `100vh` ≠ visible viewport height on
+    // mobile browsers. Leaflet's `getSize()` returns the map container in
+    // CSS pixels — the same frame `project` / `unproject` operate in.
+    const mapSize = map.getSize();
+    const mapHeight = mapSize.y;
+    const viewportHeight =
+      typeof window !== "undefined" ? window.innerHeight : mapHeight;
+
+    const desiredY = computeVisibleTargetY(
+      mapHeight,
+      viewportHeight,
+      topOverlayPx,
+      bottomOverlayPx
+    );
+
+    // We want the marker to land at container y = desiredY. At zoom Z,
+    // marker_container_y = mapHeight/2 + project(marker).y - project(centre).y
+    // Solving: project(centre).y = project(marker).y + mapHeight/2 - desiredY
+    const offsetY = mapHeight / 2 - desiredY;
     const point = map.project(target, targetZoom);
-    point.y += offset;
+    point.y += offsetY;
     const adjusted = map.unproject(point, targetZoom);
 
     // On a fresh selection, fly with the usual cinematic duration. When only
@@ -489,10 +542,21 @@ function FitBoundsOnVersion({
     prevKeyRef.current = fitBoundsKey;
     if (places.length === 1) {
       const targetZoom = Math.max(map.getZoom(), 12);
+      // Reuse FocusOnSelectedPoint's clamped visible-strip centre so a
+      // single match lands in the same safe area as a tapped pin, even
+      // when the bottom sheet is already open.
+      const mapSize = map.getSize();
+      const mapHeight = mapSize.y;
+      const viewportHeight =
+        typeof window !== "undefined" ? window.innerHeight : mapHeight;
+      const desiredY = computeVisibleTargetY(
+        mapHeight,
+        viewportHeight,
+        topOverlayPx,
+        bottomOverlayPx
+      );
       const point = map.project(places[0], targetZoom);
-      // Keep the single match in the visible strip between the top chrome and
-      // the bottom sheet — same sign rule as FocusOnSelectedPoint above.
-      point.y += Math.max(0, (bottomOverlayPx - topOverlayPx) / 2);
+      point.y += mapHeight / 2 - desiredY;
       const adjusted = map.unproject(point, targetZoom);
       map.flyTo(adjusted, targetZoom, { duration: 0.6 });
       return;
