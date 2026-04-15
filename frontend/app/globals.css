@@ -221,6 +221,7 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap;
   grid-column: 1 / -1;
   position: sticky;
   top: 0.35rem;
@@ -236,6 +237,19 @@ a {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+/* Keep the brand block on the left and let it shrink if the subtitle is
+   long, so the header info-nav buttons always stay pinned to the right. */
+.unifiedTopBar .unifiedBrandBlock {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.unifiedTopBar .topBarControls {
+  flex: 0 0 auto;
+  margin-left: auto;
+  flex-wrap: nowrap;
 }
 
 .unifiedTopBar.compact {
