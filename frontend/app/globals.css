@@ -1581,6 +1581,24 @@ body.mapFullscreenActive {
     display: inline;
   }
 
+  /* Place sheet info elements dark mode */
+  .gmSectionTitle {
+    color: #8fa5c2;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .gmPlaceCounty {
+    color: #8fa5c2;
+  }
+
+  .rowViolated td {
+    background: rgba(220, 53, 69, 0.12);
+  }
+
+  .valueViolated {
+    color: #ff6b6b !important;
+  }
+
   /* Sheet + search bar dark mode */
   .mobileBottomSheet {
     background: #111b2d;

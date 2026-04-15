@@ -93,24 +93,36 @@ const modelKeyNorm = (value: string) => String(value || "").trim().toLowerCase()
 function modelLabelWithPrinciple(key: string, lang: Lang): string {
   const k = modelKeyNorm(key);
   if (k === "lr" || k === "logreg" || k === "logistic_regression") {
-    return lang === "ru"
-      ? "LR — Logistic Regression (линейная модель вероятности через логистическую функцию)"
-      : "LR — Logistic Regression (lineaarne tõenäosusmudel logistilise funktsiooniga)";
+    return lruet(
+      lang,
+      "LR — Logistic Regression (линейная модель вероятности через логистическую функцию)",
+      "LR — Logistic Regression (lineaarne tõenäosusmudel logistilise funktsiooniga)",
+      "LR — Logistic Regression (linear probability model via logistic function)"
+    );
   }
   if (k === "rf" || k === "random_forest") {
-    return lang === "ru"
-      ? "RF — Random Forest (ансамбль деревьев, усредняющий решения)"
-      : "RF — Random Forest (puuansambel, mis keskmistab otsuseid)";
+    return lruet(
+      lang,
+      "RF — Random Forest (ансамбль деревьев, усредняющий решения)",
+      "RF — Random Forest (puuansambel, mis keskmistab otsuseid)",
+      "RF — Random Forest (ensemble of trees averaging predictions)"
+    );
   }
   if (k === "gb" || k === "gradient_boosting") {
-    return lang === "ru"
-      ? "GB — Gradient Boosting (последовательные деревья, исправляющие ошибки предыдущих)"
-      : "GB — Gradient Boosting (järjestikused puud, mis parandavad eelmiste vigu)";
+    return lruet(
+      lang,
+      "GB — Gradient Boosting (последовательные деревья, исправляющие ошибки предыдущих)",
+      "GB — Gradient Boosting (järjestikused puud, mis parandavad eelmiste vigu)",
+      "GB — Gradient Boosting (sequential trees that correct prior errors)"
+    );
   }
   if (k === "lgbm" || k === "lightgbm") {
-    return lang === "ru"
-      ? "LGBM — LightGBM (эффективный gradient boosting на деревьях)"
-      : "LGBM — LightGBM (efektiivne gradient boosting puudel)";
+    return lruet(
+      lang,
+      "LGBM — LightGBM (эффективный gradient boosting на деревьях)",
+      "LGBM — LightGBM (efektiivne gradient boosting puudel)",
+      "LGBM — LightGBM (efficient histogram-based gradient boosting)"
+    );
   }
   return key.toUpperCase();
 }
@@ -726,7 +738,7 @@ export default function Dashboard({ snapshot }: Props) {
       enDesc: "Gives water a dark tint and metallic taste. Chronic exposure to high levels may affect the nervous system. Norm: ≤0.05 mg/L."
     },
     fluoride: {
-      ruLabel: "Фторид (мг/л)", etLabel: "Fluoriiid (mg/l)", enLabel: "Fluoride (mg/L)",
+      ruLabel: "Фторид (мг/л)", etLabel: "Fluoriid (mg/l)", enLabel: "Fluoride (mg/L)",
       ruDesc: "В небольших количествах защищает зубы от кариеса, но при избытке вызывает флюороз зубов и костей. Норма ЕС для питьевой воды: ≤1.5 мг/л.",
       etDesc: "Väikestes kogustes kaitseb hambaid, kuid ülemäärasus põhjustab fluoroosi. EL joogivee norm: ≤1.5 mg/l.",
       enDesc: "In small amounts protects teeth from decay, but excess causes dental and skeletal fluorosis. EU drinking water norm: ≤1.5 mg/L."
@@ -998,6 +1010,24 @@ export default function Dashboard({ snapshot }: Props) {
     });
   }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
+
+  // Auto-fit map to visible places whenever filters produce a meaningful subset.
+  const [fitBoundsVersion, setFitBoundsVersion] = useState(0);
+  const fitBoundsPlaces = useMemo<[number, number][]>(
+    () => filtered.map((p) => [p.lat, p.lon]),
+    [filtered]
+  );
+  const fitBoundsInitRef = useRef(false);
+  useEffect(() => {
+    if (!fitBoundsInitRef.current) {
+      // Skip first render — initial Estonia bounds are handled by isFullscreen effect in MapClient
+      fitBoundsInitRef.current = true;
+      return;
+    }
+    // Only auto-fit when filters narrow the result set (not when showing all places)
+    if (filtered.length === 0 || filtered.length === snapshot.places.length) return;
+    setFitBoundsVersion((v) => v + 1);
+  }, [filtered, snapshot.places.length]);
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
@@ -1889,6 +1919,8 @@ export default function Dashboard({ snapshot }: Props) {
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
           showCountyOverlay={!isMobile}
+          fitBoundsVersion={fitBoundsVersion}
+          fitBoundsPlaces={fitBoundsPlaces}
         />
       </section>
 
