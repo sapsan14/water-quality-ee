@@ -2078,55 +2078,6 @@ export default function Dashboard({ snapshot }: Props) {
             ) : null}
           </div>
         </div>
-        <div className="filterActionRow">
-          <button
-            type="button"
-            className={`btn iconBtn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
-            onClick={() => setAlertsOnly((v) => !v)}
-            aria-pressed={alertsOnly}
-            aria-label={t.alertsOnly}
-            title={t.alertsOnly}
-          >
-            <span className="btnIcon" aria-hidden="true">
-              <Icon name="alert" />
-            </span>
-          </button>
-          <button
-            type="button"
-            className={`btn iconBtn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
-            onClick={() => {
-              if (nearbyOnly) {
-                setNearbyOnly(false);
-                setGeoError(null);
-                return;
-              }
-              if (userCoords) {
-                setNearbyOnly(true);
-                setGeoError(null);
-                return;
-              }
-              activateNearMe();
-            }}
-            aria-pressed={nearbyOnly}
-            aria-label={t.nearMe}
-            title={t.nearMe}
-          >
-            <span className="btnIcon" aria-hidden="true">
-              <Icon name="locate" />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="btn clearFiltersBtn iconBtn"
-            onClick={clearFilters}
-            aria-label={t.clearFilters}
-            title={t.clearFilters}
-          >
-            <span className="btnIcon" aria-hidden="true">
-              <Icon name="filter-x" />
-            </span>
-          </button>
-        </div>
         {nearbyOnly && userCoords ? (
           <div className="nearbyPanel">
             <label htmlFor="nearby-radius">
@@ -2439,6 +2390,15 @@ export default function Dashboard({ snapshot }: Props) {
                 <Icon name="signal" />
               </button>
             ) : null}
+            <button
+              type="button"
+              className="mapChip mapChipClear"
+              onClick={clearFilters}
+              aria-label={t.clearFilters}
+              title={t.clearFilters}
+            >
+              <Icon name="filter-x" />
+            </button>
           </div>
         ) : null}
         <MapClient
