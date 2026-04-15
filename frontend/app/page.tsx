@@ -1,22 +1,16 @@
-import Dashboard from "./components/Dashboard";
+import DashboardLoader from "./components/DashboardLoader";
 import WebVitalsReporter from "./components/WebVitalsReporter";
-import type { FrontendSnapshot } from "./lib/types";
 
-async function loadSnapshot(): Promise<FrontendSnapshot> {
-  // Build-time/local fallback that also works for static hosting on Cloudflare Pages.
-  const { readFile } = await import("node:fs/promises");
-  const { join } = await import("node:path");
-  const raw = await readFile(join(process.cwd(), "public", "data", "snapshot.frontend.json"), "utf-8");
-  return JSON.parse(raw) as FrontendSnapshot;
-}
-
-export default async function HomePage() {
-  const snapshot = await loadSnapshot();
+// The ~7 MB snapshot is now fetched client-side (see DashboardLoader +
+// lib/snapshot-client). Keeping page.tsx as a lean server component means
+// the RSC payload stays tiny, the snapshot file is cacheable at the CDN
+// edge, and hydration starts seconds earlier on mobile networks.
+export default function HomePage() {
   const currentYear = new Date().getFullYear();
   return (
     <main className="page">
       <WebVitalsReporter />
-      <Dashboard snapshot={snapshot} />
+      <DashboardLoader />
       <footer className="footerNote">
         <p>© {currentYear} H2O Atlas. Open data + ML decision support.</p>
       </footer>

@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Manrope, Space_Grotesk } from "next/font/google";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,6 +29,21 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg"
   }
+};
+
+// Explicit mobile viewport — Next 16 no longer injects a default tag, so
+// without this mobile Safari renders at 980px desktop width and every
+// CSS media query in globals.css misfires.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5, // do not lock to 1 — blocks pinch-zoom accessibility
+  viewportFit: "cover", // lets env(safe-area-inset-*) take effect on notched iPhones
+  themeColor: [
+    // Match --bg tokens in globals.css (light: #f3f7fb, dark: #0b1220)
+    { media: "(prefers-color-scheme: light)", color: "#f3f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1220" }
+  ]
 };
 
 // Inline FOUC-prevention script — applies the saved theme to <body>
