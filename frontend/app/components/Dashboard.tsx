@@ -2289,7 +2289,6 @@ export default function Dashboard({ snapshot }: Props) {
                   onClick={() => setDrawerOpen((v) => !v)}
                   aria-label={drawerOpen ? t.close : t.openFilters}
                   aria-pressed={drawerOpen}
-                  title={drawerOpen ? t.close : t.openFilters}
                   data-tooltip={drawerOpen ? t.close : t.openFilters}
                 >
                   <Icon name={drawerOpen ? "filter-x" : "filters"} />
@@ -2314,7 +2313,6 @@ export default function Dashboard({ snapshot }: Props) {
                     showCountBubble(countText);
                   }}
                   aria-label={allLabel}
-                  title={allLabel}
                   data-tooltip={allLabel}
                 >
                   <Icon name="grid" />
@@ -2344,7 +2342,6 @@ export default function Dashboard({ snapshot }: Props) {
                     showCountBubble(`${label}: ${domainCount}`);
                   }}
                   aria-label={label}
-                  title={label}
                   data-tooltip={label}
                 >
                   <Icon name={iconName} />
@@ -2373,7 +2370,6 @@ export default function Dashboard({ snapshot }: Props) {
                   }}
                   aria-label={alertsLabel}
                   aria-pressed={alertsOnly}
-                  title={alertsLabel}
                   data-tooltip={alertsLabel}
                 >
                   <Icon name="alert" />
@@ -2410,7 +2406,6 @@ export default function Dashboard({ snapshot }: Props) {
                   }}
                   aria-label={nearLabel}
                   aria-pressed={nearbyOnly}
-                  title={nearLabel}
                   data-tooltip={nearLabel}
                 >
                   <Icon name="locate" />
@@ -2423,7 +2418,6 @@ export default function Dashboard({ snapshot }: Props) {
                 className="mapChip mapChipActive"
                 onClick={() => setRisk("all")}
                 aria-label={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
-                title={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
                 data-tooltip={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
               >
                 <Icon name="signal" />
@@ -2434,7 +2428,6 @@ export default function Dashboard({ snapshot }: Props) {
               className="mapChip mapChipClear"
               onClick={clearFilters}
               aria-label={t.clearFilters}
-              title={t.clearFilters}
               data-tooltip={t.clearFilters}
             >
               <Icon name="filter-x" />
