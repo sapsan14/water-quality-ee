@@ -376,6 +376,8 @@ type Props = {
   canRecenter?: boolean;
   isMobile?: boolean;
   showCountyOverlay?: boolean;
+  fitBoundsVersion?: number;
+  fitBoundsPlaces?: [number, number][];
 };
 
 function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace | null }) {
@@ -386,6 +388,32 @@ function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace
       duration: 0.7
     });
   }, [map, selectedPoint]);
+  return null;
+}
+
+function FitBoundsOnVersion({
+  version,
+  places
+}: {
+  version?: number;
+  places?: [number, number][];
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (version === undefined || !places || places.length === 0) return;
+    if (places.length === 1) {
+      map.flyTo(places[0], Math.max(map.getZoom(), 11), { duration: 0.6 });
+      return;
+    }
+    const bounds = L.latLngBounds(places.map(([lat, lon]) => [lat, lon]));
+    map.fitBounds(bounds, {
+      animate: true,
+      paddingTopLeft: [10, 120],
+      paddingBottomRight: [10, 70],
+      maxZoom: 13
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
   return null;
 }
 
@@ -418,7 +446,9 @@ function MapClient({
   recenterLabel = "Near me",
   canRecenter = true,
   isMobile = false,
-  showCountyOverlay = true
+  showCountyOverlay = true,
+  fitBoundsVersion,
+  fitBoundsPlaces
 }: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
   const countyRisk = useMemo(() => {
@@ -510,8 +540,14 @@ function MapClient({
       mapRef.current?.invalidateSize();
       // After entering fullscreen (especially on mobile), re-fit Estonia so the
       // map doesn't shift or show the wrong region due to container resize.
+      // Use asymmetric padding to keep Estonia clear of the search+chip overlay
+      // at top (≈120px) and the sheet peek at bottom (≈70px).
       if (isFullscreen) {
-        mapRef.current?.fitBounds(ESTONIA_BOUNDS, { animate: false, padding: [20, 20] });
+        mapRef.current?.fitBounds(ESTONIA_BOUNDS, {
+          animate: false,
+          paddingTopLeft: [10, 120],
+          paddingBottomRight: [10, 70]
+        });
       }
     }, 250);
     return () => window.clearTimeout(t);
@@ -602,6 +638,7 @@ function MapClient({
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint selectedPoint={selectedPoint} />
+        <FitBoundsOnVersion version={fitBoundsVersion} places={fitBoundsPlaces} />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
       </MapContainer>

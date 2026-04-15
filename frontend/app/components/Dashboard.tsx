@@ -93,24 +93,36 @@ const modelKeyNorm = (value: string) => String(value || "").trim().toLowerCase()
 function modelLabelWithPrinciple(key: string, lang: Lang): string {
   const k = modelKeyNorm(key);
   if (k === "lr" || k === "logreg" || k === "logistic_regression") {
-    return lang === "ru"
-      ? "LR — Logistic Regression (линейная модель вероятности через логистическую функцию)"
-      : "LR — Logistic Regression (lineaarne tõenäosusmudel logistilise funktsiooniga)";
+    return lruet(
+      lang,
+      "LR — Logistic Regression (линейная модель вероятности через логистическую функцию)",
+      "LR — Logistic Regression (lineaarne tõenäosusmudel logistilise funktsiooniga)",
+      "LR — Logistic Regression (linear probability model via logistic function)"
+    );
   }
   if (k === "rf" || k === "random_forest") {
-    return lang === "ru"
-      ? "RF — Random Forest (ансамбль деревьев, усредняющий решения)"
-      : "RF — Random Forest (puuansambel, mis keskmistab otsuseid)";
+    return lruet(
+      lang,
+      "RF — Random Forest (ансамбль деревьев, усредняющий решения)",
+      "RF — Random Forest (puuansambel, mis keskmistab otsuseid)",
+      "RF — Random Forest (ensemble of trees averaging predictions)"
+    );
   }
   if (k === "gb" || k === "gradient_boosting") {
-    return lang === "ru"
-      ? "GB — Gradient Boosting (последовательные деревья, исправляющие ошибки предыдущих)"
-      : "GB — Gradient Boosting (järjestikused puud, mis parandavad eelmiste vigu)";
+    return lruet(
+      lang,
+      "GB — Gradient Boosting (последовательные деревья, исправляющие ошибки предыдущих)",
+      "GB — Gradient Boosting (järjestikused puud, mis parandavad eelmiste vigu)",
+      "GB — Gradient Boosting (sequential trees that correct prior errors)"
+    );
   }
   if (k === "lgbm" || k === "lightgbm") {
-    return lang === "ru"
-      ? "LGBM — LightGBM (эффективный gradient boosting на деревьях)"
-      : "LGBM — LightGBM (efektiivne gradient boosting puudel)";
+    return lruet(
+      lang,
+      "LGBM — LightGBM (эффективный gradient boosting на деревьях)",
+      "LGBM — LightGBM (efektiivne gradient boosting puudel)",
+      "LGBM — LightGBM (efficient histogram-based gradient boosting)"
+    );
   }
   return key.toUpperCase();
 }
@@ -651,77 +663,128 @@ export default function Dashboard({ snapshot }: Props) {
 
   const paramInfo: Record<
     string,
-    { ruLabel: string; etLabel: string; ruDesc: string; etDesc: string }
+    { ruLabel: string; etLabel: string; enLabel: string; ruDesc: string; etDesc: string; enDesc: string }
   > = {
     e_coli: {
-      ruLabel: "E. coli (КОЕ/100 мл)",
-      etLabel: "E. coli (PMÜ/100 ml)",
-      ruDesc:
-        "Ключевой индикатор фекального загрязнения. Если значение повышено, растет риск кишечных инфекций и контактных заболеваний, особенно в открытой воде.",
-      etDesc: "Fekaalreostuse indikaator. Kõrged väärtused suurendavad terviseriski."
+      ruLabel: "E. coli (КОЕ/100 мл)", etLabel: "E. coli (PMÜ/100 ml)", enLabel: "E. coli (CFU/100 ml)",
+      ruDesc: "Ключевой индикатор фекального загрязнения. Повышенные значения увеличивают риск кишечных инфекций и контактных заболеваний, особенно в открытой воде.",
+      etDesc: "Fekaalreostuse põhiindikaator. Kõrged väärtused suurendavad seedetrakti infektsioonide ja kontakthaiguste riski, eriti avatud vees.",
+      enDesc: "Key indicator of faecal contamination. Elevated values increase risk of intestinal infections and contact diseases, especially in open water."
     },
     enterococci: {
-      ruLabel: "Энтерококки",
-      etLabel: "Enterokokid",
-      ruDesc:
-        "Бактериальный индикатор для купальных зон и рекреационной воды. В сочетании с E. coli помогает оценить микробиологическую безопасность.",
-      etDesc: "Bakteriaalne veekvaliteedi indikaator, eriti supluskohtades."
+      ruLabel: "Энтерококки (КОЕ/100 мл)", etLabel: "Enterokokid (PMÜ/100 ml)", enLabel: "Enterococci (CFU/100 ml)",
+      ruDesc: "Бактериальный индикатор для купальных зон и рекреационной воды. В сочетании с E. coli помогает оценить микробиологическую безопасность.",
+      etDesc: "Bakteriaalne veekvaliteedi indikaator, eriti supluskohtades. Koos E. coliga aitab hinnata mikrobioloogilist ohutust.",
+      enDesc: "Bacterial indicator for bathing and recreational water. Together with E. coli it helps assess microbiological safety."
     },
     coliforms: {
-      ruLabel: "Колиформы",
-      etLabel: "Kolibakterid",
-      ruDesc:
-        "Общий микробиологический индикатор санитарного состояния. Рост колиформ может указывать на проблемы в источнике или системе водоподготовки.",
-      etDesc: "Üldine mikrobioloogiline näitaja vee sanitaarseisundi kohta."
+      ruLabel: "Колиформы (КОЕ/100 мл)", etLabel: "Kolibakterid (PMÜ/100 ml)", enLabel: "Coliforms (CFU/100 ml)",
+      ruDesc: "Общий микробиологический индикатор санитарного состояния. Рост колиформ может указывать на проблемы в источнике или системе водоподготовки.",
+      etDesc: "Üldine mikrobioloogiline näitaja vee sanitaarseisundi kohta. Kõrge tase viitab allikas- või töötlemisprobleemidele.",
+      enDesc: "General microbiological indicator of sanitary conditions. Elevated coliforms may indicate issues in the water source or treatment system."
     },
     ph: {
-      ruLabel: "pH",
-      etLabel: "pH",
-      ruDesc:
-        "Кислотность/щелочность воды. Влияет на коррозию труб, эффективность дезинфекции и комфорт при контакте с водой.",
-      etDesc: "Vee happelisus/leelisus. Äärmused viitavad kvaliteediprobleemidele."
+      ruLabel: "pH", etLabel: "pH", enLabel: "pH",
+      ruDesc: "Кислотность/щёлочность воды. Влияет на коррозию труб, эффективность дезинфекции и комфорт при контакте с водой. Норма для питьевой воды: 6.5–9.5.",
+      etDesc: "Vee happelisus/leelisus. Mõjutab torutorrosiooni, desinfektsiooni tõhusust ja mugavust. Joogivee norm: 6.5–9.5.",
+      enDesc: "Acidity/alkalinity of water. Affects pipe corrosion, disinfection efficiency and comfort. Drinking water norm: 6.5–9.5."
     },
     nitrates: {
-      ruLabel: "Нитраты",
-      etLabel: "Nitraadid",
-      ruDesc:
-        "Особенно важны для питьевой воды. Повышенные нитраты часто связаны с сельхоз-стоками и требуют усиленного контроля источника.",
-      etDesc: "Kõrged nitraaditasemed on eriti kriitilised joogivees."
+      ruLabel: "Нитраты (мг/л)", etLabel: "Nitraadid (mg/l)", enLabel: "Nitrates (mg/L)",
+      ruDesc: "Особенно важны для питьевой воды. Повышенные нитраты часто связаны с сельхоз-стоками и требуют усиленного контроля. Норма: ≤50 мг/л.",
+      etDesc: "Eriti olulised joogivees. Kõrge tase on sageli seotud põllumajanduslike heitvetega. Norm: ≤50 mg/l.",
+      enDesc: "Particularly important for drinking water. Elevated nitrates are often linked to agricultural run-off. Norm: ≤50 mg/L."
     },
     nitrites: {
-      ruLabel: "Нитриты",
-      etLabel: "Nitritid",
-      ruDesc:
-        "Маркер свежей биозагрязненности и нестабильных процессов азотного цикла. В питьевой воде требует повышенного внимания.",
-      etDesc: "Oluline joogivee näitaja, võib viidata värskele bioreostusele."
+      ruLabel: "Нитриты (мг/л)", etLabel: "Nitritid (mg/l)", enLabel: "Nitrites (mg/L)",
+      ruDesc: "Маркер свежей биозагрязнённости и нестабильных процессов азотного цикла. В питьевой воде требует повышенного внимания. Норма: ≤0.5 мг/л.",
+      etDesc: "Värske bioreostuse marker. Joogivees nõuab erilist tähelepanu. Norm: ≤0.5 mg/l.",
+      enDesc: "Marker of fresh biological contamination and unstable nitrogen-cycle processes. Requires close attention in drinking water. Norm: ≤0.5 mg/L."
     },
     ammonium: {
-      ruLabel: "Аммоний",
-      etLabel: "Ammoonium",
-      ruDesc:
-        "Повышенный аммоний может указывать на органическое загрязнение или недостаточную очистку. Влияет на вкус/запах и технологичность воды.",
-      etDesc: "Kõrgenenud ammoonium võib viidata orgaanilisele reostusele."
+      ruLabel: "Аммоний (мг/л)", etLabel: "Ammoonium (mg/l)", enLabel: "Ammonium (mg/L)",
+      ruDesc: "Повышенный аммоний может указывать на органическое загрязнение или недостаточную очистку. Влияет на вкус/запах воды. Норма: ≤0.5 мг/л.",
+      etDesc: "Kõrgenenud ammoonium võib viidata orgaanilisele reostusele. Mõjutab vee maitset ja lõhna. Norm: ≤0.5 mg/l.",
+      enDesc: "Elevated ammonium may indicate organic contamination or insufficient treatment. Affects taste and odour. Norm: ≤0.5 mg/L."
     },
     turbidity: {
-      ruLabel: "Мутность",
-      etLabel: "Hägusus",
-      ruDesc:
-        "Мутность отражает количество взвешенных частиц. Повышенные значения могут маскировать микробные риски и снижать эффективность обеззараживания.",
-      etDesc: "Hägusus halvendab vee visuaalset ja sanitaarset kvaliteeti."
+      ruLabel: "Мутность (NTU)", etLabel: "Hägusus (NTU)", enLabel: "Turbidity (NTU)",
+      ruDesc: "Отражает количество взвешенных частиц. Повышенные значения могут маскировать микробные риски и снижать эффективность дезинфекции. Норма: ≤4 NTU (питьевая), ≤0.5 NTU (бассейн).",
+      etDesc: "Peegeldab hõljuvate osakeste hulka. Kõrge hägusus varjab mikroobiohtu ja vähendab desinfektsiooni tõhusust.",
+      enDesc: "Reflects suspended particles. Elevated turbidity can mask microbial risks and reduce disinfection effectiveness. Norm: ≤4 NTU (drinking), ≤0.5 NTU (pool)."
     },
     free_chlorine: {
-      ruLabel: "Свободный хлор",
-      etLabel: "Vaba kloor",
-      ruDesc:
-        "Ключевой параметр для бассейнов/SPA: недостаток снижает дезинфекцию, избыток может вызывать раздражение кожи, глаз и дыхательных путей.",
-      etDesc: "Basseinides/SPA-des oluline desinfitseerimisnäitaja."
+      ruLabel: "Свободный хлор (мг/л)", etLabel: "Vaba kloor (mg/l)", enLabel: "Free chlorine (mg/L)",
+      ruDesc: "Ключевой параметр для бассейнов/SPA: недостаток снижает дезинфекцию, избыток может раздражать кожу, глаза и дыхательные пути. Норма: 0.2–0.6 мг/л.",
+      etDesc: "Basseinides/SPA-des kriitiliselt oluline: liiga vähe vähendab desinfektsiooni, liiga palju ärritab. Norm: 0.2–0.6 mg/l.",
+      enDesc: "Critical for pools/SPA: too little reduces disinfection; excess irritates skin, eyes and airways. Norm: 0.2–0.6 mg/L."
+    },
+    combined_chlorine: {
+      ruLabel: "Связанный хлор (мг/л)", etLabel: "Seotud kloor (mg/l)", enLabel: "Combined chlorine (mg/L)",
+      ruDesc: "Хлорамины, образующиеся в бассейнах при реакции хлора с аммиаком из пота и мочи. Высокие значения дают запах «хлорки» и раздражение слизистых. Норма: ≤0.4 мг/л.",
+      etDesc: "Basseinis tekkivad kloramiinid. Kõrged väärtused põhjustavad lõhna ja limaskesta ärritust. Norm: ≤0.4 mg/l.",
+      enDesc: "Chloramines in pools from chlorine reacting with ammonia in sweat/urine. Cause the 'pool smell' and mucosal irritation. Norm: ≤0.4 mg/L."
+    },
+    iron: {
+      ruLabel: "Железо (мг/л)", etLabel: "Raud (mg/l)", enLabel: "Iron (mg/L)",
+      ruDesc: "Повышенное железо придаёт воде металлический привкус и ржавый оттенок, окрашивает сантехнику. Связано со старением труб или природными грунтовыми водами. Норма: ≤0.2 мг/л.",
+      etDesc: "Kõrge rauasisaldus annab veele metalse maitse ja roostelise värvi. Seotud vananenud torude või põhjavee omapäraga. Norm: ≤0.2 mg/l.",
+      enDesc: "Elevated iron gives a metallic taste and rusty tint, staining plumbing. Linked to ageing pipes or natural groundwater. Norm: ≤0.2 mg/L."
+    },
+    manganese: {
+      ruLabel: "Марганец (мг/л)", etLabel: "Mangaan (mg/l)", enLabel: "Manganese (mg/L)",
+      ruDesc: "Придаёт воде тёмную окраску и металлический вкус. Хроническое воздействие высоких доз может влиять на нервную систему. Норма: ≤0.05 мг/л.",
+      etDesc: "Annab veele tumeda värvuse ja metalse maitse. Pikaaegne kõrge tase võib mõjutada närvisüsteemi. Norm: ≤0.05 mg/l.",
+      enDesc: "Gives water a dark tint and metallic taste. Chronic exposure to high levels may affect the nervous system. Norm: ≤0.05 mg/L."
+    },
+    fluoride: {
+      ruLabel: "Фторид (мг/л)", etLabel: "Fluoriid (mg/l)", enLabel: "Fluoride (mg/L)",
+      ruDesc: "В небольших количествах защищает зубы от кариеса, но при избытке вызывает флюороз зубов и костей. Норма ЕС для питьевой воды: ≤1.5 мг/л.",
+      etDesc: "Väikestes kogustes kaitseb hambaid, kuid ülemäärasus põhjustab fluoroosi. EL joogivee norm: ≤1.5 mg/l.",
+      enDesc: "In small amounts protects teeth from decay, but excess causes dental and skeletal fluorosis. EU drinking water norm: ≤1.5 mg/L."
+    },
+    color: {
+      ruLabel: "Цветность (мг Pt/л)", etLabel: "Värvus (mg Pt/l)", enLabel: "Colour (mg Pt/L)",
+      ruDesc: "Измеряется по платиново-кобальтовой шкале. Высокая цветность обычно связана с гуминовыми веществами из торфяных почв — не токсично само по себе, но указывает на органику. Норма: ≤20 мг Pt/л.",
+      etDesc: "Mõõdetakse plaatina-koobalt skaalal. Kõrge värvus viitab humiinainetele turbapinnasest. Norm: ≤20 mg Pt/l.",
+      enDesc: "Measured on the platinum-cobalt scale. High colour typically indicates humic substances from peat soils — not directly toxic but signals organic matter. Norm: ≤20 mg Pt/L."
+    },
+    chlorides: {
+      ruLabel: "Хлориды (мг/л)", etLabel: "Kloriidid (mg/l)", enLabel: "Chlorides (mg/L)",
+      ruDesc: "Повышенные хлориды могут указывать на засоление, влияние морской воды, противогололёдные реагенты или промышленные стоки. Влияют на вкус воды и коррозию. Норма: ≤250 мг/л.",
+      etDesc: "Kõrge kloriidide sisaldus viitab soolastumisele, merevee mõjule või tööstusheitmetele. Norm: ≤250 mg/l.",
+      enDesc: "Elevated chlorides may indicate salinisation, seawater intrusion, de-icing agents or industrial discharge. Affect taste and pipe corrosion. Norm: ≤250 mg/L."
+    },
+    sulfates: {
+      ruLabel: "Сульфаты (мг/л)", etLabel: "Sulfaadid (mg/l)", enLabel: "Sulfates (mg/L)",
+      ruDesc: "Высокое содержание сульфатов может оказывать слабительный эффект при длительном употреблении. Влияют на вкус воды. Норма: ≤250 мг/л.",
+      etDesc: "Kõrge sulfaadisisaldus võib pikaajalise tarbimise korral põhjustada lahtistit. Mõjutab vee maitset. Norm: ≤250 mg/l.",
+      enDesc: "High sulfate content may have a laxative effect with prolonged consumption and affects taste. Norm: ≤250 mg/L."
+    },
+    pseudomonas: {
+      ruLabel: "Pseudomonas aeruginosa (КОЕ/100 мл)", etLabel: "Pseudomonas aeruginosa (PMÜ/100 ml)", enLabel: "Pseudomonas aeruginosa (CFU/100 ml)",
+      ruDesc: "Условно-патогенный микроорганизм. В бассейнах норма — 0 КОЕ/100 мл. Может вызывать инфекции кожи, глаз и ушей, особенно у иммунокомпрометированных лиц.",
+      etDesc: "Oportunistlik patogeen. Basseinides norm: 0 PMÜ/100 ml. Võib põhjustada naha-, silma- ja kõrvainfektsioone.",
+      enDesc: "Opportunistic pathogen; must be absent in pool water (0 CFU/100 ml). Can cause skin, eye and ear infections, especially in immunocompromised individuals."
+    },
+    staphylococci: {
+      ruLabel: "Staphylococcus aureus (КОЕ/100 мл)", etLabel: "Staphylococcus aureus (PMÜ/100 ml)", enLabel: "Staphylococcus aureus (CFU/100 ml)",
+      ruDesc: "Патогенная бактерия. В бассейнах норма ≤20 КОЕ/100 мл. Превышение указывает на антисанитарию и возможное заражение кожи и слизистых оболочек.",
+      etDesc: "Patogeenne bakter. Basseinides norm ≤20 PMÜ/100 ml. Ületamine viitab sanitaarprobleemidele.",
+      enDesc: "Pathogenic bacterium. Pool norm: ≤20 CFU/100 ml. Exceedance indicates unsanitary conditions and risk of skin/mucous membrane infections."
+    },
+    transparency: {
+      ruLabel: "Прозрачность (м)", etLabel: "Läbipaistvus (m)", enLabel: "Transparency (m)",
+      ruDesc: "Видимая глубина воды по шкале Секки в метрах. Используется для купальных зон. Снижение прозрачности указывает на цветение водорослей, взвесь или загрязнение.",
+      etDesc: "Sekchi sügavus meetrites. Kasutatakse supluskohtades. Läbipaistvuse vähenemine viitab vetikate õitsengule või reostusele.",
+      enDesc: "Secchi depth in metres. Used for bathing areas. Decreasing transparency indicates algal blooms, suspended matter or other contamination."
     }
   };
 
   const labelForParam = (key: string) => {
     const i = paramInfo[key];
     if (!i) return key;
-    return lruet(lang, i.ruLabel, i.etLabel, i.ruLabel);
+    return lruet(lang, i.ruLabel, i.etLabel, i.enLabel);
   };
 
   const descForParam = (key: string) => {
@@ -733,7 +796,7 @@ export default function Dashboard({ snapshot }: Props) {
         "Laboratoorne veekvaliteedi näitaja. Tähendus sõltub domeenist ja normidest.",
         "Laboratory water quality parameter. Its meaning depends on domain and applicable norms."
       );
-    return lruet(lang, i.ruDesc, i.etDesc, i.ruDesc);
+    return lruet(lang, i.ruDesc, i.etDesc, i.enDesc);
   };
 
   const formatNum = (value: number) => Number(value.toFixed(3)).toString();
@@ -947,6 +1010,24 @@ export default function Dashboard({ snapshot }: Props) {
     });
   }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
+
+  // Auto-fit map to visible places whenever filters produce a meaningful subset.
+  const [fitBoundsVersion, setFitBoundsVersion] = useState(0);
+  const fitBoundsPlaces = useMemo<[number, number][]>(
+    () => filtered.map((p) => [p.lat, p.lon]),
+    [filtered]
+  );
+  const fitBoundsInitRef = useRef(false);
+  useEffect(() => {
+    if (!fitBoundsInitRef.current) {
+      // Skip first render — initial Estonia bounds are handled by isFullscreen effect in MapClient
+      fitBoundsInitRef.current = true;
+      return;
+    }
+    // Only auto-fit when filters narrow the result set (not when showing all places)
+    if (filtered.length === 0 || filtered.length === snapshot.places.length) return;
+    setFitBoundsVersion((v) => v + 1);
+  }, [filtered, snapshot.places.length]);
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
@@ -1336,8 +1417,24 @@ export default function Dashboard({ snapshot }: Props) {
   }, [isMapFullscreen]);
 
   const cycleMobilePanelState = () => {
-    setMobilePanelState((prev) => (prev === "collapsed" ? "half" : prev === "half" ? "full" : "collapsed"));
+    setMobilePanelState((prev) => {
+      if (prev === "collapsed") {
+        // Only open if there's something to show (filter mode always has content)
+        if (sheetMode === "filter" || selectedPlace) return "half";
+        // No place selected in place mode → open filter instead
+        setSheetMode("filter");
+        return "half";
+      }
+      return prev === "half" ? "full" : "collapsed";
+    });
   };
+
+  // Auto-collapse sheet when in place mode but nothing is selected
+  useEffect(() => {
+    if (mobilePanelState !== "collapsed" && sheetMode === "place" && !selectedPlace) {
+      setMobilePanelState("collapsed");
+    }
+  }, [mobilePanelState, sheetMode, selectedPlace]);
 
   const onSheetPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     sheetDragStartY.current = e.clientY;
@@ -1822,6 +1919,8 @@ export default function Dashboard({ snapshot }: Props) {
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
           showCountyOverlay={!isMobile}
+          fitBoundsVersion={fitBoundsVersion}
+          fitBoundsPlaces={fitBoundsPlaces}
         />
       </section>
 
@@ -2082,13 +2181,28 @@ export default function Dashboard({ snapshot }: Props) {
                   <div className="field">
                     <label htmlFor="gm-risk-select">{t.risk}</label>
                     <select id="gm-risk-select" value={risk} onChange={(e) => setRisk(e.target.value)}>
-                      {riskOrder.map((r) => <option key={r} value={r}>{r}</option>)}
+                      {riskOrder.map((r) => (
+                        <option key={r} value={r}>
+                          {r === "all" ? lruet(lang, "Все", "Kõik", "All")
+                          : r === "low" ? lruet(lang, "Низкий", "Madal", "Low")
+                          : r === "medium" ? lruet(lang, "Средний", "Keskmine", "Medium")
+                          : r === "high" ? lruet(lang, "Высокий", "Kõrge", "High")
+                          : lruet(lang, "Неизвестно", "Teadmata", "Unknown")}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="field">
                     <label htmlFor="gm-official-select">{t.official}</label>
                     <select id="gm-official-select" value={official} onChange={(e) => setOfficial(e.target.value as (typeof officialOrder)[number])}>
-                      {officialOrder.map((s) => <option key={s} value={s}>{s}</option>)}
+                      {officialOrder.map((s) => (
+                        <option key={s} value={s}>
+                          {s === "all" ? lruet(lang, "Все", "Kõik", "All")
+                          : s === "compliant" ? lruet(lang, "Соответствует", "Vastab", "Compliant")
+                          : s === "violation" ? lruet(lang, "Нарушение", "Rikkumine", "Violation")
+                          : lruet(lang, "Неизвестно", "Teadmata", "Unknown")}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="field">
@@ -2135,55 +2249,146 @@ export default function Dashboard({ snapshot }: Props) {
                 /* ---- PLACE MODE ---- */
                 <div className="gmSheetPlaceContent">
                   {!selectedPlace ? (
-                    <p className="hint" style={{ textAlign: "center", paddingTop: "1rem" }}>
+                    <p className="hint" style={{ textAlign: "center", paddingTop: "1.2rem" }}>
                       {lruet(lang, "Нажмите на метку на карте", "Vajuta kaardil märgile", "Tap a marker on the map")}
                     </p>
                   ) : (
                     <>
-                      <p className="hint" style={{ marginBottom: "0.4rem" }}>
-                        {selectedPlace.domain} · {countyPretty(selectedPlace.county || "")}<br />
-                        {lruet(lang, "Проба", "Proov", "Sample")}: {fmtDate(selectedPlace.sample_date)}
-                      </p>
-                      <div className="mobileBadges" style={{ marginBottom: "0.6rem" }}>
-                        <span className={`badge ${selectedPlace.risk_level === "high" ? "bad" : selectedPlace.risk_level === "medium" ? "warn" : "good"}`}>
-                          {lruet(lang, "Риск", "Risk", "Risk")}: {selectedPlace.risk_level}
-                          {selectedPlace.model_violation_prob !== null ? ` (${selectedPlace.model_violation_prob.toFixed(2)})` : ""}
+                      {/* Place kind + county */}
+                      <div className="gmPlaceKindRow">
+                        <span className="gmPlaceKindEmoji" aria-hidden="true">
+                          {selectedPlace.place_kind === "swimming" ? "🏖" : selectedPlace.place_kind === "pool_spa" ? "🏊" : selectedPlace.place_kind === "drinking_water" ? "🚰" : "💧"}
                         </span>
-                        <span className={`badge ${selectedPlace.official_compliant === 0 ? "bad" : selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
-                          {lruet(lang, "Офиц.", "Ametlik", "Official")}:{" "}
-                          {selectedPlace.official_compliant === null ? "n/a" : officialStatusText(selectedPlace.official_compliant)}
-                        </span>
+                        <span className="gmPlaceKindLabel">{placeKindLabel(selectedPlace.place_kind)}</span>
+                        {selectedPlace.county ? <span className="gmPlaceCounty">· {countyPretty(selectedPlace.county)}</span> : null}
                       </div>
+
+                      {/* Sample date */}
+                      <p className="hint gmPlaceMeta">
+                        {lruet(lang, "Последняя проба", "Viimane proov", "Latest sample")}: <b>{fmtDate(selectedPlace.sample_date)}</b>
+                      </p>
+
+                      {/* Status row: official + risk */}
+                      <div className="gmStatusRow">
+                        {selectedPlace.official_compliant === 0 ? (
+                          <button
+                            className="badge bad linkBtn clickableBadge"
+                            onClick={() => openInfo(lruet(lang, "Официальное нарушение", "Ametlik rikkumine", "Official violation"), explainViolation(selectedPlace))}
+                          >
+                            ✗ {officialStatusText(0)}
+                          </button>
+                        ) : (
+                          <span className={`badge ${selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
+                            {selectedPlace.official_compliant === 1 ? "✓ " : ""}{officialStatusText(selectedPlace.official_compliant)}
+                          </span>
+                        )}
+                        <button
+                          className={`badge ${selectedPlace.risk_level === "high" ? "bad" : selectedPlace.risk_level === "medium" ? "warn" : selectedPlace.risk_level === "low" ? "good" : ""} linkBtn clickableBadge`}
+                          onClick={() => openInfo(
+                            lruet(lang, "Оценка модели", "Mudeli hinnang", "Model assessment"),
+                            [
+                              `${lruet(lang, "Уровень риска", "Riskitase", "Risk level")}: ${selectedPlace.risk_level}`,
+                              `P(violation): ${selectedPlace.model_violation_prob !== null ? selectedPlace.model_violation_prob.toFixed(2) : "n/a"}`,
+                              `LR/RF/GB/LGBM: ${[selectedPlace.lr_violation_prob, selectedPlace.rf_violation_prob, selectedPlace.gb_violation_prob, selectedPlace.lgbm_violation_prob].map(v => (typeof v === "number" ? v.toFixed(2) : "n/a")).join(" / ")}`,
+                              "",
+                              lruet(lang,
+                                "LR = Логистическая регрессия, RF = Случайный лес, GB = Gradient Boosting, LGBM = LightGBM. Значения — вероятность нарушения от 0 до 1.",
+                                "LR = Logistiline regressioon, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM. Väärtused — rikkumise tõenäosus 0–1.",
+                                "LR = Logistic Regression, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM. Values are violation probability 0–1."
+                              )
+                            ].join("\n")
+                          )}
+                        >
+                          ▲ {lruet(lang, "Риск", "Risk", "Risk")}: {selectedPlace.risk_level}
+                          {selectedPlace.model_violation_prob !== null ? ` (${selectedPlace.model_violation_prob.toFixed(2)})` : ""}
+                        </button>
+                      </div>
+
+                      {/* Measurements — all rows, with norm violation colouring */}
                       {Object.keys(selectedPlace.measurements || {}).length ? (
-                        <div className="tableWrap compact">
-                          <table className="table">
-                            <thead>
-                              <tr>
-                                <th>{lruet(lang, "Показатель", "Näitaja", "Parameter")}</th>
-                                <th>{lruet(lang, "Значение", "Väärtus", "Value")}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(selectedPlace.measurements)
-                                .slice(0, mobilePanelState === "full" ? Number.MAX_SAFE_INTEGER : 6)
-                                .map(([k, v]) => (
-                                  <tr key={`mm-${k}`}>
+                        <>
+                          <div className="gmSectionTitle">{t.measurements}</div>
+                          <div className="tableWrap compact">
+                            <table className="table">
+                              <thead>
+                                <tr>
+                                  <th>{lruet(lang, "Показатель", "Näitaja", "Parameter")}</th>
+                                  <th>{lruet(lang, "Значение", "Väärtus", "Value")}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(selectedPlace.measurements).map(([k, v]) => {
+                                  const { violated } = assessNorm(k, Number(v), selectedPlace.domain);
+                                  return (
+                                    <tr key={`ms-${k}`} className={violated === true ? "rowViolated" : ""}>
+                                      <td>
+                                        <button className="linkBtn" onClick={() => openInfo(labelForParam(k), descForParam(k))}>
+                                          {labelForParam(k)}
+                                        </button>
+                                      </td>
+                                      <td>
+                                        <button
+                                          className={`linkBtn${violated === true ? " valueViolated" : ""}`}
+                                          onClick={() => openInfo(`${labelForParam(k)}: ${lruet(lang, "норматив", "norm", "norm")}`, explainMeasurementNorm(k, v, selectedPlace))}
+                                        >
+                                          {String(v)}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      ) : null}
+
+                      {/* Sample history */}
+                      {selectedPlace.sample_history?.length ? (
+                        <>
+                          <div className="gmSectionTitle">{t.history}</div>
+                          <div className="tableWrap compact">
+                            <table className="table">
+                              <thead>
+                                <tr>
+                                  <th>{lruet(lang, "Дата", "Kuupäev", "Date")}</th>
+                                  <th>{lruet(lang, "Статус", "Staatus", "Status")}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedPlace.sample_history.slice(0, 12).map((h, idx) => (
+                                  <tr
+                                    key={`mh-${idx}`}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => openInfo(
+                                      lruet(lang, `История: ${fmtDate(h.sample_date)}`, `Ajalugu: ${fmtDate(h.sample_date)}`, `History: ${fmtDate(h.sample_date)}`),
+                                      explainHistoryMeasurements(selectedPlace, idx)
+                                    )}
+                                  >
+                                    <td>{fmtDate(h.sample_date)}</td>
                                     <td>
-                                      <button className="linkBtn" onClick={() => openInfo(labelForParam(k), descForParam(k))}>
-                                        {labelForParam(k)}
-                                      </button>
-                                    </td>
-                                    <td>
-                                      <button className="linkBtn" onClick={() => openInfo(`${labelForParam(k)}: ${lruet(lang, "норматив", "norm", "norm")}`, explainMeasurementNorm(k, v, selectedPlace))}>
-                                        {String(v)}
-                                      </button>
+                                      {h.official_compliant === 0 ? (
+                                        <button
+                                          className="linkBtn badge bad clickableBadge"
+                                          onClick={(e) => { e.stopPropagation(); openInfo(lruet(lang, "Официальное нарушение (история)", "Ametlik rikkumine (ajalugu)", "Official violation (history)"), explainViolationFromMeasurements(selectedPlace.domain, historyMeasurements(selectedPlace, idx))); }}
+                                        >
+                                          {officialStatusText(0)}
+                                        </button>
+                                      ) : (
+                                        <span className={`badge ${h.official_compliant === 1 ? "good" : "warn"}`}>
+                                          {officialStatusText(h.official_compliant)}
+                                        </span>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : null}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="hint" style={{ fontSize: "0.82rem", marginTop: "0.6rem" }}>{t.historyPlaceholder}</p>
+                      )}
                     </>
                   )}
                 </div>
