@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
@@ -114,44 +114,6 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return earthRadiusKm * c;
 }
 
-const modelKeyNorm = (value: string) => String(value || "").trim().toLowerCase();
-
-function modelLabelWithPrinciple(key: string, lang: Lang): string {
-  const k = modelKeyNorm(key);
-  if (k === "lr" || k === "logreg" || k === "logistic_regression") {
-    return lruet(
-      lang,
-      "LR — Logistic Regression (линейная модель вероятности через логистическую функцию)",
-      "LR — Logistic Regression (lineaarne tõenäosusmudel logistilise funktsiooniga)",
-      "LR — Logistic Regression (linear probability model via logistic function)"
-    );
-  }
-  if (k === "rf" || k === "random_forest") {
-    return lruet(
-      lang,
-      "RF — Random Forest (ансамбль деревьев, усредняющий решения)",
-      "RF — Random Forest (puuansambel, mis keskmistab otsuseid)",
-      "RF — Random Forest (ensemble of trees averaging predictions)"
-    );
-  }
-  if (k === "gb" || k === "gradient_boosting") {
-    return lruet(
-      lang,
-      "GB — Gradient Boosting (последовательные деревья, исправляющие ошибки предыдущих)",
-      "GB — Gradient Boosting (järjestikused puud, mis parandavad eelmiste vigu)",
-      "GB — Gradient Boosting (sequential trees that correct prior errors)"
-    );
-  }
-  if (k === "lgbm" || k === "lightgbm") {
-    return lruet(
-      lang,
-      "LGBM — LightGBM (эффективный gradient boosting на деревьях)",
-      "LGBM — LightGBM (efektiivne gradient boosting puudel)",
-      "LGBM — LightGBM (efficient histogram-based gradient boosting)"
-    );
-  }
-  return key.toUpperCase();
-}
 
 function lruet<T>(lang: Lang, ru: T, et: T, en: T): T {
   if (lang === "ru") return ru;
@@ -403,7 +365,6 @@ export default function Dashboard({ snapshot }: Props) {
     const saved = window.localStorage.getItem("water.ui.theme.v1");
     return saved === "dark" ? "dark" : "light";
   });
-  const [activeTab, setActiveTab] = useState<TabKey>("alerts");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filtersPinned, setFiltersPinned] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
@@ -412,7 +373,7 @@ export default function Dashboard({ snapshot }: Props) {
   });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoPageOpen, setInfoPageOpen] = useState(false);
-  const [infoPageTab, setInfoPageTab] = useState<TabKey>("alerts");
+  const [infoPageTab, setInfoPageTab] = useState<TabKey>("analytics");
   const [toast, setToast] = useState<string | null>(null);
   const [infoTitle, setInfoTitle] = useState("");
   const [infoText, setInfoText] = useState("");
@@ -431,9 +392,6 @@ export default function Dashboard({ snapshot }: Props) {
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [simDelta, setSimDelta] = useState(0);
-  const [simPressure, setSimPressure] = useState(0);
-  const [simMicro, setSimMicro] = useState(0);
   const [watchlist, setWatchlist] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -468,14 +426,6 @@ export default function Dashboard({ snapshot }: Props) {
   const [headerCompact, setHeaderCompact] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement | null>(null);
-  const [isTabPending, startTabTransition] = useTransition();
-  const [visitedTabs, setVisitedTabs] = useState<Record<TabKey, boolean>>({
-    alerts: true,
-    domain: false,
-    analytics: false,
-    aboutModel: false,
-    aboutService: false
-  });
 
   const tr = useMemo(
     () => ({
@@ -1528,40 +1478,6 @@ export default function Dashboard({ snapshot }: Props) {
     return snapshot.places.filter((p) => byId.has(p.id));
   }, [watchlist, snapshot.places]);
 
-  const simulatedProb = useMemo(() => {
-    if (!selectedPlace || selectedPlace.model_violation_prob === null) return null;
-    const combinedDelta = simDelta + simPressure * 0.08 + simMicro * 0.12;
-    return Math.max(0, Math.min(1, selectedPlace.model_violation_prob + combinedDelta));
-  }, [selectedPlace, simDelta, simPressure, simMicro]);
-
-  const modelRows = useMemo(() => {
-    if (!selectedPlace) return [];
-    const rows = [
-      { key: "lr", prob: selectedPlace.lr_violation_prob },
-      { key: "rf", prob: selectedPlace.rf_violation_prob },
-      { key: "gb", prob: selectedPlace.gb_violation_prob },
-      { key: "lgbm", prob: selectedPlace.lgbm_violation_prob }
-    ];
-    return rows.filter((r) => typeof r.prob === "number");
-  }, [selectedPlace]);
-
-  const modelRowsFull = useMemo(() => {
-    if (!selectedPlace) return [] as Array<{ key: string; prob: number | null }>;
-    return [
-      { key: "lr", prob: typeof selectedPlace.lr_violation_prob === "number" ? selectedPlace.lr_violation_prob : null },
-      { key: "rf", prob: typeof selectedPlace.rf_violation_prob === "number" ? selectedPlace.rf_violation_prob : null },
-      { key: "gb", prob: typeof selectedPlace.gb_violation_prob === "number" ? selectedPlace.gb_violation_prob : null },
-      { key: "lgbm", prob: typeof selectedPlace.lgbm_violation_prob === "number" ? selectedPlace.lgbm_violation_prob : null }
-    ];
-  }, [selectedPlace]);
-
-  const modelSpread = useMemo(() => {
-    const vals = modelRowsFull.map((r) => r.prob).filter((v): v is number => typeof v === "number");
-    if (vals.length < 2) return null;
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    return { min, max, delta: max - min };
-  }, [modelRowsFull]);
 
   const quickInsights = useMemo(() => {
     const coverage = snapshot.diagnostics.model_coverage_share;
@@ -1829,17 +1745,6 @@ export default function Dashboard({ snapshot }: Props) {
     }
   };
 
-  const switchTab = useCallback(
-    (tab: TabKey) => {
-      if (tab === activeTab) return;
-      if (!visitedTabs[tab]) {
-        setVisitedTabs((prev) => ({ ...prev, [tab]: true }));
-      }
-      startTabTransition(() => setActiveTab(tab));
-    },
-    [activeTab, visitedTabs, startTabTransition]
-  );
-
   return (
     <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
       {toast ? <div className="toastBanner">{toast}</div> : null}
@@ -1869,24 +1774,26 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          {/* Info nav buttons — Diagnostics + About Model + About Service */}
+          {/* Info nav buttons — all open the info-page popup overlay so that
+              the main page stays focused on the map. About Model / About
+              Service / Diagnostics live only in the popup on desktop. */}
+          <button
+            className="btn headerInfoNav"
+            onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutModel"); }}
+          >
+            {t.tabs.aboutModel}
+          </button>
+          <button
+            className="btn headerInfoNav"
+            onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutService"); }}
+          >
+            {t.tabs.aboutService}
+          </button>
           <button
             className="btn headerInfoNav"
             onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
           >
             {t.tabs.analytics}
-          </button>
-          <button
-            className={`btn headerInfoNav ${activeTab === "aboutModel" ? "btnActive" : ""}`}
-            onClick={() => switchTab("aboutModel")}
-          >
-            {t.tabs.aboutModel}
-          </button>
-          <button
-            className={`btn headerInfoNav ${activeTab === "aboutService" ? "btnActive" : ""}`}
-            onClick={() => switchTab("aboutService")}
-          >
-            {t.tabs.aboutService}
           </button>
           <div className="headerDivider" aria-hidden="true" />
           {/* Language dropdown (replaces 3 flat ET/EN/RU pills) */}
@@ -3116,30 +3023,13 @@ export default function Dashboard({ snapshot }: Props) {
 
 
       <section className="panel">
-        <div className={`tabRow ${isTabPending ? "isPending" : ""}`}>
-          <button className={`tabBtn ${activeTab === "alerts" ? "tabBtnActive" : ""}`} onClick={() => switchTab("alerts")}>
-            {t.tabs.alerts}
-          </button>
-          {/* Domains tab removed — its data is covered by the Alerts tab's Domain health report.
-              Diagnostics moved to the header (desktop) and info-page overlay. */}
-          <button
-            className="tabBtn mobileOnly"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
-          >
-            {t.tabs.analytics}
-          </button>
-          {/* aboutModel and aboutService are accessible via header info-nav buttons on desktop;
-              shown as tabs on mobile where the header buttons are hidden */}
-          <button className={`tabBtn mobileOnly ${activeTab === "aboutModel" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutModel")}>
-            {t.tabs.aboutModel}
-          </button>
-          <button className={`tabBtn mobileOnly ${activeTab === "aboutService" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutService")}>
-            {t.tabs.aboutService}
-          </button>
-        </div>
+        {/* Tab row removed — Alerts button is gone (its info keeps rendering
+            below), Domains button is gone (covered by Domain health report),
+            and Diagnostics / About Model / About Service now open the
+            info-page popup overlay via the header buttons (desktop) or the
+            mobile search-bar info button. */}
 
-        {activeTab === "alerts" ? (
-          <div className="reportsGrid">
+        <div className="reportsGrid">
           <div className="panel reportPanel">
             <h4>{lruet(lang, "Центр алертов", "Häirekeskus", "Alert center")}</h4>
             <p className="hint">
@@ -3192,710 +3082,8 @@ export default function Dashboard({ snapshot }: Props) {
               </table>
             </div>
           </div>
-          </div>
-        ) : null}
+        </div>
 
-        {/* Domains inline tab removed — now covered by the Alerts tab. */}
-
-        {/* Analytics inline tab no longer reachable from the tabRow — users open it
-            via the header Diagnostics button, which shows the info-page overlay.
-            The block below is retained but gated on activeTab === "analytics" and
-            so will not render unless explicitly switched to. */}
-        {activeTab === "analytics" ? (
-          <div className="reportsGrid">
-          <div className="panel reportPanel">
-            <h4>{lruet(lang, "Сравнение моделей", "Mudelite võrdlus", "Model comparison")}</h4>
-            <p className="hint">
-              {lruet(
-                lang,
-                "1) Официальный статус — это поле vastavus из Terviseamet. 2) LR/RF/GB/LGBM — отдельные оценки моделей, они не заменяют официальный статус.",
-                "1) Ametlik staatus tuleb Terviseameti vastavus väljast. 2) LR/RF/GB/LGBM on eraldi mudelihinnangud ega asenda ametlikku staatust.",
-                "1) Official status comes from Terviseamet `vastavus`. 2) LR/RF/GB/LGBM are separate model estimates and do not replace official status."
-              )}
-            </p>
-            <p className="hint">
-              {lruet(
-                lang,
-                "Формат чтения: P(violation) от 0 до 1. Ближе к 1 — выше риск, ближе к 0 — ниже риск.",
-                "Lugemine: P(violation) vahemikus 0 kuni 1. Mida lähemal 1-le, seda kõrgem risk.",
-                "Reading: P(violation) ranges from 0 to 1. Closer to 1 means higher risk; closer to 0 means lower risk."
-              )}
-            </p>
-            <div className="infoCardGrid">
-              <article className="infoCard">
-                <div className="infoCardHead">
-                  <span className="infoCardIcon" aria-hidden>🎯</span>
-                  <div>
-                    <h5>{lruet(lang, "Что именно предсказывается", "Mida mudel ennustab", "What is predicted")}</h5>
-                  </div>
-                </div>
-                <p className="hint">
-                  {lruet(
-                    lang,
-                    "Модель оценивает вероятность нарушения для конкретной пробы по её лабораторным показателям. Это оценка текущей/исторической записи, а не прогноз будущего качества воды.",
-                    "Mudel hindab rikkumise tõenäosust konkreetse proovi laborinäitajate põhjal. See on praeguse/ajaloolise kirje hinnang, mitte tuleviku prognoos.",
-                    "The model estimates violation probability for a specific sample from its laboratory measurements. This is a current/historical record estimate, not a future water-quality forecast."
-                  )}
-                </p>
-              </article>
-              <article className="infoCard">
-                <div className="infoCardHead">
-                  <span className="infoCardIcon" aria-hidden>📈</span>
-                  <div>
-                    <h5>{lruet(lang, "Как читать P(violation)", "Kuidas lugeda P(violation)", "How to read P(violation)")}</h5>
-                  </div>
-                </div>
-                <p className="hint">
-                  {lruet(
-                    lang,
-                    "0.80 означает высокий риск по историческим паттернам, а не «80% гарантию» в физическом смысле. При плохой калибровке вероятность лучше использовать как ранжирование приоритетов.",
-                    "0.80 tähendab kõrget riski ajalooliste mustrite järgi, mitte füüsikalist „80% garantiid“. Nõrga kalibreerituse korral kasuta väärtust pigem prioriteetide järjestamiseks.",
-                    "0.80 means high risk by historical patterns, not a physical '80% guarantee'. With weak calibration, use probability mainly for ranking priorities."
-                  )}
-                </p>
-              </article>
-              <article className="infoCard">
-                <div className="infoCardHead">
-                  <span className="infoCardIcon" aria-hidden>🧪</span>
-                  <div>
-                    <h5>{lruet(lang, "Почему значения у моделей разные", "Miks mudelid annavad eri väärtusi", "Why model values differ")}</h5>
-                  </div>
-                </div>
-                <p className="hint">
-                  {lruet(
-                    lang,
-                    "LR, RF, GB и LightGBM обучены по-разному, поэтому дают немного разные вероятности. Разница с RF показывает, насколько конкретная модель строже или мягче в оценке риска.",
-                    "LR, RF, GB ja LightGBM on erineva loogikaga, seetõttu erinevad ka tõenäosused. RF-iga võrdlus näitab, kas mudel on rangem või leebem riski hindamisel.",
-                    "LR, RF, GB, and LightGBM learn differently, so probabilities can differ slightly. Difference vs RF shows whether a model is stricter or softer in risk assessment."
-                  )}
-                </p>
-              </article>
-              <article className="infoCard">
-                <div className="infoCardHead">
-                  <span className="infoCardIcon" aria-hidden>⚖️</span>
-                  <div>
-                    <h5>{lruet(lang, "Как использовать в решениях", "Kuidas otsustes kasutada", "How to use in decisions")}</h5>
-                  </div>
-                </div>
-                <p className="hint">
-                  {lruet(
-                    lang,
-                    "Официальный статус остаётся первичным. Модельный риск — это ранний индикатор для приоритизации проверок и коммуникации риска, особенно когда Recall важнее пропуска нарушений.",
-                    "Ametlik staatus on esmane. Mudelirisk on varajane indikaator kontrollide prioritiseerimiseks ja riskikommunikatsiooniks, eriti kui Recall on olulisem kui möödalaskmised.",
-                    "Official status remains primary. Model risk is an early indicator for inspection prioritization and risk communication, especially when high Recall is critical."
-                  )}
-                </p>
-              </article>
-            </div>
-            <p className="hint">
-              {lruet(
-                lang,
-                "Расшифровка моделей: LR — Logistic Regression (линейная модель), RF — Random Forest (ансамбль деревьев), GB — Gradient Boosting (последовательное усиление), LGBM — LightGBM (оптимизированный boosting на деревьях). Все они оценивают P(violation) по одной и той же пробе, но разными алгоритмами.",
-                "Mudelite lühendid: LR, RF, GB, LGBM. Kõik hindavad sama proovi P(rikkumine), kuid erinevate algoritmidega.",
-                "Model legend: LR = Logistic Regression, RF = Random Forest, GB = Gradient Boosting, LGBM = LightGBM. All estimate P(violation) for the same sample using different algorithms."
-              )}
-            </p>
-            <div>
-              <button
-                className="btn btnSmall"
-                onClick={() => openInfo(lruet(lang, "Режим эксперта", "Eksperdireziim", "Expert mode"), expertModeText)}
-              >
-                {lruet(lang, "Подробнее (режим эксперта)", "Rohkem (eksperdireziim)", "More (expert mode)")}
-              </button>
-            </div>
-            {!selectedPlace ? (
-              <p className="hint">
-                {lruet(lang, "Выберите точку, чтобы сравнить вероятности LR / RF / GB / LightGBM.", "Vali punkt, et võrrelda LR / RF / GB / LightGBM tõenäosusi.", "Select a point to compare LR / RF / GB / LightGBM probabilities.")}
-              </p>
-            ) : modelRows.length === 0 ? (
-              <p className="hint">
-                {lruet(lang, "Для этой точки в текущем snapshot нет модельных значений (n/a). Это ожидаемо для сборки с --map-only.", "Selle punkti jaoks pole mudeliprognoose. Koosta snapshot ilma --map-only.", "No model values are available for this point in the current snapshot (n/a). This is expected for --map-only builds.")}
-              </p>
-            ) : (
-              <>
-                <div className="tableWrap compact">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>{lruet(lang, "Модель", "Mudel", "Model")}</th>
-                        <th>
-                          <button
-                            className="linkBtn"
-                            onClick={() =>
-                              openInfo(
-                                "P(violation)",
-                                lruet(
-                                  lang,
-                                  "P(violation) — оценка вероятности нарушения для конкретной пробы по её показателям. Это не прогноз будущего и не официальный вердикт, а вероятностный риск-скор для приоритизации.",
-                                  "P(violation) on rikkumise tõenäosuse hinnang konkreetse proovi näitajate põhjal. See ei ole tuleviku prognoos ega ametlik otsus, vaid riskiskoor prioriteetide seadmiseks.",
-                                  "P(violation) is the estimated probability of violation for this sample by model features. It is not a future forecast and not an official verdict; it is a probabilistic risk score for prioritization."
-                                )
-                              )
-                            }
-                          >
-                            P(violation)
-                          </button>
-                        </th>
-                        <th>{lruet(lang, "Интерпретация", "Tõlgendus", "Interpretation")}</th>
-                        <th>{lruet(lang, "Разница с RF", "Erinevus RF-ist", "Difference vs RF")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {modelRowsFull.map((r) => {
-                        const rf = modelRowsFull.find((x) => x.key === "rf")?.prob ?? null;
-                        const deltaRf = typeof r.prob === "number" && typeof rf === "number" ? r.prob - rf : null;
-                        return (
-                          <tr key={`model-${r.key}`}>
-                            <td>{modelLabelWithPrinciple(snapshot.model_labels?.[r.key] || r.key, lang)}</td>
-                            <td>{typeof r.prob === "number" ? r.prob.toFixed(2) : "n/a"}</td>
-                            <td>
-                              {typeof r.prob === "number"
-                                ? r.prob >= 0.7
-                                  ? lruet(lang, "высокий риск", "kõrge risk", "high risk")
-                                  : r.prob >= 0.4
-                                    ? lruet(lang, "средний риск", "keskmine risk", "medium risk")
-                                    : lruet(lang, "низкий риск", "madal risk", "low risk")
-                                : "n/a"}
-                            </td>
-                            <td>{deltaRf === null ? "n/a" : `${deltaRf >= 0 ? "+" : ""}${deltaRf.toFixed(2)}`}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="hint">
-                  {modelSpread
-                    ? lruet(
-                        lang,
-                        `Разброс между моделями: min=${modelSpread.min.toFixed(2)}, max=${modelSpread.max.toFixed(2)}, delta=${modelSpread.delta.toFixed(2)}. Чем меньше delta, тем больше согласие моделей.`,
-                        `Mudelite hajuvus: min=${modelSpread.min.toFixed(2)}, max=${modelSpread.max.toFixed(2)}, delta=${modelSpread.delta.toFixed(2)}. Mida väiksem delta, seda suurem mudelite üksmeel.`,
-                        `Model spread: min=${modelSpread.min.toFixed(2)}, max=${modelSpread.max.toFixed(2)}, delta=${modelSpread.delta.toFixed(2)}. Smaller delta means stronger agreement between models.`
-                      )
-                    : lruet(
-                        lang,
-                        "Разброс между моделями не рассчитывается: в текущем snapshot недостаточно значений.",
-                        "Mudelite hajuvust ei saa arvutada: snapshotis on liiga vähe väärtusi.",
-                        "Model spread is unavailable: current snapshot has too few values."
-                      )}
-                </p>
-              </>
-            )}
-          </div>
-          <div className="panel reportPanel">
-            <h4>{lruet(lang, "Диагностика + сценарный what-if", "Diagnostika + what-if stsenaarium", "Diagnostics + what-if scenario")}</h4>
-            <div className="hint">
-              {lruet(lang, "Доля официально соответствующих", "Ametlik vastavus", "Official compliant share")}:{" "}
-              <b>{snapshot.diagnostics.official_compliant_share === null ? "n/a" : `${(snapshot.diagnostics.official_compliant_share * 100).toFixed(1)}%`}</b>
-              <br />
-              {lruet(lang, "Доля официальных нарушений", "Ametlik rikkumine", "Official violation share")}:{" "}
-              <b>{snapshot.diagnostics.official_violation_share === null ? "n/a" : `${(snapshot.diagnostics.official_violation_share * 100).toFixed(1)}%`}</b>
-              <br />
-              {lruet(lang, "Покрытие моделью", "Mudeli katvus", "Model coverage")}: <b>{(snapshot.diagnostics.model_coverage_share * 100).toFixed(1)}%</b>
-              <br />
-              {snapshot.diagnostics.model_coverage_share === 0
-                ? lruet(
-                    lang,
-                    "Покрытие 0% означает, что текущий экспорт сделан из snapshot без модельных вероятностей.",
-                    "0% katvus tähendab, et praegune export on tehtud snapshotist ilma mudeli tõenäosusteta.",
-                    "0% coverage means current export was built from a snapshot without model probabilities."
-                  )
-                : lruet(
-                    lang,
-                    "Средние значения по моделям ниже показывают общий риск-профиль в текущей выборке.",
-                    "Allpool olevad mudelite keskmised näitavad valimi üldist riskiprofiili.",
-                    "Average model values below summarize the overall risk profile in the current sample."
-                  )}
-            </div>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Model</th>
-                    <th>{lruet(lang, "Средняя P(нарушения)", "Keskmine P(rikkumine)", "Average P(violation)")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(snapshot.diagnostics.mean_model_probabilities || {}).map(([key, val]) => (
-                    <tr key={`diag-${key}`}>
-                      <td>{modelLabelWithPrinciple(snapshot.model_labels?.[key] || key, lang)}</td>
-                      <td>{typeof val === "number" ? val.toFixed(2) : "n/a"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <hr />
-            <h4>{lruet(lang, "Что можно делать в what-if", "Mida what-if võimaldab", "What you can do in what-if")}</h4>
-            {!selectedPlace || selectedPlace.model_violation_prob === null ? (
-              <p className="hint">
-                {lruet(lang, "Сценарий включается после выбора точки с модельной вероятностью (клик по таблице/алерту/маркеру).", "Stsenaarium töötab pärast mudelitõenäosusega punkti valikut.", "Scenario becomes available after selecting a point with model probability (table/alert/marker click).")}
-              </p>
-            ) : (
-              <>
-                <p className="hint">
-                  {lruet(lang, "Это не перерасчёт модели по новым анализам, а сценарная оценка чувствительности: как изменится риск при усилении загрязняющего давления или микробиологической нагрузки.", "See ei ole mudeli ümberõpe, vaid tundlikkuse stsenaarium: kuidas risk muutub koormuse kasvul.", "This is not model recalculation from new lab tests; it is a sensitivity scenario showing how risk changes under stronger pollution or microbiological load.")}
-                </p>
-                <p className="hint">
-                  {lang === "ru"
-                    ? "Просто: вы двигаете регуляторы и смотрите, как меняется риск. Это учебный сценарий (направление изменения риска), а не официальный новый лабораторный результат."
-                    : "Lihtsalt: liigutad liugureid ja näed riski muutust. See on õppeline stsenaarium, mitte uus ametlik laboritulemus."}
-                </p>
-                <div className="field">
-                  <label htmlFor="sim-delta">
-                    {lruet(lang, "Базовый сдвиг риска", "Baasriski nihe", "Base risk shift")}: <b>{simDelta >= 0 ? `+${simDelta.toFixed(2)}` : simDelta.toFixed(2)}</b>
-                  </label>
-                  <input id="sim-delta" type="range" min={-0.5} max={0.5} step={0.01} value={simDelta} onInput={(e) => setSimDelta(Number((e.target as HTMLInputElement).value))} />
-                  <p className="hint">
-                    {lang === "ru"
-                      ? "Ручной общий сдвиг риска: +0.10 добавляет 10 п.п., -0.10 вычитает 10 п.п."
-                      : "Käsitsi üldnihe: +0.10 lisab 10 pp, -0.10 vähendab 10 pp."}
-                  </p>
-                </div>
-                <div className="field">
-                  <label htmlFor="sim-pressure">
-                    {lruet(lang, "Фактор антропогенной нагрузки", "Antropogeense koormuse tegur", "Anthropogenic pressure factor")}: <b>{simPressure.toFixed(1)}</b>
-                  </label>
-                  <input id="sim-pressure" type="range" min={-2} max={2} step={0.1} value={simPressure} onInput={(e) => setSimPressure(Number((e.target as HTMLInputElement).value))} />
-                  <p className="hint">
-                    {lang === "ru"
-                      ? "Условная внешняя нагрузка (стоки, нагрузка на инфраструктуру, сезон): вклад в риск = фактор × 0.08."
-                      : "Tinglik väline koormus: panus riski = tegur × 0.08."}
-                  </p>
-                </div>
-                <div className="field">
-                  <label htmlFor="sim-micro">
-                    {lruet(lang, "Фактор микробиологических рисков", "Mikrobioloogilise riski tegur", "Microbiological risk factor")}: <b>{simMicro.toFixed(1)}</b>
-                  </label>
-                  <input id="sim-micro" type="range" min={-2} max={2} step={0.1} value={simMicro} onInput={(e) => setSimMicro(Number((e.target as HTMLInputElement).value))} />
-                  <p className="hint">
-                    {lang === "ru"
-                      ? "Условная микробиологическая нагрузка (например, после осадков): вклад в риск = фактор × 0.12."
-                      : "Tinglik mikrobioloogiline koormus: panus riski = tegur × 0.12."}
-                  </p>
-                </div>
-                <p className="hint">
-                  {lruet(lang, "Базовая P(нарушения)", "Baas P(rikkumine)", "Base P(violation)")}: <b>{selectedPlace.model_violation_prob.toFixed(2)}</b>
-                  <br />
-                  {lang === "ru"
-                    ? `Суммарный сдвиг сценария: ${((simDelta + simPressure * 0.08 + simMicro * 0.12) >= 0 ? "+" : "") + (simDelta + simPressure * 0.08 + simMicro * 0.12).toFixed(2)}`
-                    : `Stsenaariumi kogunihe: ${((simDelta + simPressure * 0.08 + simMicro * 0.12) >= 0 ? "+" : "") + (simDelta + simPressure * 0.08 + simMicro * 0.12).toFixed(2)}`}
-                  <br />
-                  {lruet(lang, "Сценарная P(нарушения)", "Stsenaariumi P(rikkumine)", "Scenario P(violation)")}: <b>{simulatedProb?.toFixed(2)}</b>
-                </p>
-              </>
-            )}
-          </div>
-          </div>
-        ) : null}
-
-        {visitedTabs.aboutModel ? (
-          <div className={`tabPanel ${activeTab === "aboutModel" ? "isActive" : ""}`}>
-          <div className="panel reportPanel">
-            <h4>{lruet(lang, "О модели", "Mudelist", "About model")}</h4>
-            <div className="stats">
-              {quickInsights.map((i) => (
-                <div className="stat" key={`qi-model-${i.key}`}>
-                  <div className="k">{i.label}</div>
-                  <div className="v">
-                    {i.value} <span className={`badge ${i.level}`}>{severityLabel(i.level)}</span>
-                  </div>
-                  <div className="hint">{i.hint}</div>
-                </div>
-              ))}
-            </div>
-            <p className="hint">
-              {lang === "ru"
-                ? "Сервис использует ансамбль моделей (LR, Random Forest, Gradient Boosting, LightGBM) для оценки вероятности нарушения санитарных норм по лабораторным параметрам."
-                : "Teenus kasutab mudelikomplekti (LR, RF, GB, LightGBM), et hinnata normirikkumise tõenäosust."}
-            </p>
-            <p className="hint">
-              {lang === "ru"
-                ? "Важно: это инструмент поддержки решений. Официальным считается статус из данных Terviseamet; ML-прогноз нужен для раннего приоритезационного скрининга."
-                : "Oluline: see on otsusetugi, ametlik staatus tuleb Terviseameti andmetest."}
-            </p>
-            <p className="hint">
-              {lang === "ru"
-                ? "4 уровня оценки качества: ROC-AUC (разделение классов), Precision/Recall (баланс ошибок), калибровка (доверие к вероятности) и SHAP (пояснение причин прогноза)."
-                : "4 hindamistaset: ROC-AUC, Precision/Recall, kalibreeritus ja SHAP selgitused."}
-            </p>
-            <p className="hint">
-              {lruet(lang, "Метрики для чтения качества модели:", "Mõõdikud mudeli hindamiseks:", "Metrics to assess model quality:")}{" "}
-              <a href="https://scikit-learn.org/stable/modules/model_evaluation.html" target="_blank" rel="noreferrer" className="linkBtn">
-                scikit-learn model evaluation
-              </a>
-              ,{" "}
-              <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic" target="_blank" rel="noreferrer" className="linkBtn">
-                ROC-AUC
-              </a>
-              ,{" "}
-              <a href="https://en.wikipedia.org/wiki/Precision_and_recall" target="_blank" rel="noreferrer" className="linkBtn">
-                Precision/Recall
-              </a>
-            </p>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Уровень", "Tase", "Level")}</th>
-                    <th>{lruet(lang, "Вопрос", "Küsimus", "Question")}</th>
-                    <th>{lruet(lang, "Метрика", "Mõõdik", "Metric")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>1</td>
-                    <td>{lruet(lang, "Разделяет ли модель чистые и рискованные пробы?", "Kas mudel eristab puhtaid ja riskseid proove?", "Does the model separate clean and risky samples?")}</td>
-                    <td>ROC-AUC</td>
-                  </tr>
-                  <tr>
-                    <td>2</td>
-                    <td>{lruet(lang, "Какие ошибки допускаются?", "Milliseid vigu tehakse?", "What errors are made?")}</td>
-                    <td>Precision / Recall</td>
-                  </tr>
-                  <tr>
-                    <td>3</td>
-                    <td>{lruet(lang, "Насколько вероятности калиброваны?", "Kui hästi on tõenäosused kalibreeritud?", "How well are probabilities calibrated?")}</td>
-                    <td>Calibration</td>
-                  </tr>
-                  <tr>
-                    <td>4</td>
-                    <td>{lruet(lang, "Почему получен этот риск?", "Miks just selline risk?", "Why this risk score?")}</td>
-                    <td>SHAP</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <h4>{t.metricGuideTitle}</h4>
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Метрика", "Mõõdik", "Metric")}</th>
-                    <th>{lruet(lang, "Точное определение", "Täpne definitsioon", "Precise definition")}</th>
-                    <th>{lruet(lang, "Интуитивно", "Intuitsioon", "Intuition")}</th>
-                    <th>{lruet(lang, "Как читать значение", "Kuidas väärtust lugeda", "How to read value")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><b>{t.metricGuide.roc.title}</b></td>
-                    <td>{t.metricGuide.roc.precise}</td>
-                    <td>{t.metricGuide.roc.intuitive}</td>
-                    <td>{t.metricGuide.roc.reading}</td>
-                  </tr>
-                  <tr>
-                    <td><b>{t.metricGuide.pr.title}</b></td>
-                    <td>{t.metricGuide.pr.precise}</td>
-                    <td>{t.metricGuide.pr.intuitive}</td>
-                    <td>{t.metricGuide.pr.reading}</td>
-                  </tr>
-                  <tr>
-                    <td><b>{t.metricGuide.calibration.title}</b></td>
-                    <td>{t.metricGuide.calibration.precise}</td>
-                    <td>{t.metricGuide.calibration.intuitive}</td>
-                    <td>{t.metricGuide.calibration.reading}</td>
-                  </tr>
-                  <tr>
-                    <td><b>{t.metricGuide.shap.title}</b></td>
-                    <td>{t.metricGuide.shap.precise}</td>
-                    <td>{t.metricGuide.shap.intuitive}</td>
-                    <td>{t.metricGuide.shap.reading}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div className="panel reportPanel" style={{ marginTop: "0.75rem" }}>
-            <h4>{lruet(lang, "Базовые формулы (для понимания)", "Põhivalemid (arusaamiseks)", "Core formulas (for understanding)")}</h4>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Обозначение", "Lühend", "Symbol")}</th>
-                    <th>{lruet(lang, "Полное название", "Täistähendus", "Full name")}</th>
-                    <th>{lruet(lang, "Что означает", "Tähendus", "Meaning")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><b>TP</b></td>
-                    <td>True Positive</td>
-                    <td>{lruet(lang, "Модель предсказала нарушение — оно реально есть", "Mudel ennustas rikkumist — see on olemas", "Model predicted violation — it is real")}</td>
-                  </tr>
-                  <tr>
-                    <td><b>FP</b></td>
-                    <td>False Positive</td>
-                    <td>{lruet(lang, "Ложная тревога: модель предсказала нарушение, но его нет", "Valepositiivne: mudel ennustas rikkumist, kuid seda pole", "False alarm: model predicted violation, but there is none")}</td>
-                  </tr>
-                  <tr>
-                    <td><b>FN</b></td>
-                    <td>False Negative</td>
-                    <td>{lruet(lang, "Пропуск: модель не нашла нарушение, а оно есть — опасно!", "Valeneg.: mudel ei leidnud rikkumist, kuigi see on olemas — ohtlik!", "Miss: model did not flag a real violation — dangerous!")}</td>
-                  </tr>
-                  <tr>
-                    <td><b>TN</b></td>
-                    <td>True Negative</td>
-                    <td>{lruet(lang, "Верно: модель предсказала норму — нарушения нет", "Õige neg.: mudel ennustas normi — rikkumist pole", "Correct: model predicted compliant — no violation")}</td>
-                  </tr>
-                  <tr>
-                    <td><b>P</b></td>
-                    <td>Precision</td>
-                    <td>{lruet(lang, "Точность: TP / (TP + FP)", "Täpsus: TP / (TP + FP)", "Precision: TP / (TP + FP)")}</td>
-                  </tr>
-                  <tr>
-                    <td><b>R</b></td>
-                    <td>Recall</td>
-                    <td>{lruet(lang, "Полнота: TP / (TP + FN)", "Täielikkus: TP / (TP + FN)", "Recall: TP / (TP + FN)")}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Метрика", "Mõõdik", "Metric")}</th>
-                    <th>{lruet(lang, "Формула", "Valem", "Formula")}</th>
-                    <th>{lruet(lang, "Смысл", "Tähendus", "Meaning")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Precision</td>
-                    <td>TP / (TP + FP)</td>
-                    <td>{lruet(lang, "Из предсказанных нарушений — сколько реальных", "Prognoositud rikkumistest kui palju on päris", "Of predicted violations, how many are real")}</td>
-                  </tr>
-                  <tr>
-                    <td>Recall</td>
-                    <td>TP / (TP + FN)</td>
-                    <td>{lruet(lang, "Из всех реальных нарушений — сколько найдено", "Kõigist päris rikkumistest kui palju leiti", "Of all real violations, how many were found")}</td>
-                  </tr>
-                  <tr>
-                    <td>F1</td>
-                    <td>2·P·R / (P + R)</td>
-                    <td>{lruet(lang, "Компромисс Precision и Recall", "Tasakaal Precisioni ja Recalli vahel", "Precision/Recall trade-off")}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Формула", "Valem", "Formula")}</th>
-                    <th>{lruet(lang, "Интуиция", "Intuitsioon", "Intuition")}</th>
-                    <th>{lruet(lang, "Пример из данных", "Näide andmetest", "Example from data")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Recall = TP / (TP + FN)</td>
-                    <td>
-                      {lang === "ru"
-                        ? "Из всех реальных нарушений сколько модель действительно нашла."
-                        : "Kõigist päris rikkumistest kui palju mudel üles leidis."}
-                    </td>
-                    <td>
-                      {lang === "ru"
-                        ? "Если Recall=0.95, модель находит ~95 из 100 нарушений."
-                        : "Kui Recall=0.95, leitakse ~95 rikkumist 100-st."}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Precision = TP / (TP + FP)</td>
-                    <td>
-                      {lang === "ru"
-                        ? "Сколько тревог модели оказались реальными нарушениями."
-                        : "Kui suur osa mudeli häiretest on päris rikkumised."}
-                    </td>
-                    <td>
-                      {lang === "ru"
-                        ? "При Precision=0.80 примерно 8 из 10 алертов подтверждаются."
-                        : "Precision=0.80 tähendab, et ~8/10 häirest kinnitub."}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>P(violation)</td>
-                    <td>
-                      {lang === "ru"
-                        ? "Вероятность нарушения для конкретной точки."
-                        : "Rikkumise tõenäosus konkreetses punktis."}
-                    </td>
-                    <td>
-                      {avgProb === null
-                        ? "n/a"
-                        : lang === "ru"
-                          ? `Сейчас средняя P(нарушения) по фильтру: ${avgProb.toFixed(2)}.`
-                          : `Praegune keskmine P(rikkumine): ${avgProb.toFixed(2)}.`}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="hint">
-              {lang === "ru"
-                ? "Для water safety важнее высокий Recall (лучше ложная тревога, чем пропущенное нарушение)."
-                : "Veeohutuses on Recall prioriteetne (parem valehäire kui märkamata rikkumine)."}
-            </p>
-          </div>
-          </div>
-        ) : null}
-
-        {visitedTabs.aboutService ? (
-          <div className={`tabPanel ${activeTab === "aboutService" ? "isActive" : ""}`}>
-          <div className="reportsGrid">
-          <div className="panel reportPanel">
-            <h4>{lruet(lang, "О сервисе", "Teenusest", "About service")}</h4>
-            <div className="stats">
-              {quickInsights.map((i) => (
-                <div className="stat" key={`qi-service-${i.key}`}>
-                  <div className="k">{i.label}</div>
-                  <div className="v">
-                    {i.value} <span className={`badge ${i.level}`}>{severityLabel(i.level)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="hint">
-              {lang === "ru"
-                ? "Этот сервис — публичный инструмент экологической прозрачности для жителей, муниципалитетов и госструктур. Он объединяет официальные открытые данные Terviseamet и аналитический ML-слой, чтобы вода оценивалась не только постфактум, но и через ранние риск-сигналы."
-                : "See teenus on avalik keskkonnaläbipaistvuse tööriist elanikele, omavalitsustele ja riigiasutustele. See ühendab Terviseameti ametlikud avaandmed ning ML-analüüsi kihi, et veekvaliteeti hinnata nii faktiliselt kui ka varaste riskisignaalide kaudu."}
-            </p>
-            <p className="hint">
-              {lang === "ru"
-                ? "По каждой точке доступны: дата и контекст последней пробы, официальный статус соответствия, вероятности нарушения от нескольких моделей, история наблюдений и пояснения ключевых параметров. Такая структура помогает принимать решения на уровне гражданской осведомлённости, муниципального планирования и экологического мониторинга."
-                : "Iga punkti kohta kuvatakse: viimase proovi kuupäev ja kontekst, ametlik vastavusstaatus, rikkumise tõenäosused mitmest mudelist, vaatlusajalugu ning võtmeparameetrite selgitused. Selline struktuur toetab nii kodanike teadlikkust, kohaliku tasandi planeerimist kui ka keskkonnaseiret."}
-            </p>
-            <p className="hint">
-              {lang === "ru"
-                ? "Важно: модельные оценки не заменяют официальный санитарный вердикт. Они предназначены для приоритезации проверок, более раннего обнаружения потенциально проблемных зон и повышения качества коммуникации между населением и органами контроля."
-                : "Oluline: mudelihinnangud ei asenda ametlikku sanitaarset otsust. Need on mõeldud kontrollide prioriseerimiseks, võimalike probleemialade varasemaks avastamiseks ning elanike ja järelevalveasutuste vahelise kommunikatsiooni parandamiseks."}
-            </p>
-            <p className="hint">
-              {lang === "ru"
-                ? "Технический слой: официальный статус — поле vastavus в данных Terviseamet. Координаты: сначала справочные точки Terviseamet (coord_source=terviseamet_*, преобразование EPSG:3301 -> WGS84), затем каскад геокодирования Google -> Geoapify -> OpenCage (coord_source=opencage/geocode_cache; в старых снимках возможны google). county_centroid — центроид уезда; approximate_ee — визуальная приблизительная точка в границах Эстонии. Параметры lr/rf/gb/lgbm_violation_prob — прогнозы отдельных ML-моделей, не замена официальной оценке."
-                : "Tehniline kiht: ametlik staatus tuleb väljast vastavus. Koordinaadid: esmalt Terviseameti viitepunktid (coord_source=terviseamet_*, teisendus EPSG:3301 -> WGS84), seejärel geokodeerimise kaskaad Google -> Geoapify -> OpenCage (coord_source=opencage/geocode_cache; vanemates snapshotides võimalik google). county_centroid on maakonna tsentroid; approximate_ee on visuaalne ligikaudne punkt Eesti piires. lr/rf/gb/lgbm_violation_prob on eraldi ML-mudelite prognoosid ega asenda ametlikku hinnangut."}
-            </p>
-            <p className="hint">{t.aboutService}</p>
-            {snapshot.data_catalog_url ? (
-              <p className="hint">
-                {lruet(lang, "Источник открытых данных:", "Avaandmete allikas:", "Open data source:")}{" "}
-                <a href={snapshot.data_catalog_url} target="_blank" rel="noreferrer" className="linkBtn">
-                  {snapshot.data_catalog_url}
-                </a>
-              </p>
-            ) : null}
-          </div>
-          <div className="panel reportPanel">
-            <h4>{lruet(lang, "Слои и интерпретация карты", "Kaardikihid ja tõlgendus", "Map layers and interpretation")}</h4>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Элемент", "Element", "Element")}</th>
-                    <th>{lruet(lang, "Что показывает", "Mida näitab", "What it shows")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{lruet(lang, "Цвет маркера", "Markeri värv", "Marker color")}</td>
-                    <td>{lruet(lang, "Зелёный/жёлтый/красный = низкий/средний/высокий риск", "Roheline/kollane/punane = madal/keskmine/kõrge risk", "Green/yellow/red = low/medium/high risk")}</td>
-                  </tr>
-                  <tr>
-                    <td>{lruet(lang, "Иконка маркера", "Markeri ikoon", "Marker icon")}</td>
-                    <td>{lruet(lang, "Тип локации: пляж, бассейн, сеть, источник", "Asukoha tüüp: rand, bassein, võrk, allikas", "Location type: beach, pool, network, source")}</td>
-                  </tr>
-                  <tr>
-                    <td>{lruet(lang, "Кластер", "Klaster", "Cluster")}</td>
-                    <td>{lruet(lang, "Количество точек в группе на текущем масштабе", "Punktide arv grupis antud suumitasemel", "Number of points in the group at current zoom")}</td>
-                  </tr>
-                  <tr>
-                    <td>{lruet(lang, "Границы уездов", "Maakonna piirid", "County borders")}</td>
-                    <td>{lruet(lang, "Контекст территории и фильтрация по выбранному уезду", "Territooriumi kontekst ja filtreerimine valitud maakonna järgi", "Territory context and filtering by selected county")}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <h4>{lruet(lang, "Нормы по ключевым параметрам (мини-справочник)", "Oluliste näitajate normid (mini-viit)", "Norms for key parameters (mini reference)")}</h4>
-            <div className="tableWrap compact">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lruet(lang, "Параметр", "Näitaja", "Parameter")}</th>
-                    <th>{lruet(lang, "Купальные воды", "Suplusvesi", "Bathing water")}</th>
-                    <th>{lruet(lang, "Питьевая вода", "Joogivesi", "Drinking water")}</th>
-                    <th>{lruet(lang, "Бассейн / SPA", "Bassein / SPA", "Pool / SPA")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>E. coli</td>
-                    <td>{lruet(lang, "низко = лучше", "madalam = parem", "lower = better")}</td>
-                    <td>{lruet(lang, "почти 0", "peaaegu 0", "near zero")}</td>
-                    <td>n/a</td>
-                  </tr>
-                  <tr>
-                    <td>Enterococci</td>
-                    <td>{lruet(lang, "контроль микробиологии", "mikrobioloogia kontroll", "microbiology control")}</td>
-                    <td>n/a</td>
-                    <td>n/a</td>
-                  </tr>
-                  <tr>
-                    <td>pH</td>
-                    <td>{lruet(lang, "~нейтральный диапазон", "~neutraalne vahemik", "~neutral range")}</td>
-                    <td>6.5-9.5</td>
-                    <td>{lruet(lang, "обычно ~7.0-7.8", "tavaliselt ~7.0-7.8", "typically ~7.0-7.8")}</td>
-                  </tr>
-                  <tr>
-                    <td>Nitrates</td>
-                    <td>n/a</td>
-                    <td>{lruet(lang, "≤ 50 mg/L", "≤ 50 mg/L", "≤ 50 mg/L")}</td>
-                    <td>n/a</td>
-                  </tr>
-                  <tr>
-                    <td>Free chlorine</td>
-                    <td>n/a</td>
-                    <td>n/a</td>
-                    <td>0.2-0.6 mg/L</td>
-                  </tr>
-                  <tr>
-                    <td>Turbidity</td>
-                    <td>{lruet(lang, "чем ниже, тем лучше", "mida madalam, seda parem", "lower is better")}</td>
-                    <td>{lruet(lang, "низкая мутность", "madal hägusus", "low turbidity")}</td>
-                    <td>{lruet(lang, "строже в pool-нормах", "pool-normides rangem", "stricter in pool norms")}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="hint">
-              {lang === "ru"
-                ? "Быстрый вывод: если по точке одновременно высокий риск, красный официальный статус и повышенные микробиологические параметры — это приоритет №1 для контроля."
-                : "Kiirjäreldus: kui punktis on koos kõrge risk, punane ametlik staatus ja kõrged mikrobioloogilised näitajad, on see prioriteet nr 1."}
-            </p>
-            <h4>{lruet(lang, "Карточки параметров: интуиция для исследователя", "Parameetrikaardid: uurija intuitsioon", "Parameter cards: practical intuition")}</h4>
-            <div className="infoCardGrid">
-              {parameterCards.map((card) => (
-                <article key={`pc-${card.key}`} className="infoCard">
-                  <div className="infoCardHead">
-                    <span className="infoCardIcon" aria-hidden>
-                      {card.icon}
-                    </span>
-                    <div>
-                      <h5>{lruet(lang, card.ruTitle, card.etTitle, card.ruTitle)}</h5>
-                      <span className="badge warn">
-                        {lruet(lang, card.ruImpact, card.etImpact, card.ruImpact)}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="hint">{lruet(lang, card.ruWhy, card.etWhy, card.ruWhy)}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-          </div>
-          </div>
-        ) : null}
 
         <div className={`tableWrap ${isMobile ? "mobileResponsiveTable" : ""}`}>
           <table className="table">
@@ -4087,7 +3275,10 @@ export default function Dashboard({ snapshot }: Props) {
             </button>
           </div>
           <div className="infoPageTabRow">
-            {(["alerts", "domain", "analytics", "aboutModel", "aboutService"] as TabKey[]).map((tab) => (
+            {/* Alerts tab removed (its data stays on the main page and keeps
+                updating there). Domains tab removed entirely — its info is
+                covered by the Domain health report on the main page. */}
+            {(["analytics", "aboutModel", "aboutService"] as TabKey[]).map((tab) => (
               <button
                 key={`ipt-${tab}`}
                 className={`infoPageTab ${infoPageTab === tab ? "active" : ""}`}
