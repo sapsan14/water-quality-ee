@@ -63,10 +63,10 @@ def main() -> None:
         if not isinstance(it, dict):
             continue
         d = str(it.get("domain") or "").strip()
-        l = str(it.get("location") or "").strip()
-        if not d or not l:
+        loc = str(it.get("location") or "").strip()
+        if not d or not loc:
             continue
-        by_key[key_of(d, l)] = it
+        by_key[key_of(d, loc)] = it
 
     applied = 0
     hidden = 0

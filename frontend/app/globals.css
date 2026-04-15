@@ -1823,3 +1823,100 @@ body.mapFullscreenActive {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Mobile search bar ---- */
+.mobileSearchBar {
+  position: fixed;
+  top: calc(40px + env(safe-area-inset-top, 0px) + 0.55rem);
+  left: max(0.6rem, env(safe-area-inset-left, 0px));
+  right: calc(44px + 1.4rem);
+  z-index: 1490;
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.65rem;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(55, 82, 128, 0.55);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: opacity 200ms ease, transform 200ms ease;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.mobileSearchBar.mobileSearchBarVisible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.mobileSearchIcon {
+  flex-shrink: 0;
+  color: #8fafd4;
+}
+
+.mobileSearchInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #e6eef9;
+  font-size: 0.88rem;
+  min-width: 0;
+}
+
+.mobileSearchInput::placeholder {
+  color: #6a8fb3;
+}
+
+.mobileSearchClear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8fafd4;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.mapFullscreenActive .mobileSearchBar {
+  z-index: 2600;
+}
+
+@media (max-width: 900px) {
+  .mobileSearchBar {
+    display: flex;
+  }
+}
+
+/* ---- Drawer lang row (mobile only) ---- */
+.drawerLangRow {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+}
+
+.drawerLangLabel {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .drawerLangRow {
+    display: flex;
+  }
+}
+
+/* ---- Teardrop pin pulse animation ---- */
+@keyframes pinPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+}
