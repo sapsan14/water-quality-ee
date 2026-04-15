@@ -441,9 +441,13 @@ function FocusOnSelectedPoint({
     const targetZoom = Math.max(map.getZoom(), 11);
     const overlay = overlayRef.current;
     if (overlay > 0) {
-      // Project, shift up so the marker sits in the visible strip above the sheet.
+      // The bottom sheet hides the lower `overlay` pixels of the viewport.
+      // To keep the marker centred in the *visible* strip (top half), the map
+      // centre must sit geographically SOUTH of the marker — i.e. its world
+      // pixel y must be LARGER than the marker's. Leaflet's pixel space has y
+      // growing downward, so we ADD overlay/2.
       const point = map.project(target, targetZoom);
-      point.y -= overlay / 2;
+      point.y += overlay / 2;
       const adjusted = map.unproject(point, targetZoom);
       map.flyTo(adjusted, targetZoom, { duration: 0.6 });
       return;
@@ -477,7 +481,9 @@ function FitBoundsOnVersion({
     if (places.length === 1) {
       const targetZoom = Math.max(map.getZoom(), 12);
       const point = map.project(places[0], targetZoom);
-      point.y -= Math.max(0, (bottomOverlayPx - topOverlayPx) / 2);
+      // Keep the single match in the visible strip between the top chrome and
+      // the bottom sheet — same sign rule as FocusOnSelectedPoint above.
+      point.y += Math.max(0, (bottomOverlayPx - topOverlayPx) / 2);
       const adjusted = map.unproject(point, targetZoom);
       map.flyTo(adjusted, targetZoom, { duration: 0.6 });
       return;

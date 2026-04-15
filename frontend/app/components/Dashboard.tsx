@@ -32,7 +32,8 @@ type IconName =
   | "dash-circle"
   | "star"
   | "star-outline"
-  | "signal";
+  | "signal"
+  | "grid";
 type CyrillicFont = "ibm" | "manrope";
 type ThemeMode = "light" | "dark";
 
@@ -329,6 +330,17 @@ function Icon({ name }: { name: IconName }) {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M12 2.5l2.6 5.3 5.9.85-4.25 4.15 1 5.85L12 15.77l-5.25 2.88 1-5.85L3.5 8.65l5.9-.85L12 2.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  /* ── 2x2 grid (used as the "All" chip glyph) ────────────────── */
+  if (name === "grid") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.2" y="3.2" width="7.6" height="7.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+        <rect x="13.2" y="3.2" width="7.6" height="7.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+        <rect x="3.2" y="13.2" width="7.6" height="7.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+        <rect x="13.2" y="13.2" width="7.6" height="7.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
       </svg>
     );
   }
@@ -1883,35 +1895,65 @@ export default function Dashboard({ snapshot }: Props) {
               </svg>
             </button>
           </div>
-          {/* Domain filter chips */}
+          {/* Domain filter chips — icon-only on mobile to keep the bar short
+              and easy to tap. Each chip carries an aria-label/title with the
+              localized name so screen readers and long-press tooltips still
+              surface the meaning. */}
           <div className="gmChipBar">
-            <button className={`gmChip ${segment === "all" ? "gmChipActive" : ""}`} onClick={() => setSegment("all")}>
-              {lruet(lang, "Все", "Kõik", "All")}
-            </button>
-            {(["swimming", "pool_spa", "drinking_water", "drinking_source"] as const).map((k) => (
-              <button
-                key={`chip-${k}`}
-                className={`gmChip ${segment === k ? "gmChipActive" : ""}`}
-                onClick={() => setSegment(segment === k ? "all" : k)}
-              >
-                {k === "swimming" ? "🏊" : k === "pool_spa" ? "🏊‍♀️" : k === "drinking_water" ? "🚰" : "💧"}{" "}
-                {k === "swimming"
+            {(() => {
+              const allLabel = lruet(lang, "Все", "Kõik", "All");
+              return (
+                <button
+                  className={`gmChip gmChipIcon ${segment === "all" ? "gmChipActive" : ""}`}
+                  onClick={() => setSegment("all")}
+                  aria-label={allLabel}
+                  title={allLabel}
+                >
+                  <Icon name="grid" />
+                </button>
+              );
+            })()}
+            {(["swimming", "pool_spa", "drinking_water", "drinking_source"] as const).map((k) => {
+              const iconName: IconName =
+                k === "swimming" ? "swim" : k === "pool_spa" ? "pool" : k === "drinking_water" ? "tap" : "drop";
+              const label =
+                k === "swimming"
                   ? lruet(lang, "Купальные", "Suplusvesi", "Swimming")
                   : k === "pool_spa"
                   ? lruet(lang, "Бассейны", "Basseinid", "Pools")
                   : k === "drinking_water"
                   ? lruet(lang, "Питьевая", "Joogivesi", "Drinking")
-                  : lruet(lang, "Источники", "Allikad", "Sources")}
-              </button>
-            ))}
+                  : lruet(lang, "Источники", "Allikad", "Sources");
+              return (
+                <button
+                  key={`chip-${k}`}
+                  className={`gmChip gmChipIcon ${segment === k ? "gmChipActive" : ""}`}
+                  onClick={() => setSegment(segment === k ? "all" : k)}
+                  aria-label={label}
+                  title={label}
+                >
+                  <Icon name={iconName} />
+                </button>
+              );
+            })}
             {alertsOnly ? (
-              <button className="gmChip gmChipActive gmChipAlert" onClick={() => setAlertsOnly(false)}>
-                ⚠ {lruet(lang, "Тревоги", "Häired", "Alerts")} ×
+              <button
+                className="gmChip gmChipIcon gmChipActive gmChipAlert"
+                onClick={() => setAlertsOnly(false)}
+                aria-label={lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")}
+                title={lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")}
+              >
+                <Icon name="alert" />
               </button>
             ) : null}
             {risk !== "all" ? (
-              <button className="gmChip gmChipActive" onClick={() => setRisk("all")}>
-                {risk} ×
+              <button
+                className="gmChip gmChipIcon gmChipActive"
+                onClick={() => setRisk("all")}
+                aria-label={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+                title={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+              >
+                <Icon name="signal" />
               </button>
             ) : null}
           </div>
