@@ -1034,8 +1034,8 @@ body.mapFullscreenActive {
 
 .gmSheetModeTitle {
   flex: 1;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 0.98rem;
+  font-weight: 600;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1043,19 +1043,30 @@ body.mapFullscreenActive {
   min-width: 0;
 }
 
-.gmSheetCloseBtn {
+.gmSheetCloseBtn,
+.gmSheetClearBtn {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 0;
   background: rgba(100, 120, 160, 0.1);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--muted);
   padding: 0;
+}
+
+.gmSheetClearBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gmSheetClearBtn:active,
+.gmSheetCloseBtn:active {
+  background: rgba(100, 120, 160, 0.2);
 }
 
 /* Sheet scrollable body */
@@ -1071,10 +1082,154 @@ body.mapFullscreenActive {
 .gmSheetPlaceContent {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  /* Generous bottom padding so the last button is never clipped by the
-     home indicator or the rounded sheet corners. */
-  padding-bottom: calc(2.4rem + env(safe-area-inset-bottom, 0px));
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  /* Generous bottom padding so the last row (last history entry, last
+     button) is never clipped by the OS home indicator, the browser
+     bottom chrome bar, or the rounded sheet corners. */
+  padding-bottom: calc(4.2rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Compact typography for controls inside the mobile bottom sheet —
+   keeps the drawer quiet on small screens. */
+.gmSheetFilterContent .field label,
+.gmSheetPlaceContent .field label {
+  font-size: 0.78rem;
+}
+
+.gmSheetFilterContent .field select,
+.gmSheetFilterContent .field input[type="date"],
+.gmSheetFilterContent .field input[type="text"] {
+  font-size: 0.85rem;
+  min-height: 38px;
+}
+
+.gmSheetFilterContent .stat .k,
+.gmSheetFilterContent .stat .v {
+  font-size: 0.78rem;
+}
+.gmSheetFilterContent .stat .v {
+  font-size: 0.95rem;
+}
+
+.gmSheetFilterContent .hint,
+.gmSheetPlaceContent .hint {
+  font-size: 0.76rem;
+}
+
+/* Primary toggle chips at the very top of the mobile filter sheet:
+   "Alerts only" and "Near me", each with a live count badge. */
+.gmQuickToggleRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.1rem;
+}
+
+.gmQuickToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid #c7d5ea;
+  background: var(--panel-soft, #f4f8ff);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 0.48rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 42px;
+  width: 100%;
+  text-align: left;
+}
+
+.gmQuickToggle .gmQuickToggleIcon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.gmQuickToggle .gmQuickToggleIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gmQuickToggleLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmQuickToggleCount {
+  flex-shrink: 0;
+  min-width: 1.6rem;
+  padding: 0.08rem 0.4rem;
+  background: rgba(100, 120, 160, 0.14);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--muted);
+}
+
+.gmQuickAlert {
+  border-color: #f5b7be;
+  background: linear-gradient(180deg, #fff5f6 0%, #ffedf0 100%);
+  color: #8a1323;
+}
+.gmQuickAlert .gmQuickToggleCount {
+  background: rgba(220, 53, 69, 0.14);
+  color: #8a1323;
+}
+.gmQuickAlert.active {
+  background: linear-gradient(180deg, #ffdadf 0%, #ffc7cf 100%);
+  border-color: #dc3545;
+  color: #7f1320;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.16);
+}
+
+.gmQuickNear {
+  border-color: #bcd3f3;
+  background: linear-gradient(180deg, #eef5ff 0%, #e3efff 100%);
+  color: #0a58ca;
+}
+.gmQuickNear .gmQuickToggleCount {
+  background: rgba(13, 110, 253, 0.14);
+  color: #0a58ca;
+}
+.gmQuickNear.active {
+  background: linear-gradient(180deg, #d9e8ff 0%, #c8dcff 100%);
+  border-color: #3d8bfd;
+  color: #053a85;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.18);
+}
+
+html[data-theme="dark"] .gmQuickToggle {
+  background: #18233a;
+  border-color: #2c4068;
+  color: #e4ecf9;
+}
+html[data-theme="dark"] .gmQuickAlert {
+  background: linear-gradient(180deg, #321821 0%, #2b1219 100%);
+  border-color: #6e2533;
+  color: #ffb8c1;
+}
+html[data-theme="dark"] .gmQuickAlert.active {
+  background: linear-gradient(180deg, #4a1a25 0%, #3a121d 100%);
+  border-color: #dc3545;
+}
+html[data-theme="dark"] .gmQuickNear {
+  background: linear-gradient(180deg, #142037 0%, #0f1a2f 100%);
+  border-color: #24406e;
+  color: #9bc2ff;
+}
+html[data-theme="dark"] .gmQuickNear.active {
+  background: linear-gradient(180deg, #1b2f55 0%, #142443 100%);
+  border-color: #3d8bfd;
 }
 
 /* Sticky settings strip at the top of the burger panel */
@@ -1254,24 +1409,24 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
 }
 
 .gmPlaceKindEmoji {
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .gmPlaceKindLabel {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .gmPlaceCounty {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: var(--muted);
 }
 
 .gmPlaceMeta {
   margin: 0.1rem 0 0.4rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .gmStatusRow {
@@ -1283,15 +1438,27 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
 
 /* Section title separator inside the place sheet */
 .gmSectionTitle {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--muted);
-  margin-top: 0.6rem;
-  margin-bottom: 0.2rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.25rem;
   padding-bottom: 0.2rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Compact table fonts inside the mobile place sheet — the measurements
+   and history tables get a single tight readable size. */
+.gmSheetPlaceContent .tableWrap.compact .table {
+  font-size: 0.8rem;
+}
+
+.gmSheetPlaceContent .tableWrap.compact .table th,
+.gmSheetPlaceContent .tableWrap.compact .table td {
+  padding: 0.35rem 0.45rem;
+  line-height: 1.35;
 }
 
 /* Measurement row with norm violation highlight */
@@ -1408,6 +1575,58 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
   overflow: hidden;
 }
 
+.modalCard b,
+.modalCard strong {
+  font-weight: 600;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.modalHeader .sectionTitle {
+  flex: 1;
+  margin: 0;
+  font-weight: 600;
+  padding-right: 0.3rem;
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+.modalCloseBtn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(100, 120, 160, 0.1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  padding: 0;
+}
+
+.modalCloseBtn:hover,
+.modalCloseBtn:active {
+  background: rgba(100, 120, 160, 0.2);
+  color: var(--text);
+}
+
+.modalCloseBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+html[data-theme="dark"] .modalCloseBtn {
+  background: rgba(180, 200, 230, 0.12);
+  color: #d5e0f2;
+}
+
 .modalCard .sectionTitle {
   font-weight: 600;
   margin-bottom: 0.55rem;
@@ -1415,7 +1634,7 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
 
 .modalBody {
   flex: 0 1 auto;
-  max-height: calc(min(90vh, 980px) - 8.5rem);
+  max-height: calc(min(90vh, 980px) - 6rem);
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
@@ -1493,7 +1712,17 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
   color: var(--text);
   font-size: 0.88rem;
   font-weight: 600;
-  margin-top: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.infoLine {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 0.2rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .infoBullet {
@@ -1524,11 +1753,87 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
 
 .infoMiniTable {
   font-size: 0.8rem;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .infoMiniTable th,
 .infoMiniTable td {
   padding: 0.4rem 0.45rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  vertical-align: top;
+  line-height: 1.35;
+}
+
+/* Narrow screens (mobile popup) — the four-column model table can't
+   fit side-by-side, so we flatten each <tr> into a small card with the
+   header labels injected via data-* attributes. */
+@media (max-width: 560px) {
+  .infoTableWrap {
+    overflow-x: visible;
+  }
+
+  .infoMiniTable,
+  .infoMiniTable thead,
+  .infoMiniTable tbody,
+  .infoMiniTable tr,
+  .infoMiniTable th,
+  .infoMiniTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .infoMiniTable thead {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+  }
+
+  .infoMiniTable tr {
+    border: 1px solid rgba(120, 140, 180, 0.22);
+    border-radius: 10px;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.5rem;
+    background: rgba(244, 248, 255, 0.55);
+  }
+
+  html[data-theme="dark"] .infoMiniTable tr {
+    background: rgba(24, 34, 56, 0.55);
+    border-color: rgba(120, 140, 180, 0.3);
+  }
+
+  .infoMiniTable td {
+    padding: 0.2rem 0;
+    border: 0;
+  }
+
+  .infoMiniTable td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 0.08rem;
+  }
+
+  .infoMiniTable td:first-child::before {
+    content: none;
+  }
+
+  .infoMiniTable td:first-child {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--brand);
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed rgba(120, 140, 180, 0.25);
+    margin-bottom: 0.25rem;
+  }
 }
 
 /* ================================================================

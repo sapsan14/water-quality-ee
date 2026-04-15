@@ -16,6 +16,7 @@ type IconName =
   | "close"
   | "alert"
   | "reset"
+  | "filter-x"
   | "filters"
   | "locate"
   | "info"
@@ -191,6 +192,21 @@ function Icon({ name }: { name: IconName }) {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 7a1 1 0 0 1 1-1h2.3a2.5 2.5 0 0 1 4.8 0H19a1 1 0 1 1 0 2h-6.9a2.5 2.5 0 0 1-4.8 0H5a1 1 0 0 1-1-1Zm8 10a2.5 2.5 0 0 1-4.7 1H5a1 1 0 1 1 0-2h2.3a2.5 2.5 0 0 1 4.7 1Zm1-6a2.5 2.5 0 0 1 4.7-1H19a1 1 0 1 1 0 2h-1.3a2.5 2.5 0 0 1-4.7-1Z" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (name === "filter-x") {
+    // Funnel icon with a diagonal strike-through — "clear all filters"
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <path d="M5 19 19 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
     );
   }
@@ -792,30 +808,42 @@ export default function Dashboard({ snapshot }: Props) {
           const trimmed = line.trim();
           if (!trimmed) return <div key={`i-${idx}`} className="infoSpacer" />;
           if (trimmed.startsWith("- ")) return <div key={`i-${idx}`} className="infoBullet">{trimmed.slice(2)}</div>;
-          return <div key={`i-${idx}`} className="infoHeading">{trimmed}</div>;
+          // Only short labels without punctuation act as real section
+          // headings. Data lines (contain ":" or end with a period) render
+          // as regular-weight body text so modals don't look shouty.
+          const isHeading = !trimmed.includes(":") && !/[.!?]$/.test(trimmed) && trimmed.length <= 60;
+          if (isHeading) return <div key={`i-${idx}`} className="infoHeading">{trimmed}</div>;
+          return <div key={`i-${idx}`} className="infoLine">{trimmed}</div>;
         })}
         {modelRows.length > 0 ? (
           <div className="infoTableWrap">
+            {(() => {
+              const fullLabel = isRu ? "Название" : isEt ? "Täisnimi" : "Full name";
+              const principleLabel = isRu ? "Принцип" : isEt ? "Põhimõte" : "Principle";
+              const sensitivityLabel = isRu ? "Чувствительность к ошибкам" : isEt ? "Tundlikkus vigadele" : "Error sensitivity";
+              return (
             <table className="table infoMiniTable">
               <thead>
                 <tr>
                   <th>Model</th>
-                  <th>Full Name</th>
-                  <th>{isRu ? "Принцип" : isEt ? "Põhimõte" : "Principle"}</th>
-                  <th>{isRu ? "Чувствительность к ошибкам" : isEt ? "Tundlikkus vigadele" : "Error sensitivity"}</th>
+                  <th>{fullLabel}</th>
+                  <th>{principleLabel}</th>
+                  <th>{sensitivityLabel}</th>
                 </tr>
               </thead>
               <tbody>
                 {modelRows.map((r) => (
                   <tr key={`mini-${r.short}`}>
                     <td>{r.short}</td>
-                    <td>{r.full}</td>
-                    <td>{r.principle}</td>
-                    <td>{r.errorSensitivity}</td>
+                    <td data-label={fullLabel}>{r.full}</td>
+                    <td data-label={principleLabel}>{r.principle}</td>
+                    <td data-label={sensitivityLabel}>{r.errorSensitivity}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+              );
+            })()}
           </div>
         ) : null}
       </div>
@@ -1171,6 +1199,19 @@ export default function Dashboard({ snapshot }: Props) {
     });
   }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
+
+  // Standalone counts for the "Alerts only" / "Near me" toggle chips —
+  // these reflect how many points match the *toggle predicate* over the
+  // whole snapshot, independent of current alerts/near-me state so the
+  // number doesn't flicker when the user toggles the chip itself.
+  const alertsCount = useMemo(
+    () => snapshot.places.filter((p) => p.risk_level === "high" || p.official_compliant === 0).length,
+    [snapshot.places]
+  );
+  const nearMeCount = useMemo(() => {
+    if (!userCoords) return null;
+    return snapshot.places.filter((p) => distanceKm(userCoords.lat, userCoords.lon, p.lat, p.lon) <= nearbyRadiusKm).length;
+  }, [snapshot.places, userCoords, nearbyRadiusKm]);
 
   // Auto-fit map to visible places whenever filters produce a meaningful subset.
   // Derived as a string key (no setState in effect) — FitBoundsOnVersion reacts to key changes.
@@ -2058,11 +2099,16 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           ) : null}
           {geoError ? <p className="hint">{geoError}</p> : null}
-          <button type="button" className="btn clearFiltersBtn" onClick={clearFilters}>
+          <button
+            type="button"
+            className="btn clearFiltersBtn iconBtn"
+            onClick={clearFilters}
+            aria-label={t.clearFilters}
+            title={t.clearFilters}
+          >
             <span className="btnIcon" aria-hidden="true">
-              <Icon name="reset" />
+              <Icon name="filter-x" />
             </span>
-            {t.clearFilters}
           </button>
         </div>
 
@@ -2371,9 +2417,14 @@ export default function Dashboard({ snapshot }: Props) {
             /* Filter mode header */
             <div className="gmSheetModeHeader">
               <span className="gmSheetModeTitle">{lruet(lang, "Фильтры", "Filtrid", "Filters")}</span>
-              <button className="btn btnSmall" type="button" onClick={clearFilters}>
-                <span className="btnIcon" aria-hidden="true"><Icon name="reset" /></span>
-                {t.clearFilters}
+              <button
+                className="gmSheetClearBtn"
+                type="button"
+                onClick={clearFilters}
+                aria-label={t.clearFilters}
+                title={t.clearFilters}
+              >
+                <Icon name="filter-x" />
               </button>
               <button
                 className="gmSheetCloseBtn"
@@ -2411,44 +2462,44 @@ export default function Dashboard({ snapshot }: Props) {
               {sheetMode === "filter" ? (
                 /* ---- FILTER MODE / BURGER PANEL ---- */
                 <div className="gmSheetFilterContent">
-                  {/* Burger settings panel: theme toggle, language, copyright */}
-                  <div className="gmBurgerPanel">
-                    <div className="gmBurgerRow">
-                      <b>{lruet(lang, "Тема", "Teema", "Theme")}</b>
-                      <div className="gmThemeToggle" role="group" aria-label="Theme">
-                        <button
-                          type="button"
-                          className={`gmThemeBtn ${theme === "light" ? "active" : ""}`}
-                          onClick={() => setTheme("light")}
-                          aria-pressed={theme === "light"}
-                        >
-                          <span className="btnIcon" aria-hidden="true"><Icon name="sun" /></span>
-                          {lruet(lang, "Светлая", "Hele", "Light")}
-                        </button>
-                        <button
-                          type="button"
-                          className={`gmThemeBtn ${theme === "dark" ? "active" : ""}`}
-                          onClick={() => setTheme("dark")}
-                          aria-pressed={theme === "dark"}
-                        >
-                          <span className="btnIcon" aria-hidden="true"><Icon name="moon" /></span>
-                          {lruet(lang, "Тёмная", "Tume", "Dark")}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="gmBurgerRow">
-                      <b>{lruet(lang, "Язык", "Keel", "Language")}</b>
-                      <div className="drawerLangRow" style={{ padding: 0 }}>
-                        <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
-                        <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
-                        <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
-                      </div>
-                    </div>
-                    <p className="gmCopyright">
-                      © {new Date().getFullYear()} H2O Atlas ·{" "}
-                      {lruet(lang, "Открытые данные Terviseamet + ML", "Terviseameti avaandmed + ML", "Terviseamet open data + ML")}
-                    </p>
+                  {/* Primary toggle chips pinned to the top of filters —
+                      "Alerts only" + "Near me" with live counts so users
+                      see how many points each predicate exposes. */}
+                  <div className="gmQuickToggleRow">
+                    <button
+                      type="button"
+                      className={`gmQuickToggle gmQuickAlert ${alertsOnly ? "active" : ""}`}
+                      onClick={() => setAlertsOnly((v) => !v)}
+                      aria-pressed={alertsOnly}
+                    >
+                      <span className="gmQuickToggleIcon" aria-hidden="true"><Icon name="alert" /></span>
+                      <span className="gmQuickToggleLabel">{t.alertsOnly}</span>
+                      <span className="gmQuickToggleCount">{alertsCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`gmQuickToggle gmQuickNear ${nearbyOnly ? "active" : ""}`}
+                      onClick={() => {
+                        if (nearbyOnly) { setNearbyOnly(false); setGeoError(null); }
+                        else if (userCoords) { setNearbyOnly(true); setGeoError(null); }
+                        else { activateNearMe(); }
+                      }}
+                      aria-pressed={nearbyOnly}
+                    >
+                      <span className="gmQuickToggleIcon" aria-hidden="true"><Icon name="locate" /></span>
+                      <span className="gmQuickToggleLabel">{t.nearMe}</span>
+                      <span className="gmQuickToggleCount">{nearMeCount ?? "—"}</span>
+                    </button>
                   </div>
+                  {nearbyOnly && userCoords ? (
+                    <div className="nearbyPanel">
+                      <label htmlFor="gm-nearby-radius">{t.nearRadius}: <b>{nearbyRadiusKm} km</b></label>
+                      <input id="gm-nearby-radius" type="range" min={1} max={50} step={1} value={nearbyRadiusKm}
+                        onChange={(e) => setNearbyRadiusKm(Number(e.target.value))} />
+                      <button type="button" className="btn btnSmall" onClick={() => { setUserCoords(null); setNearbyOnly(false); setGeoError(null); }}>{t.clearNearMe}</button>
+                    </div>
+                  ) : null}
+                  {geoError ? <p className="hint">{geoError}</p> : null}
 
                   <div className="field">
                     <label htmlFor="gm-county-select">{t.county}</label>
@@ -2532,31 +2583,51 @@ export default function Dashboard({ snapshot }: Props) {
                     </div>
                     <p className="hint">{t.latestSampleDateHint}</p>
                   </div>
-                  <div className="filterActionRow">
-                    <button type="button" className={`btn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
-                      onClick={() => setAlertsOnly((v) => !v)} aria-pressed={alertsOnly}>
-                      <span className="btnIcon" aria-hidden="true"><Icon name="alert" /></span>{t.alertsOnly}
-                    </button>
-                    <button type="button" className={`btn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
-                      onClick={() => { if (nearbyOnly) { setNearbyOnly(false); setGeoError(null); } else if (userCoords) { setNearbyOnly(true); setGeoError(null); } else { activateNearMe(); } }}
-                      aria-pressed={nearbyOnly}>
-                      <span className="btnIcon" aria-hidden="true"><Icon name="locate" /></span>{t.nearMe}
-                    </button>
-                    {nearbyOnly && userCoords ? (
-                      <div className="nearbyPanel">
-                        <label htmlFor="gm-nearby-radius">{t.nearRadius}: <b>{nearbyRadiusKm} km</b></label>
-                        <input id="gm-nearby-radius" type="range" min={1} max={50} step={1} value={nearbyRadiusKm}
-                          onChange={(e) => setNearbyRadiusKm(Number(e.target.value))} />
-                        <button type="button" className="btn btnSmall" onClick={() => { setUserCoords(null); setNearbyOnly(false); setGeoError(null); }}>{t.clearNearMe}</button>
-                      </div>
-                    ) : null}
-                    {geoError ? <p className="hint">{geoError}</p> : null}
-                  </div>
                   <div className="stats">
                     <div className="stat"><div className="k">{lruet(lang, "Видимых", "Nähtav", "Visible")}</div><div className="v">{filtered.length}</div></div>
                     <div className="stat"><div className="k">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</div><div className="v">{high}</div></div>
                     <div className="stat"><div className="k">{lruet(lang, "Низкий риск", "Madal risk", "Low risk")}</div><div className="v">{low}</div></div>
                     <div className="stat"><div className="k">{lruet(lang, "Офиц. нарушения", "Ametlik rikkumine", "Official violations")}</div><div className="v">{violations}</div></div>
+                  </div>
+
+                  {/* Burger settings panel: theme toggle, language, copyright —
+                      moved to the bottom so the functional filters come first. */}
+                  <div className="gmBurgerPanel">
+                    <div className="gmBurgerRow">
+                      <b>{lruet(lang, "Тема", "Teema", "Theme")}</b>
+                      <div className="gmThemeToggle" role="group" aria-label="Theme">
+                        <button
+                          type="button"
+                          className={`gmThemeBtn ${theme === "light" ? "active" : ""}`}
+                          onClick={() => setTheme("light")}
+                          aria-pressed={theme === "light"}
+                        >
+                          <span className="btnIcon" aria-hidden="true"><Icon name="sun" /></span>
+                          {lruet(lang, "Светлая", "Hele", "Light")}
+                        </button>
+                        <button
+                          type="button"
+                          className={`gmThemeBtn ${theme === "dark" ? "active" : ""}`}
+                          onClick={() => setTheme("dark")}
+                          aria-pressed={theme === "dark"}
+                        >
+                          <span className="btnIcon" aria-hidden="true"><Icon name="moon" /></span>
+                          {lruet(lang, "Тёмная", "Tume", "Dark")}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="gmBurgerRow">
+                      <b>{lruet(lang, "Язык", "Keel", "Language")}</b>
+                      <div className="drawerLangRow" style={{ padding: 0 }}>
+                        <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+                        <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+                        <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+                      </div>
+                    </div>
+                    <p className="gmCopyright">
+                      © {new Date().getFullYear()} H2O Atlas ·{" "}
+                      {lruet(lang, "Открытые данные Terviseamet + ML", "Terviseameti avaandmed + ML", "Terviseamet open data + ML")}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -3950,13 +4021,19 @@ export default function Dashboard({ snapshot }: Props) {
       {infoOpen ? (
         <div className="modalBackdrop" onClick={() => setInfoOpen(false)}>
           <div className="modalCard panel" onClick={(e) => e.stopPropagation()}>
-            <h3 className="sectionTitle">{infoTitle}</h3>
-            <div className="modalBody">{renderInfoContent(infoText)}</div>
-            <div className="modalFooter">
-              <button className="btn btnSmall" onClick={() => setInfoOpen(false)}>
-                {t.close}
+            <div className="modalHeader">
+              <h3 className="sectionTitle">{infoTitle}</h3>
+              <button
+                type="button"
+                className="modalCloseBtn"
+                onClick={() => setInfoOpen(false)}
+                aria-label={t.close}
+                title={t.close}
+              >
+                <Icon name="close" />
               </button>
             </div>
+            <div className="modalBody">{renderInfoContent(infoText)}</div>
           </div>
         </div>
       ) : null}
