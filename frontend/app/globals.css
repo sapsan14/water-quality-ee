@@ -1493,12 +1493,18 @@ body.mapFullscreenActive {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  /* Explicit height so translateY percentages are always relative to 92dvh,
-     not to the auto content size. */
-  height: 92dvh;
+  /* Explicit height so translateY percentages are always relative to the
+     viewport, not to the auto content size. Order matters: put the static
+     `vh` units first as a fallback for browsers that don't understand
+     `dvh`, and the dynamic `dvh` units last so modern browsers use the
+     *visible* viewport (which tracks window.innerHeight as URL bars
+     collapse). With the previous order, `vh` won on every browser and the
+     sheet — together with the fullscreen map below — was sized against the
+     large viewport, breaking the pin-centring math which uses innerHeight. */
   height: 92vh;
-  max-height: 92dvh;
+  height: 92dvh;
   max-height: 92vh;
+  max-height: 92dvh;
 }
 
 @media (max-width: 900px) {
@@ -2865,15 +2871,19 @@ html[data-theme="dark"] .dateRangeSep {
   }
 
   .mapShell {
-    height: 58dvh;
+    /* See .mobileBottomSheet comment: keep `vh` first as fallback and
+       `dvh` second so modern browsers use the dynamic (visible) viewport,
+       matching window.innerHeight. */
     height: 58vh;
+    height: 58dvh;
     min-height: 360px;
   }
 
   .mapPanelFullscreen .mapShell {
-    height: 100dvh;
     height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .mobileBottomSheet {

@@ -1373,14 +1373,26 @@ export default function Dashboard({ snapshot }: Props) {
 
   // Combined "obscured pixels at the bottom" = sheet height + keyboard.
   // Used by the map to keep selected markers above sheet / IME.
+  //
+  // These constants MUST stay in sync with `.mobileBottomSheet` in
+  // globals.css — otherwise FocusOnSelectedPoint will over/under-shoot and
+  // the selected pin slides out of view when the sheet opens.
+  //   - own height:           92dvh        (≈ 0.92 × innerHeight)
+  //   - half translateY:      46% of own   (→ visible = 54% of own)
+  //   - full translateY:      6rem + safe-area-inset-top
+  //   - collapsed translateY: 100% - 84px - safe-area-inset-bottom
+  // Previous values (0.5*vh for half, 0.55*vh for full, 72 for collapsed)
+  // were ballpark — the "full" one was off by ~30 percentage points of vh,
+  // hiding the pin behind the expanded sheet.
   const mobileBottomOverlayPx = useMemo(() => {
     if (!isMobile) return 0;
+    const sheetOwnHeight = viewportHeight * 0.92;
     const sheetPx =
       mobilePanelState === "full"
-        ? Math.round(viewportHeight * 0.55)
+        ? Math.max(0, Math.round(sheetOwnHeight - 96))
         : mobilePanelState === "half"
-          ? Math.round(viewportHeight * 0.5)
-          : 72;
+          ? Math.round(sheetOwnHeight * 0.54)
+          : 84;
     return sheetPx + keyboardOffset;
   }, [isMobile, mobilePanelState, viewportHeight, keyboardOffset]);
 
