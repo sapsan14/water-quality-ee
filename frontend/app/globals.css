@@ -2503,6 +2503,27 @@ html[data-theme="dark"] .dateRangeSep {
     overflow: hidden;
   }
 
+  /* Belt-and-suspenders: pin the map shell + leaflet root to the
+     viewport horizontally on mobile so no ancestor border/padding/
+     margin can leak the dark `.panel` bg as ~10px side strips next
+     to the leaflet canvas. Static CSS analysis came up clean for the
+     ancestor chain, but the strips were still visible in dark mode
+     on the user's screenshot — this rule guarantees the leaflet
+     container is exactly viewport-wide regardless of any unknown
+     ancestor inset. Safe because `body.mapFullscreenActive` already
+     sets `overflow: hidden` on mobile (Dashboard.tsx auto-fullscreen
+     effect), so 100vw == visible viewport width with no scrollbar
+     reservation. */
+  .mapTopPanel .mapShell,
+  .mobileMapPanel .mapShell,
+  .mapTopPanel .leaflet-container,
+  .mobileMapPanel .leaflet-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
   .mapTopPanel .sectionTitle,
   .mobileMapPanel .sectionTitle {
     display: none;
