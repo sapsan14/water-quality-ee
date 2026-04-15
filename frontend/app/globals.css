@@ -2488,15 +2488,22 @@ html[data-theme="dark"] .dateRangeSep {
     padding: 0.7rem;
   }
 
+  /* Edge-to-edge map on mobile. Targeted on `.mapTopPanel` directly (not
+     on the JS-added `.mobileMapPanel` class) so the overrides apply
+     during SSR / pre-hydration paint — otherwise `.panel` padding +
+     border remains visible as a thin frame around the map until React
+     hydrates and toggles the `mobileMapPanel` class. */
+  .mapTopPanel,
   .mobileMapPanel {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     /* Ensure the map fills the viewport with no gap from the page chrome. */
     overflow: hidden;
   }
 
+  .mapTopPanel .sectionTitle,
   .mobileMapPanel .sectionTitle {
     display: none;
   }
@@ -2506,6 +2513,7 @@ html[data-theme="dark"] .dateRangeSep {
      (0.45rem) still leaves a thin white strip above the map — visible as
      a subtle border. Hide the row entirely so the leaflet canvas hugs the
      top edge of the viewport. */
+  .mapTopPanel .mapHeaderRow,
   .mobileMapPanel .mapHeaderRow {
     display: none;
   }
