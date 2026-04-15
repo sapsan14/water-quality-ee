@@ -1794,26 +1794,18 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          {/* Info nav buttons — all open the info-page popup overlay so that
-              the main page stays focused on the map. About Model / About
-              Service / Diagnostics live only in the popup on desktop. */}
+          {/* Single info entry point — opens the floating info pane that
+              hosts all three informational tabs (About Model / About
+              Service / Diagnostics). Keeping the header lean prevents
+              the buttons from competing with the map for attention. */}
           <button
-            className="btn headerInfoNav"
+            className="btn headerInfoNav headerInfoNavPrimary"
             onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutModel"); }}
           >
+            <span className="headerInfoNavIcon" aria-hidden="true">
+              <Icon name="info" />
+            </span>
             {t.tabs.aboutModel}
-          </button>
-          <button
-            className="btn headerInfoNav"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutService"); }}
-          >
-            {t.tabs.aboutService}
-          </button>
-          <button
-            className="btn headerInfoNav"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("analytics"); }}
-          >
-            {t.tabs.analytics}
           </button>
           <div className="headerDivider" aria-hidden="true" />
           {/* Language dropdown (replaces 3 flat ET/EN/RU pills) */}
@@ -3322,7 +3314,17 @@ export default function Dashboard({ snapshot }: Props) {
       </div>
 
       {infoPageOpen ? (
-        <div className="infoPageOverlay">
+        <div
+          className="infoPageBackdrop"
+          onClick={() => setInfoPageOpen(false)}
+          role="presentation"
+        >
+        <div
+          className="infoPageOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="infoPageHeader">
             <h3 className="infoPageTitle">H2O Atlas</h3>
             <button
@@ -3621,6 +3623,7 @@ export default function Dashboard({ snapshot }: Props) {
               )}
             </p>
           </div>
+        </div>
         </div>
       ) : null}
 
