@@ -380,6 +380,14 @@ a {
   text-align: left;
 }
 
+/* ── Sticky header — stays visible when table body scrolls ─── */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #ffffff;
+}
+
 .table tbody tr {
   cursor: pointer;
 }
@@ -428,6 +436,12 @@ a {
 .table td:last-child .iconTooltip::after,
 .table th:last-child .iconTooltip::after { left: auto; right: 0; transform: none; }
 
+/* Header tooltips open downward so they aren't clipped by the overflow container */
+.table thead th .iconTooltip::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+
 .cellIcon {
   display: inline-flex;
   align-items: center;
@@ -446,6 +460,15 @@ a {
 .table td.iconCol {
   text-align: center;
   width: 2.6rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+/* date column — must not be constrained to iconCol width */
+.table th.dateCol,
+.table td.dateCol {
+  white-space: nowrap;
+  min-width: 5.5rem;
   padding-left: 0.25rem;
   padding-right: 0.25rem;
 }
@@ -1705,6 +1728,10 @@ html[data-theme="dark"] .modalCard {
 html[data-theme="dark"] .table th,
 html[data-theme="dark"] .table td {
   border-bottom-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .table thead th {
+  background: #111b2d;
 }
 
 html[data-theme="dark"] .field select,
