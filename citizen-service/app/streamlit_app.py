@@ -1120,10 +1120,10 @@ def _render_about_model() -> None:
     )
 
 
-def _render_about_service() -> None:
+def _render_about_service(lang: str = "RU") -> None:
     """Standalone info page: what this service is and how it works."""
-    st.markdown(
-        """
+    _ABOUT_SERVICE: dict[str, str] = {
+        "RU": """
 ## О сервисе
 
 ### Зачем этот сервис
@@ -1155,8 +1155,73 @@ def _render_about_service() -> None:
 
 GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам
 05:00 UTC и 1-е число 04:00 UTC).
-"""
-    )
+""",
+        "EN": """
+## About the service
+
+### What this service does
+
+The map shows **individual sampling points**: swimming locations, **pools / SPA**, **drinking water network** (`veevärk`),
+**drinking water sources** (`joogiveeallikas`). Each point displays the sample date, official status,
+predictions from **four models**, and the **parameters** of the latest sample.
+
+**Mineral water** (`mineraalvesi`): no annual XML files are available in Terviseamet opendata — not included in the snapshot.
+
+### Four models
+
+| Model | Description |
+|-------|-------------|
+| **Logistic Regression** | Linear baseline classifier. Interpretable and fast. |
+| **Random Forest** | Ensemble of decision trees. Robust to outliers and missing values. |
+| **Gradient Boosting** | Sequential boosting. Typically more accurate on imbalanced data. |
+| **LightGBM** | Microsoft gradient boosting. Faster, with native NaN handling. |
+
+All models are trained on **the same data** (all years). `P(violation)` is the probability of the "violation" class
+(0 = safe, 1 = definite violation). Default threshold: 0.5.
+
+### Coordinates
+
+Coordinates in the snapshot come from: **OpenCage** (when built with an API key), **cache**, **county centroid**, or
+**approximate point** (`approximate_ee`). Drinking water network points are often geocoded coarsely.
+
+### Data updates
+
+GitHub Actions on schedule: `citizen-snapshot.yml` (full snapshot with models: Mondays at 05:00 UTC and the 1st of each month at 04:00 UTC).
+""",
+        "ET": """
+## Teenuse kohta
+
+### Mida see teenus teeb
+
+Kaardil on **üksikud proovivõtupunktid**: suplusekohad, **basseinid / SPA**, **ühisveevärk** (`veevärk`),
+**joogivee allikad** (`joogiveeallikas`). Igal punktil kuvatakse proovi kuupäev, ametlik staatus,
+**nelja mudeli** ennustused ja viimase proovi **parameetrid**.
+
+**Mineraalvesi** (`mineraalvesi`): Terviseameti avalikus andmebaasis puuduvad aasta-XML-failid — hetkel puudub andmekogumisel.
+
+### Neli mudelit
+
+| Mudel | Kirjeldus |
+|-------|-----------|
+| **Logistic Regression** | Lineaarne baasmudel. Tõlgendatav ja kiire. |
+| **Random Forest** | Otsustuspuude ansambel. Vastupidav erindite ja puuduvate väärtuste suhtes. |
+| **Gradient Boosting** | Järjestikune võimendamine. Tavaliselt täpsem tasakaalustamata andmetel. |
+| **LightGBM** | Microsofti gradientvõimendus. Kiirem, natiivselt toetab NaN-väärtusi. |
+
+Kõik mudelid on treenitud **samadel andmetel** (kõik aastad). `P(rikkumine)` on "rikkumise" klassi tõenäosus
+(0 = ohutu, 1 = kindel rikkumine). Vaikimisi lävi: 0.5.
+
+### Koordinaadid
+
+Koordinaadid andmekogumis pärinevad: **OpenCage** (kui ehitatud API-võtmega), **vahemälust**, **maakonna tsentroidist** või
+**ligikaudsest punktist** (`approximate_ee`). Ühisveevärgi punktide geokodeerimine on sageli ebatäpne.
+
+### Andmete uuendamine
+
+GitHub Actions ajakaval: `citizen-snapshot.yml` (täielik andmekogum koos mudelitega: esmaspäeviti kell 05:00 UTC ja iga kuu 1. kuupäeval kell 04:00 UTC).
+""",
+    }
+    st.markdown(_ABOUT_SERVICE.get(lang, _ABOUT_SERVICE["RU"]))
 
 
 def main() -> None:
@@ -1455,7 +1520,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         _render_about_model()
         return
     if info_page == "about_service":
-        _render_about_service()
+        _render_about_service(lang)
         return
 
     # ── main tabs: Map / Table / Compare ──────────────────────────────────
