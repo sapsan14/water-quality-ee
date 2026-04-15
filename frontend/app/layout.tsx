@@ -31,9 +31,22 @@ export const metadata: Metadata = {
   }
 };
 
+// Inline FOUC-prevention script — applies the saved theme to <body>
+// before React hydrates, so users do not see a light flash on dark devices
+// (or vice versa) and the mobile shell does not blink between themes.
+const themeBootstrap = `(() => {
+  try {
+    var t = localStorage.getItem('water.ui.theme.v1');
+    if (t === 'dark') document.documentElement.dataset.theme = 'dark';
+  } catch (e) {}
+})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
       <body className={`${spaceGrotesk.variable} ${ibmPlexSans.variable} ${manrope.variable} cyr-ibm`}>{children}</body>
     </html>
   );

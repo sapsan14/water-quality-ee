@@ -10,8 +10,20 @@ import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
 
 type Props = { snapshot: FrontendSnapshot };
-type IconName = "pin" | "unpin" | "close" | "alert" | "reset" | "filters" | "locate";
+type IconName =
+  | "pin"
+  | "unpin"
+  | "close"
+  | "alert"
+  | "reset"
+  | "filters"
+  | "locate"
+  | "info"
+  | "calendar"
+  | "sun"
+  | "moon";
 type CyrillicFont = "ibm" | "manrope";
+type ThemeMode = "light" | "dark";
 
 const riskOrder: FrontendPlace["risk_level"][] = ["all", "low", "medium", "high", "unknown"] as never;
 const officialOrder = ["all", "compliant", "violation", "unknown"] as const;
@@ -180,6 +192,42 @@ function Icon({ name }: { name: IconName }) {
       </svg>
     );
   }
+  if (name === "info") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <circle cx="12" cy="7.6" r="1.4" fill="currentColor" />
+        <rect x="10.7" y="10.4" width="2.6" height="7.2" rx="1" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (name === "calendar") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.2" y="5" width="17.6" height="16" rx="2.4" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M3.2 9.6h17.6" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M8 3v3.2M16 3v3.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (name === "sun") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+        <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M5.1 18.9l1.7-1.7M17.2 6.8l1.7-1.7" />
+        </g>
+      </svg>
+    );
+  }
+  if (name === "moon") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 13.5A9 9 0 1 1 10.5 3a7.2 7.2 0 0 0 10.5 10.5Z" fill="currentColor" />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 4a8 8 0 1 1-5.7 2.3L4.9 7.7A10 10 0 1 0 12 2v2Zm-1 1 4 4-4 4V10H2V8h9V5Z" fill="currentColor" />
@@ -201,6 +249,12 @@ export default function Dashboard({ snapshot }: Props) {
     if (typeof window === "undefined") return "ibm";
     const saved = window.localStorage.getItem("water.ui.cyrillic-font.v1");
     return saved === "ibm" || saved === "manrope" ? saved : "ibm";
+  });
+  // Theme is opt-in. Default light. Applied to <body data-theme>.
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "light";
+    const saved = window.localStorage.getItem("water.ui.theme.v1");
+    return saved === "dark" ? "dark" : "light";
   });
   const [activeTab, setActiveTab] = useState<TabKey>("alerts");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -240,7 +294,15 @@ export default function Dashboard({ snapshot }: Props) {
       return [];
     }
   });
-  const [isMobile, setIsMobile] = useState(false);
+  // Initialize from matchMedia synchronously so first client render already
+  // matches the viewport. Server still emits desktop markup, but the mobile
+  // overlays (.gmSearchBar, .mobileBottomSheet) are hidden via pure CSS until
+  // `@media (max-width: 900px)` matches, so users do not see the desktop UI
+  // flash before the mobile shell appears.
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 900px)").matches;
+  });
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
   const [sheetMode, setSheetMode] = useState<MobileSheetMode>("place");
@@ -1017,13 +1079,20 @@ export default function Dashboard({ snapshot }: Props) {
     if (filtered.length === 0 || filtered.length === snapshot.places.length) return "";
     const firstId = filtered[0]?.id ?? "";
     const lastId = filtered[filtered.length - 1]?.id ?? "";
-    return `${filtered.length}:${firstId}:${lastId}`;
-  }, [filtered, snapshot.places.length]);
+    // Include the search query so the map re-targets the first match every
+    // time the user types — even if other filters keep the same set.
+    return `${filtered.length}:${firstId}:${lastId}:${query.trim().toLowerCase()}`;
+  }, [filtered, snapshot.places.length, query]);
 
-  const fitBoundsPlaces = useMemo<[number, number][]>(
-    () => filtered.map((p) => [p.lat, p.lon]),
-    [filtered]
-  );
+  // When an active text search is in play, center on the FIRST match instead
+  // of fitting all matches — that's what users expect on mobile when they
+  // type a place name. Otherwise fit the full set as before.
+  const fitBoundsPlaces = useMemo<[number, number][]>(() => {
+    if (query.trim().length > 0 && filtered.length > 0) {
+      return [[filtered[0].lat, filtered[0].lon]];
+    }
+    return filtered.map((p) => [p.lat, p.lon]);
+  }, [filtered, query]);
 
   useEffect(() => {
     track("dashboard_open", { places_count: snapshot.places_count, has_model: snapshot.has_model_predictions });
@@ -1068,6 +1137,18 @@ export default function Dashboard({ snapshot }: Props) {
     }
   }, [cyrillicFont]);
 
+  // Persist + apply theme to <html data-theme>. Light is the implicit
+  // default — the attribute is only set when dark is requested, which
+  // mirrors the inline FOUC-avoidance script in layout.tsx.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (theme === "dark") document.documentElement.dataset.theme = "dark";
+    else delete document.documentElement.dataset.theme;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("water.ui.theme.v1", theme);
+    }
+  }, [theme]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(max-width: 900px)");
@@ -1080,10 +1161,52 @@ export default function Dashboard({ snapshot }: Props) {
         mobileFullscreenInitializedRef.current = true;
       }
     };
+    // First run — initial state may already be correct, but re-running
+    // is cheap and ensures the fullscreen-init effect fires.
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
+
+  // Track the on-screen keyboard via VisualViewport so map focus calls
+  // can offset the marker above the IME / bottom sheet.
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState<number>(() =>
+    typeof window === "undefined" ? 800 : window.innerHeight
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onResize = () => setViewportHeight(window.innerHeight);
+    onResize();
+    window.addEventListener("resize", onResize);
+    const vv = window.visualViewport;
+    const onVvChange = () => {
+      if (!vv) return;
+      const diff = window.innerHeight - (vv.height + vv.offsetTop);
+      setKeyboardOffset(diff > 80 ? diff : 0);
+    };
+    onVvChange();
+    vv?.addEventListener("resize", onVvChange);
+    vv?.addEventListener("scroll", onVvChange);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      vv?.removeEventListener("resize", onVvChange);
+      vv?.removeEventListener("scroll", onVvChange);
+    };
+  }, []);
+
+  // Combined "obscured pixels at the bottom" = sheet height + keyboard.
+  // Used by the map to keep selected markers above sheet / IME.
+  const mobileBottomOverlayPx = useMemo(() => {
+    if (!isMobile) return 0;
+    const sheetPx =
+      mobilePanelState === "full"
+        ? Math.round(viewportHeight * 0.55)
+        : mobilePanelState === "half"
+          ? Math.round(viewportHeight * 0.5)
+          : 72;
+    return sheetPx + keyboardOffset;
+  }, [isMobile, mobilePanelState, viewportHeight, keyboardOffset]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -1513,7 +1636,7 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       ) : null}
 
-      <div className={`topBar unifiedTopBar ${headerCompact ? "compact" : ""} ${isMobile ? "mobileHidden" : ""}`}>
+      <div className={`topBar unifiedTopBar desktopOnly ${headerCompact ? "compact" : ""}`}>
         <div className="brandBlock unifiedBrandBlock" style={{ display: "flex" }}>
           <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo unifiedBrandLogo" width={36} height={36} priority />
           <div className="unifiedBrandText">
@@ -1544,9 +1667,11 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       </div>
 
-      {isMobile ? (
-        <>
-          {/* Google Maps-style search bar — always visible on mobile */}
+      {/* Mobile-only Google Maps-style search bar.
+          Rendered unconditionally so the initial paint already matches the
+          viewport. Visibility is controlled by `.gmSearchBar` (display:none
+          by default → display:flex inside @media (max-width: 900px)). */}
+      <>
           <div className="gmSearchBar">
             <button
               className="gmSearchMenuBtn"
@@ -1586,11 +1711,15 @@ export default function Dashboard({ snapshot }: Props) {
             </button>
             <button
               className="gmSearchInfoBtn"
-              onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
+              onClick={() => { setInfoPageOpen(true); setInfoPageTab("aboutService"); }}
               aria-label="Info"
             >
-              <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.18" />
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="7.6" r="1.4" fill="currentColor" />
+                <rect x="10.7" y="10.4" width="2.6" height="7.2" rx="1.1" fill="currentColor" />
+                <path d="M0 0z"/>
               </svg>
             </button>
           </div>
@@ -1627,7 +1756,6 @@ export default function Dashboard({ snapshot }: Props) {
             ) : null}
           </div>
         </>
-      ) : null}
 
       {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
       <aside className={`drawer panel ${drawerOpen || filtersPinned ? "open" : ""} ${filtersPinned ? "pinned" : ""}`}>
@@ -1675,7 +1803,7 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="field">
           <label htmlFor="segment-select">{lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}</label>
           <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">
-            <option value="all">all</option>
+            <option value="all">{lruet(lang, "Все", "Kõik", "All")}</option>
             {placeKinds.map((k) => (
               <option key={`k-${k}`} value={k}>
                 {placeKindLabel(k)}
@@ -1686,7 +1814,7 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="field">
           <label htmlFor="county-select">{t.county}</label>
           <select id="county-select" value={county} onChange={(e) => setCounty(e.target.value)} aria-label="Filter by county">
-            <option value="all">all</option>
+            <option value="all">{lruet(lang, "Все", "Kõik", "All")}</option>
             {counties.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
@@ -1699,7 +1827,15 @@ export default function Dashboard({ snapshot }: Props) {
           <select id="risk-select" value={risk} onChange={(e) => setRisk(e.target.value)} aria-label="Filter by risk level">
             {riskOrder.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {(r as string) === "all"
+                  ? lruet(lang, "Все", "Kõik", "All")
+                  : (r as string) === "low"
+                  ? lruet(lang, "Низкий", "Madal", "Low")
+                  : (r as string) === "medium"
+                  ? lruet(lang, "Средний", "Keskmine", "Medium")
+                  : (r as string) === "high"
+                  ? lruet(lang, "Высокий", "Kõrge", "High")
+                  : lruet(lang, "Неизвестно", "Teadmata", "Unknown")}
               </option>
             ))}
           </select>
@@ -1709,7 +1845,13 @@ export default function Dashboard({ snapshot }: Props) {
           <select id="official-select" value={official} onChange={(e) => setOfficial(e.target.value as (typeof officialOrder)[number])}>
             {officialOrder.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {s === "all"
+                  ? lruet(lang, "Все", "Kõik", "All")
+                  : s === "compliant"
+                  ? lruet(lang, "Соответствует", "Vastab", "Compliant")
+                  : s === "violation"
+                  ? lruet(lang, "Нарушение", "Rikkumine", "Violation")
+                  : lruet(lang, "Неизвестно", "Teadmata", "Unknown")}
               </option>
             ))}
           </select>
@@ -1919,10 +2061,15 @@ export default function Dashboard({ snapshot }: Props) {
           showCountyOverlay={!isMobile}
           fitBoundsKey={fitBoundsKey}
           fitBoundsPlaces={fitBoundsPlaces}
+          /* When the bottom sheet is half/full or the keyboard is open,
+             tell MapClient how much screen real estate is obscured so
+             flyTo() pans the marker into the still-visible area. */
+          bottomOverlayPx={isMobile ? mobileBottomOverlayPx : 0}
+          topOverlayPx={isMobile ? 105 : 20}
         />
       </section>
 
-      <section className={`panel selectedPointDesktop ${isMobile ? "mobileHidden" : ""}`}>
+      <section className="panel selectedPointDesktop desktopOnly">
         <h3 className="sectionTitle">{t.selectedPoint}</h3>
         {!selectedPlace ? (
           <p className="hint">{t.noSelectedPoint}</p>
@@ -2087,8 +2234,9 @@ export default function Dashboard({ snapshot }: Props) {
         )}
       </section>
 
-      {isMobile ? (
-        <section
+      {/* Mobile bottom sheet — rendered unconditionally to avoid hydration
+          flicker. CSS hides it on viewports wider than 900px. */}
+      <section
           className={`mobileBottomSheet ${mobilePanelState} ${sheetDragging ? "dragging" : ""}`}
           style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
         >
@@ -2161,18 +2309,51 @@ export default function Dashboard({ snapshot }: Props) {
           {mobilePanelState !== "collapsed" ? (
             <div className="gmSheetBody">
               {sheetMode === "filter" ? (
-                /* ---- FILTER MODE ---- */
+                /* ---- FILTER MODE / BURGER PANEL ---- */
                 <div className="gmSheetFilterContent">
-                  <div className="drawerLangRow">
-                    <span className="drawerLangLabel">{lruet(lang, "Язык", "Keel", "Language")}</span>
-                    <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
-                    <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
-                    <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+                  {/* Burger settings panel: theme toggle, language, copyright */}
+                  <div className="gmBurgerPanel">
+                    <div className="gmBurgerRow">
+                      <b>{lruet(lang, "Тема", "Teema", "Theme")}</b>
+                      <div className="gmThemeToggle" role="group" aria-label="Theme">
+                        <button
+                          type="button"
+                          className={`gmThemeBtn ${theme === "light" ? "active" : ""}`}
+                          onClick={() => setTheme("light")}
+                          aria-pressed={theme === "light"}
+                        >
+                          <span className="btnIcon" aria-hidden="true"><Icon name="sun" /></span>
+                          {lruet(lang, "Светлая", "Hele", "Light")}
+                        </button>
+                        <button
+                          type="button"
+                          className={`gmThemeBtn ${theme === "dark" ? "active" : ""}`}
+                          onClick={() => setTheme("dark")}
+                          aria-pressed={theme === "dark"}
+                        >
+                          <span className="btnIcon" aria-hidden="true"><Icon name="moon" /></span>
+                          {lruet(lang, "Тёмная", "Tume", "Dark")}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="gmBurgerRow">
+                      <b>{lruet(lang, "Язык", "Keel", "Language")}</b>
+                      <div className="drawerLangRow" style={{ padding: 0 }}>
+                        <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+                        <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+                        <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+                      </div>
+                    </div>
+                    <p className="gmCopyright">
+                      © {new Date().getFullYear()} H2O Atlas ·{" "}
+                      {lruet(lang, "Открытые данные Terviseamet + ML", "Terviseameti avaandmed + ML", "Terviseamet open data + ML")}
+                    </p>
                   </div>
+
                   <div className="field">
                     <label htmlFor="gm-county-select">{t.county}</label>
                     <select id="gm-county-select" value={county} onChange={(e) => setCounty(e.target.value)}>
-                      <option value="all">all</option>
+                      <option value="all">{lruet(lang, "Все", "Kõik", "All")}</option>
                       {counties.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   </div>
@@ -2210,11 +2391,46 @@ export default function Dashboard({ snapshot }: Props) {
                   </div>
                   <div className="field">
                     <label>{t.latestSampleDate}</label>
-                    <div style={{ display: "grid", gap: "0.35rem" }}>
-                      <input type="date" value={sampleDateFrom} onChange={(e) => setSampleDateFrom(e.target.value)} aria-label={t.dateFrom} />
-                      <input type="date" value={sampleDateTo} onChange={(e) => setSampleDateTo(e.target.value)} aria-label={t.dateTo} />
-                      <button className="btn btnSmall" type="button" onClick={() => { setSampleDateFrom(""); setSampleDateTo(""); }}>{t.resetDate}</button>
+                    {/* Compact From/To date pickers — calendar icons replace
+                        the bulky native listboxes seen in the old UI. */}
+                    <div className="gmDateRangeWrap">
+                      <div className="gmDateRange">
+                        <div>
+                          <span className="gmDateLabel">{t.dateFrom}</span>
+                          <div className="gmDateField">
+                            <Icon name="calendar" />
+                            <input
+                              type="date"
+                              value={sampleDateFrom}
+                              onChange={(e) => setSampleDateFrom(e.target.value)}
+                              aria-label={t.dateFrom}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="gmDateLabel">{t.dateTo}</span>
+                          <div className="gmDateField">
+                            <Icon name="calendar" />
+                            <input
+                              type="date"
+                              value={sampleDateTo}
+                              onChange={(e) => setSampleDateTo(e.target.value)}
+                              aria-label={t.dateTo}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="gmDateClear"
+                        onClick={() => { setSampleDateFrom(""); setSampleDateTo(""); }}
+                        aria-label={t.resetDate}
+                        title={t.resetDate}
+                      >
+                        <Icon name="reset" />
+                      </button>
                     </div>
+                    <p className="hint">{t.latestSampleDateHint}</p>
                   </div>
                   <div className="filterActionRow">
                     <button type="button" className={`btn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
@@ -2224,7 +2440,7 @@ export default function Dashboard({ snapshot }: Props) {
                     <button type="button" className={`btn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
                       onClick={() => { if (nearbyOnly) { setNearbyOnly(false); setGeoError(null); } else if (userCoords) { setNearbyOnly(true); setGeoError(null); } else { activateNearMe(); } }}
                       aria-pressed={nearbyOnly}>
-                      <span aria-hidden="true">📍</span>{t.nearMe}
+                      <span className="btnIcon" aria-hidden="true"><Icon name="locate" /></span>{t.nearMe}
                     </button>
                     {nearbyOnly && userCoords ? (
                       <div className="nearbyPanel">
@@ -2394,7 +2610,6 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           ) : null}
         </section>
-      ) : null}
 
 
       <section className="panel">
@@ -3398,6 +3613,13 @@ export default function Dashboard({ snapshot }: Props) {
                     </div>
                   ))}
                 </div>
+                <p className="hint" style={{ marginTop: "0.75rem" }}>
+                  {lang === "ru"
+                    ? "4 уровня оценки качества: ROC-AUC (разделение классов), Precision/Recall (баланс ошибок), калибровка (доверие к вероятности) и SHAP (пояснение причин прогноза)."
+                    : lang === "et"
+                      ? "4 hindamistaset: ROC-AUC, Precision/Recall, kalibreeritus ja SHAP selgitused."
+                      : "Four levels of model assessment: ROC-AUC (class separation), Precision/Recall (error trade-off), Calibration (probability trust) and SHAP (per-prediction explanation)."}
+                </p>
                 <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.75rem" }}>
                   <table className="table">
                     <thead>
@@ -3431,6 +3653,31 @@ export default function Dashboard({ snapshot }: Props) {
                     </tbody>
                   </table>
                 </div>
+                <h4 style={{ marginTop: "1rem" }}>{t.metricGuideTitle}</h4>
+                <div className="infoCardGrid">
+                  {(["roc", "pr", "calibration", "shap"] as const).map((key) => (
+                    <article key={`ipg-${key}`} className="infoCard">
+                      <div className="infoCardHead">
+                        <span className="infoCardIcon" aria-hidden>
+                          {key === "roc" ? "📈" : key === "pr" ? "🎯" : key === "calibration" ? "⚖️" : "🧠"}
+                        </span>
+                        <div>
+                          <h5>{t.metricGuide[key].title}</h5>
+                        </div>
+                      </div>
+                      <p className="hint"><b>{lruet(lang, "Точно:", "Täpselt:", "Precise:")}</b> {t.metricGuide[key].precise}</p>
+                      <p className="hint"><b>{lruet(lang, "Интуиция:", "Intuitsioon:", "Intuition:")}</b> {t.metricGuide[key].intuitive}</p>
+                      <p className="hint"><b>{lruet(lang, "Как читать:", "Kuidas lugeda:", "How to read:")}</b> {t.metricGuide[key].reading}</p>
+                    </article>
+                  ))}
+                </div>
+                <button
+                  className="btn btnSmall"
+                  style={{ marginTop: "0.6rem" }}
+                  onClick={() => openInfo(lruet(lang, "Режим эксперта", "Eksperdireziim", "Expert mode"), expertModeText)}
+                >
+                  {lruet(lang, "Подробнее (режим эксперта)", "Rohkem (eksperdireziim)", "More (expert mode)")}
+                </button>
               </div>
             ) : null}
 
@@ -3439,12 +3686,25 @@ export default function Dashboard({ snapshot }: Props) {
                 <h4>{t.tabs.aboutService}</h4>
                 <p className="hint">{t.aboutService}</p>
                 <p className="hint">
-                  {lruet(
-                    lang,
-                    "Сервис объединяет данные Terviseamet, карту, аналитику и ML-оценки для жителей, туристов и специалистов.",
-                    "Teenus ühendab Terviseameti avaandmed, kaardi, analüütika ja ML-hinnangud.",
-                    "The service combines Terviseamet open data, map, analytics and ML assessments."
-                  )}
+                  {lang === "ru"
+                    ? "Этот сервис — публичный инструмент экологической прозрачности для жителей, муниципалитетов и госструктур. Он объединяет официальные открытые данные Terviseamet и аналитический ML-слой, чтобы вода оценивалась не только постфактум, но и через ранние риск-сигналы."
+                    : lang === "et"
+                      ? "See teenus on avalik keskkonnaläbipaistvuse tööriist elanikele, omavalitsustele ja riigiasutustele. See ühendab Terviseameti ametlikud avaandmed ning ML-analüüsi kihi."
+                      : "A public environmental-transparency tool for residents, municipalities and authorities. It combines official Terviseamet open data with an ML analytics layer for early risk signals on top of post-fact compliance reporting."}
+                </p>
+                <p className="hint">
+                  {lang === "ru"
+                    ? "По каждой точке доступны: дата и контекст последней пробы, официальный статус соответствия, вероятности нарушения от нескольких моделей, история наблюдений и пояснения ключевых параметров."
+                    : lang === "et"
+                      ? "Iga punkti kohta: viimase proovi kuupäev, ametlik vastavus, mitme mudeli rikkumistõenäosused, vaatlusajalugu ja võtmenäitajate selgitused."
+                      : "For every point: latest sample date and context, official compliance status, model violation probabilities, observation history and explanations of the main water parameters."}
+                </p>
+                <p className="hint">
+                  {lang === "ru"
+                    ? "Важно: модельные оценки не заменяют официальный санитарный вердикт. Они предназначены для приоритезации проверок и более раннего обнаружения потенциально проблемных зон."
+                    : lang === "et"
+                      ? "Oluline: mudelihinnangud ei asenda ametlikku sanitaarset otsust — need on mõeldud kontrollide prioritiseerimiseks."
+                      : "Important: model assessments do not replace the official sanitary verdict. They support inspection prioritization and earlier detection of potential problem areas."}
                 </p>
                 {snapshot.data_catalog_url ? (
                   <p className="hint">
@@ -3454,7 +3714,8 @@ export default function Dashboard({ snapshot }: Props) {
                     </a>
                   </p>
                 ) : null}
-                <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.75rem" }}>
+                <h4 style={{ marginTop: "1rem" }}>{lruet(lang, "Слои и интерпретация карты", "Kaardikihid ja tõlgendus", "Map layers")}</h4>
+                <div className="tableWrap compact mobileResponsiveTable" style={{ marginTop: "0.4rem" }}>
                   <table className="table">
                     <thead>
                       <tr>
@@ -3478,8 +3739,35 @@ export default function Dashboard({ snapshot }: Props) {
                     </tbody>
                   </table>
                 </div>
+                <h4 style={{ marginTop: "1rem" }}>{lruet(lang, "Карточки параметров", "Parameetrikaardid", "Parameter cards")}</h4>
+                <div className="infoCardGrid">
+                  {parameterCards.map((card) => (
+                    <article key={`ipc-${card.key}`} className="infoCard">
+                      <div className="infoCardHead">
+                        <span className="infoCardIcon" aria-hidden>{card.icon}</span>
+                        <div>
+                          <h5>{lruet(lang, card.ruTitle, card.etTitle, card.ruTitle)}</h5>
+                          <span className="badge warn">{lruet(lang, card.ruImpact, card.etImpact, card.ruImpact)}</span>
+                        </div>
+                      </div>
+                      <p className="hint">{lruet(lang, card.ruWhy, card.etWhy, card.ruWhy)}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
             ) : null}
+
+            {/* Copyright footer — present on every info tab so the user
+                always sees attribution and disclaimer. */}
+            <p className="gmCopyright" style={{ marginTop: "1.2rem" }}>
+              © {new Date().getFullYear()} H2O Atlas ·{" "}
+              {lruet(
+                lang,
+                "Открытые данные Terviseamet · ML — поддержка решений, не медицинская рекомендация.",
+                "Terviseameti avaandmed · ML — otsusetugi, mitte meditsiiniline soovitus.",
+                "Terviseamet open data · ML — decision support, not medical advice."
+              )}
+            </p>
           </div>
         </div>
       ) : null}
