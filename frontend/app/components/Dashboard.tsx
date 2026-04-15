@@ -18,6 +18,7 @@ const officialOrder = ["all", "compliant", "violation", "unknown"] as const;
 type Lang = "ru" | "et" | "en";
 type TabKey = "alerts" | "domain" | "analytics" | "aboutModel" | "aboutService";
 type MobilePanelState = "collapsed" | "half" | "full";
+type MobileSheetMode = "place" | "filter";
 const countyKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
 const countyPretty = (value: string | null | undefined) =>
   (value || "")
@@ -230,6 +231,7 @@ export default function Dashboard({ snapshot }: Props) {
   const [isMobile, setIsMobile] = useState(false);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
+  const [sheetMode, setSheetMode] = useState<MobileSheetMode>("place");
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const sheetDragStartY = useRef<number | null>(null);
   const sheetDragLastY = useRef<number | null>(null);
@@ -1296,8 +1298,9 @@ export default function Dashboard({ snapshot }: Props) {
   const selectPoint = useCallback((id: string) => {
     setSelectedId(id);
     if (isMobile) {
-      setIsMapFullscreen(false);
-      setMobilePanelState("full");
+      setSheetMode("place");
+      setMobilePanelState("half");
+      // Map stays fullscreen — Google Maps style
     }
   }, [isMobile]);
 
@@ -1415,7 +1418,7 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       ) : null}
 
-      <div className={`topBar unifiedTopBar ${headerCompact ? "compact" : ""}`}>
+      <div className={`topBar unifiedTopBar ${headerCompact ? "compact" : ""} ${isMobile ? "mobileHidden" : ""}`}>
         <div className="brandBlock unifiedBrandBlock" style={{ display: "flex" }}>
           <Image src="/logo.svg" alt="H2O Atlas logo" className="brandLogo unifiedBrandLogo" width={36} height={36} priority />
           <div className="unifiedBrandText">
@@ -1447,59 +1450,88 @@ export default function Dashboard({ snapshot }: Props) {
       </div>
 
       {isMobile ? (
-        <div className={`mobileFloatingToolbar ${isMapFullscreen && mobilePanelState === "collapsed" ? "" : "hidden"}`}>
-          <button
-            type="button"
-            className="fabBtn"
-            onClick={() => setDrawerOpen(true)}
-            aria-label={t.filters}
-            title={t.filters}
-          >
-            <span className="btnIcon" aria-hidden="true"><Icon name="filters" /></span>
-          </button>
-          <button
-            type="button"
-            className={`fabBtn ${nearbyOnly ? "active" : ""}`}
-            onClick={activateNearMe}
-            aria-label={t.nearMe}
-            title={t.nearMe}
-          >
-            <span className="btnIcon" aria-hidden="true"><Icon name="locate" /></span>
-          </button>
-          <button
-            type="button"
-            className="fabBtn"
-            onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
-            aria-label="Info"
-            title="Info"
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-            </svg>
-          </button>
-        </div>
-      ) : null}
-
-      {isMobile ? (
-        <div className={`mobileSearchBar ${isMapFullscreen && mobilePanelState === "collapsed" ? "mobileSearchBarVisible" : ""}`}>
-          <svg className="mobileSearchIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
-          </svg>
-          <input
-            className="mobileSearchInput"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={lruet(lang, "Поиск места...", "Otsi kohta...", "Search place...")}
-            aria-label="Search places"
-          />
-          {query ? (
-            <button className="mobileSearchClear" onClick={() => setQuery("")} aria-label="Clear search">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        <>
+          {/* Google Maps-style search bar — always visible on mobile */}
+          <div className="gmSearchBar">
+            <button
+              className="gmSearchMenuBtn"
+              onClick={() => { setSheetMode("filter"); setMobilePanelState(mobilePanelState === "collapsed" ? "half" : mobilePanelState); }}
+              aria-label={t.filters}
+            >
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
             </button>
-          ) : null}
-        </div>
+            <svg className="gmSearchIconSvg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+            </svg>
+            <input
+              className="gmSearchInput"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={lruet(lang, "Поиск места...", "Otsi kohta...", "Search place...")}
+              aria-label="Search"
+            />
+            {query ? (
+              <button className="gmSearchClearBtn" onClick={() => setQuery("")} aria-label="Clear">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            ) : null}
+            <div className="gmSearchDivider" />
+            <button
+              className={`gmSearchLocateBtn ${nearbyOnly ? "active" : ""}`}
+              onClick={activateNearMe}
+              aria-label={t.nearMe}
+            >
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" fill="currentColor" fillOpacity="0.35"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="9"/>
+              </svg>
+            </button>
+            <button
+              className="gmSearchInfoBtn"
+              onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
+              aria-label="Info"
+            >
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              </svg>
+            </button>
+          </div>
+          {/* Domain filter chips */}
+          <div className="gmChipBar">
+            <button className={`gmChip ${segment === "all" ? "gmChipActive" : ""}`} onClick={() => setSegment("all")}>
+              {lruet(lang, "Все", "Kõik", "All")}
+            </button>
+            {(["swimming", "pool_spa", "drinking_water", "drinking_source"] as const).map((k) => (
+              <button
+                key={`chip-${k}`}
+                className={`gmChip ${segment === k ? "gmChipActive" : ""}`}
+                onClick={() => setSegment(segment === k ? "all" : k)}
+              >
+                {k === "swimming" ? "🏊" : k === "pool_spa" ? "🏊‍♀️" : k === "drinking_water" ? "🚰" : "💧"}{" "}
+                {k === "swimming"
+                  ? lruet(lang, "Купальные", "Suplusvesi", "Swimming")
+                  : k === "pool_spa"
+                  ? lruet(lang, "Бассейны", "Basseinid", "Pools")
+                  : k === "drinking_water"
+                  ? lruet(lang, "Питьевая", "Joogivesi", "Drinking")
+                  : lruet(lang, "Источники", "Allikad", "Sources")}
+              </button>
+            ))}
+            {alertsOnly ? (
+              <button className="gmChip gmChipActive gmChipAlert" onClick={() => setAlertsOnly(false)}>
+                ⚠ {lruet(lang, "Тревоги", "Häired", "Alerts")} ×
+              </button>
+            ) : null}
+            {risk !== "all" ? (
+              <button className="gmChip gmChipActive" onClick={() => setRisk("all")}>
+                {risk} ×
+              </button>
+            ) : null}
+          </div>
+        </>
       ) : null}
 
       {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
@@ -1783,8 +1815,8 @@ export default function Dashboard({ snapshot }: Props) {
           userLocation={nearbyOnly ? userCoords : null}
           isFullscreen={isMapFullscreen}
           isMobile={isMobile}
-          onToggleFullscreen={toggleMapFullscreen}
-          fullscreenLabel={isMapFullscreen ? lruet(lang, "Выйти из полноэкранного", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
+          onToggleFullscreen={isMobile ? undefined : toggleMapFullscreen}
+          fullscreenLabel={isMobile ? "" : isMapFullscreen ? lruet(lang, "Выйти из полноэкранного", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
           disableHoverPopups={isMobile}
           onRecenterUser={activateNearMe}
           recenterLabel={t.nearMe}
@@ -1958,131 +1990,209 @@ export default function Dashboard({ snapshot }: Props) {
         )}
       </section>
 
-      {isMobile && !isMapFullscreen ? (
+      {isMobile ? (
         <section
-          className={`mobileBottomSheet ${mobilePanelState} ${isMapFullscreen ? "fullscreenShift" : ""} ${sheetDragging ? "dragging" : ""}`}
+          className={`mobileBottomSheet ${mobilePanelState} ${sheetDragging ? "dragging" : ""}`}
           style={{ "--sheet-drag-offset": `${sheetDragOffset}px` } as React.CSSProperties}
         >
-          <div className="mobileSheetHandleRow">
-            <button
-              type="button"
-              className="mobileSheetHandle"
-              onClick={cycleMobilePanelState}
-              onPointerDown={onSheetPointerDown}
-              onPointerMove={onSheetPointerMove}
-              onPointerUp={onSheetPointerUp}
-              onPointerCancel={() => {
-                sheetDragStartY.current = null;
-                sheetDragLastY.current = null;
-                sheetDragLastTs.current = null;
-                sheetDragVelocity.current = 0;
-                setSheetDragging(false);
-                setSheetDragOffset(0);
-              }}
-              aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
-            >
-              <span />
-            </button>
-            <div className="mobileSheetActions">
-              <button type="button" className="btn btnSmall iconBtn" onClick={() => setDrawerOpen(true)} aria-label={t.filters} title={t.filters}>
-                <span className="btnIcon" aria-hidden="true">
-                  <Icon name="filters" />
-                </span>
-              </button>
-              <button type="button" className="btn btnSmall iconBtn nearMeFabBtn" onClick={activateNearMe} aria-label={t.nearMe} title={t.nearMe}>
-                <span className="btnIcon" aria-hidden="true">
-                  <Icon name="locate" />
-                </span>
+          {/* Drag handle */}
+          <button
+            type="button"
+            className="gmSheetHandle"
+            onClick={cycleMobilePanelState}
+            onPointerDown={onSheetPointerDown}
+            onPointerMove={onSheetPointerMove}
+            onPointerUp={onSheetPointerUp}
+            onPointerCancel={() => {
+              sheetDragStartY.current = null;
+              sheetDragLastY.current = null;
+              sheetDragLastTs.current = null;
+              sheetDragVelocity.current = 0;
+              setSheetDragging(false);
+              setSheetDragOffset(0);
+            }}
+            aria-label={lruet(lang, "Изменить высоту панели", "Muuda paneeli kõrgust", "Toggle panel height")}
+          >
+            <span className="gmSheetHandlePill" />
+          </button>
+
+          {/* Collapsed peek row: just show count */}
+          {mobilePanelState === "collapsed" ? (
+            <div className="gmSheetPeek">
+              <span className="gmSheetPeekCount">{filtered.length}</span>
+              <span className="gmSheetPeekLabel">{lruet(lang, " мест на карте", " kohta kaardil", " places on map")}</span>
+            </div>
+          ) : sheetMode === "filter" ? (
+            /* Filter mode header */
+            <div className="gmSheetModeHeader">
+              <span className="gmSheetModeTitle">{lruet(lang, "Фильтры", "Filtrid", "Filters")}</span>
+              <button className="btn btnSmall" type="button" onClick={clearFilters}>
+                <span className="btnIcon" aria-hidden="true"><Icon name="reset" /></span>
+                {t.clearFilters}
               </button>
               <button
+                className="gmSheetCloseBtn"
                 type="button"
-                className="btn btnSmall iconBtn"
-                onClick={() => { setInfoPageOpen(true); setInfoPageTab("alerts"); }}
-                aria-label="Info"
-                title="Info"
+                onClick={() => { setSheetMode("place"); setMobilePanelState("collapsed"); }}
+                aria-label={t.close}
               >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
-          </div>
-          <strong className="mobileSheetTitle">{t.selectedPoint}</strong>
-          {!selectedPlace ? (
-            <p className="hint">{t.noSelectedPoint}</p>
           ) : (
-            <div className="mobilePointContent">
-              <h4>{selectedPlace.location}</h4>
-              <p className="hint">
-                {selectedPlace.domain} / {selectedPlace.place_kind}
-                <br />
-                {t.county}: {countyPretty(selectedPlace.county || "Unknown")}
-                <br />
-                {lruet(lang, "Проба", "Proov", "Sample")}: {fmtDate(selectedPlace.sample_date)}
-              </p>
-              <div className="mobileBadges">
-                <span className={`badge ${selectedPlace.risk_level === "high" ? "bad" : selectedPlace.risk_level === "medium" ? "warn" : "good"}`}>
-                  {lruet(lang, "Риск", "Risk", "Risk")}: {selectedPlace.risk_level}
-                </span>
-                <span className={`badge ${selectedPlace.official_compliant === 0 ? "bad" : selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
-                  {lruet(lang, "Офиц.", "Ametlik", "Official")}:{" "}
-                  {selectedPlace.official_compliant === null ? "n/a" : officialStatusText(selectedPlace.official_compliant)}
-                </span>
-              </div>
-              {Object.keys(selectedPlace.measurements || {}).length ? (
-                <div className="tableWrap compact">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>{lruet(lang, "Показатель", "Näitaja", "Parameter")}</th>
-                        <th>{lruet(lang, "Значение", "Väärtus", "Value")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(selectedPlace.measurements)
-                        .slice(0, mobilePanelState === "full" ? Number.MAX_SAFE_INTEGER : 6)
-                        .map(([k, v]) => (
-                          <tr key={`mm-${k}`}>
-                            <td>
-                              <button className="linkBtn" onClick={() => openInfo(labelForParam(k), descForParam(k))}>
-                                {labelForParam(k)}
-                              </button>
-                            </td>
-                            <td>
-                              <button
-                                className="linkBtn"
-                                onClick={() =>
-                                  openInfo(
-                                    `${labelForParam(k)}: ${lruet(lang, "норматив", "norm", "norm")}`,
-                                    explainMeasurementNorm(k, v, selectedPlace)
-                                  )
-                                }
-                              >
-                                {String(v)}
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
+            /* Place mode header */
+            <div className="gmSheetModeHeader">
+              <span className="gmSheetModeTitle">
+                {selectedPlace ? selectedPlace.location : lruet(lang, "Выберите точку", "Vali koht", "Select a place")}
+              </span>
+              <button
+                className="gmSheetCloseBtn"
+                type="button"
+                onClick={() => setMobilePanelState("collapsed")}
+                aria-label={t.close}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
           )}
+
+          {/* Sheet body — scrollable */}
+          {mobilePanelState !== "collapsed" ? (
+            <div className="gmSheetBody">
+              {sheetMode === "filter" ? (
+                /* ---- FILTER MODE ---- */
+                <div className="gmSheetFilterContent">
+                  <div className="drawerLangRow">
+                    <span className="drawerLangLabel">{lruet(lang, "Язык", "Keel", "Language")}</span>
+                    <button className={`btn btnSmall ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
+                    <button className={`btn btnSmall ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+                    <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="gm-county-select">{t.county}</label>
+                    <select id="gm-county-select" value={county} onChange={(e) => setCounty(e.target.value)}>
+                      <option value="all">all</option>
+                      {counties.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="gm-risk-select">{t.risk}</label>
+                    <select id="gm-risk-select" value={risk} onChange={(e) => setRisk(e.target.value)}>
+                      {riskOrder.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="gm-official-select">{t.official}</label>
+                    <select id="gm-official-select" value={official} onChange={(e) => setOfficial(e.target.value as (typeof officialOrder)[number])}>
+                      {officialOrder.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="gm-min-prob">{t.minProb}: <b>{minProb.toFixed(2)}</b></label>
+                    <input id="gm-min-prob" type="range" min={0} max={1} step={0.01} value={minProbInput}
+                      onInput={(e) => setMinProbInput(Number((e.target as HTMLInputElement).value))} />
+                  </div>
+                  <div className="field">
+                    <label>{t.latestSampleDate}</label>
+                    <div style={{ display: "grid", gap: "0.35rem" }}>
+                      <input type="date" value={sampleDateFrom} onChange={(e) => setSampleDateFrom(e.target.value)} aria-label={t.dateFrom} />
+                      <input type="date" value={sampleDateTo} onChange={(e) => setSampleDateTo(e.target.value)} aria-label={t.dateTo} />
+                      <button className="btn btnSmall" type="button" onClick={() => { setSampleDateFrom(""); setSampleDateTo(""); }}>{t.resetDate}</button>
+                    </div>
+                  </div>
+                  <div className="filterActionRow">
+                    <button type="button" className={`btn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
+                      onClick={() => setAlertsOnly((v) => !v)} aria-pressed={alertsOnly}>
+                      <span className="btnIcon" aria-hidden="true"><Icon name="alert" /></span>{t.alertsOnly}
+                    </button>
+                    <button type="button" className={`btn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
+                      onClick={() => { if (nearbyOnly) { setNearbyOnly(false); setGeoError(null); } else if (userCoords) { setNearbyOnly(true); setGeoError(null); } else { activateNearMe(); } }}
+                      aria-pressed={nearbyOnly}>
+                      <span aria-hidden="true">📍</span>{t.nearMe}
+                    </button>
+                    {nearbyOnly && userCoords ? (
+                      <div className="nearbyPanel">
+                        <label htmlFor="gm-nearby-radius">{t.nearRadius}: <b>{nearbyRadiusKm} km</b></label>
+                        <input id="gm-nearby-radius" type="range" min={1} max={50} step={1} value={nearbyRadiusKm}
+                          onChange={(e) => setNearbyRadiusKm(Number(e.target.value))} />
+                        <button type="button" className="btn btnSmall" onClick={() => { setUserCoords(null); setNearbyOnly(false); setGeoError(null); }}>{t.clearNearMe}</button>
+                      </div>
+                    ) : null}
+                    {geoError ? <p className="hint">{geoError}</p> : null}
+                  </div>
+                  <div className="stats">
+                    <div className="stat"><div className="k">{lruet(lang, "Видимых", "Nähtav", "Visible")}</div><div className="v">{filtered.length}</div></div>
+                    <div className="stat"><div className="k">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</div><div className="v">{high}</div></div>
+                    <div className="stat"><div className="k">{lruet(lang, "Низкий риск", "Madal risk", "Low risk")}</div><div className="v">{low}</div></div>
+                    <div className="stat"><div className="k">{lruet(lang, "Офиц. нарушения", "Ametlik rikkumine", "Official violations")}</div><div className="v">{violations}</div></div>
+                  </div>
+                </div>
+              ) : (
+                /* ---- PLACE MODE ---- */
+                <div className="gmSheetPlaceContent">
+                  {!selectedPlace ? (
+                    <p className="hint" style={{ textAlign: "center", paddingTop: "1rem" }}>
+                      {lruet(lang, "Нажмите на метку на карте", "Vajuta kaardil märgile", "Tap a marker on the map")}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="hint" style={{ marginBottom: "0.4rem" }}>
+                        {selectedPlace.domain} · {countyPretty(selectedPlace.county || "")}<br />
+                        {lruet(lang, "Проба", "Proov", "Sample")}: {fmtDate(selectedPlace.sample_date)}
+                      </p>
+                      <div className="mobileBadges" style={{ marginBottom: "0.6rem" }}>
+                        <span className={`badge ${selectedPlace.risk_level === "high" ? "bad" : selectedPlace.risk_level === "medium" ? "warn" : "good"}`}>
+                          {lruet(lang, "Риск", "Risk", "Risk")}: {selectedPlace.risk_level}
+                          {selectedPlace.model_violation_prob !== null ? ` (${selectedPlace.model_violation_prob.toFixed(2)})` : ""}
+                        </span>
+                        <span className={`badge ${selectedPlace.official_compliant === 0 ? "bad" : selectedPlace.official_compliant === 1 ? "good" : "warn"}`}>
+                          {lruet(lang, "Офиц.", "Ametlik", "Official")}:{" "}
+                          {selectedPlace.official_compliant === null ? "n/a" : officialStatusText(selectedPlace.official_compliant)}
+                        </span>
+                      </div>
+                      {Object.keys(selectedPlace.measurements || {}).length ? (
+                        <div className="tableWrap compact">
+                          <table className="table">
+                            <thead>
+                              <tr>
+                                <th>{lruet(lang, "Показатель", "Näitaja", "Parameter")}</th>
+                                <th>{lruet(lang, "Значение", "Väärtus", "Value")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(selectedPlace.measurements)
+                                .slice(0, mobilePanelState === "full" ? Number.MAX_SAFE_INTEGER : 6)
+                                .map(([k, v]) => (
+                                  <tr key={`mm-${k}`}>
+                                    <td>
+                                      <button className="linkBtn" onClick={() => openInfo(labelForParam(k), descForParam(k))}>
+                                        {labelForParam(k)}
+                                      </button>
+                                    </td>
+                                    <td>
+                                      <button className="linkBtn" onClick={() => openInfo(`${labelForParam(k)}: ${lruet(lang, "норматив", "norm", "norm")}`, explainMeasurementNorm(k, v, selectedPlace))}>
+                                        {String(v)}
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null}
         </section>
       ) : null}
-      {isMobile && isMapFullscreen ? (
-        <button
-          type="button"
-          className="btn btnSmall mobileShowSheetBtn"
-          onClick={() => {
-            setIsMapFullscreen(false);
-            setMobilePanelState("half");
-          }}
-        >
-          {lruet(lang, "Показать карточку", "Näita detaile", "Show details")}
-        </button>
-      ) : null}
+
 
       <section className="panel">
         <div className={`tabRow ${isTabPending ? "isPending" : ""}`}>

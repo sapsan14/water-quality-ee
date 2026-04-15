@@ -781,36 +781,33 @@ body.mapFullscreenActive {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2400;
-  background: #ffffff;
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  border: 1px solid #d7e6f8;
-  box-shadow: 0 -10px 30px rgba(15, 31, 55, 0.2);
-  padding: 0.5rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  z-index: 2700; /* Always above fullscreen map (2500) */
+  background: var(--panel);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 -4px 24px rgba(15, 31, 55, 0.15), 0 -1px 4px rgba(0,0,0,0.06);
+  padding: 0 0 calc(0.5rem + env(safe-area-inset-bottom, 0px));
   --sheet-drag-offset: 0px;
-  transition: transform 280ms cubic-bezier(0.22, 0.9, 0.32, 1);
+  transition: transform 300ms cubic-bezier(0.22, 0.9, 0.32, 1);
   will-change: transform;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
   overflow: hidden;
+  max-height: 92dvh;
+  max-height: 92vh;
 }
 
 .mobileBottomSheet.collapsed {
-  transform: translateY(calc(100% - 54px + var(--sheet-drag-offset)));
+  transform: translateY(calc(100% - 62px + var(--sheet-drag-offset)));
 }
 
 .mobileBottomSheet.half {
-  transform: translateY(calc(44% + var(--sheet-drag-offset)));
+  transform: translateY(calc(42% + var(--sheet-drag-offset)));
 }
 
 .mobileBottomSheet.full {
-  transform: translateY(calc(4% + var(--sheet-drag-offset)));
-}
-
-.mobileBottomSheet.fullscreenShift {
-  z-index: 2600;
+  transform: translateY(calc(3% + var(--sheet-drag-offset)));
 }
 
 .mobileMapQuickActions {
@@ -835,72 +832,105 @@ body.mapFullscreenActive {
   font-weight: 700;
 }
 
-.mobileShowSheetBtn {
-  position: fixed;
-  left: calc(0.7rem + env(safe-area-inset-left, 0px));
-  bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
-  z-index: 2650;
-  border-radius: 999px;
-  padding: 0.44rem 0.72rem;
-  background: rgba(17, 27, 45, 0.9);
-  border-color: #45689d;
-  color: #e8f0fb;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.mobileSheetHandle {
+/* ---- Google Maps-style sheet handle ---- */
+.gmSheetHandle {
   border: 0;
   background: transparent;
-  padding: 0.1rem 0;
+  padding: 0.55rem 0 0.2rem;
   cursor: pointer;
+  touch-action: none;
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-.mobileSheetHandle span {
+.gmSheetHandlePill {
   display: block;
-  width: 56px;
-  height: 5px;
+  width: 44px;
+  height: 4px;
   border-radius: 999px;
-  background: #b7cbe2;
+  background: #c8d9ee;
   margin: 0 auto;
   transition: transform 120ms ease, background-color 120ms ease;
 }
 
-.mobileBottomSheet.dragging .mobileSheetHandle span {
-  transform: scaleX(1.08) scaleY(1.14);
-  background: #8db3db;
+.mobileBottomSheet.dragging .gmSheetHandlePill {
+  transform: scaleX(1.15) scaleY(1.3);
+  background: #7fafd6;
 }
 
-.mobileSheetHandleRow {
+/* Collapsed peek row */
+.gmSheetPeek {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.22rem;
+  padding: 0.1rem 1rem 0.55rem;
+  flex-shrink: 0;
 }
 
-.mobileSheetHandleRow .mobileSheetHandle {
-  flex: 1;
+.gmSheetPeekCount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.mobileSheetTitle {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
+.gmSheetPeekLabel {
+  font-size: 0.88rem;
   color: var(--muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin: 0 0 0.1rem;
 }
 
-.mobileSheetHeader {
+/* Mode header (place/filter) */
+.gmSheetModeHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  gap: 0.5rem;
+  padding: 0 1rem 0.6rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.mobileSheetActions {
-  display: inline-flex;
-  gap: 0.4rem;
+.gmSheetModeTitle {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.gmSheetCloseBtn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(100, 120, 160, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  padding: 0;
+}
+
+/* Sheet scrollable body */
+.gmSheetBody {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0.6rem 1rem 0;
+}
+
+.gmSheetFilterContent,
+.gmSheetPlaceContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-bottom: 1.5rem;
 }
 
 /* "Done" close button — icon-only on desktop, shows label on mobile */
@@ -1488,10 +1518,49 @@ body.mapFullscreenActive {
     display: inline;
   }
 
-  /* Sheet background fully opaque — stops content bleeding through */
+  /* Sheet + search bar dark mode */
   .mobileBottomSheet {
-    background: #0f1828;
-    border-top-color: #2b3f5f;
+    background: #111b2d;
+    border-color: #243552;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .gmSheetModeHeader {
+    border-bottom-color: #243552;
+  }
+
+  .gmSheetHandlePill {
+    background: #2e4468;
+  }
+
+  .mobileBottomSheet.dragging .gmSheetHandlePill {
+    background: #4a6a9a;
+  }
+
+  .gmSheetCloseBtn {
+    background: rgba(70, 100, 150, 0.2);
+  }
+
+  .gmSearchBar {
+    background: #1a2535;
+    border-color: #2a3b55;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  }
+
+  .gmSearchDivider {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .gmChip {
+    background: #1a2535;
+    border-color: #2a3b55;
+    color: #e6eef9;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .gmChip.gmChipActive {
+    background: #1a5fc4;
+    border-color: #1a5fc4;
   }
 
   /* Horizontal scroll on data tables instead of overflow */
@@ -1792,27 +1861,24 @@ body.mapFullscreenActive {
     font-size: 0.86rem;
   }
 
+  /* On mobile: no fullscreen toggle — map is always fullscreen */
   .mapFullscreenBtn {
-    padding: 0.28rem 0.52rem;
-    gap: 0.24rem;
-  }
-
-  .mapFullscreenLabel {
-    font-size: 0.72rem;
+    display: none;
   }
 
   .mapFloatingControls {
     gap: 0.32rem;
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
-    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    /* Keep above the collapsed bottom sheet (62px) */
+    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
   }
 
   .mobileBottomSheet.collapsed {
-    transform: translateY(calc(100% - 50px + var(--sheet-drag-offset)));
+    transform: translateY(calc(100% - 62px + var(--sheet-drag-offset)));
   }
 
   .mobileBottomSheet.half {
-    transform: translateY(calc(48% + var(--sheet-drag-offset)));
+    transform: translateY(calc(42% + var(--sheet-drag-offset)));
   }
 
   .mobileBottomSheet.full {
@@ -1824,95 +1890,165 @@ body.mapFullscreenActive {
   }
 }
 
-/* ---- Mobile search bar ---- */
-.mobileSearchBar {
+/* ---- Google Maps-style search bar (mobile) ---- */
+.gmSearchBar {
   position: fixed;
-  top: calc(40px + env(safe-area-inset-top, 0px) + 0.55rem);
-  left: max(0.6rem, env(safe-area-inset-left, 0px));
-  right: calc(44px + 1.4rem);
-  z-index: 1490;
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  left: max(0.65rem, env(safe-area-inset-left, 0px));
+  right: max(0.65rem, env(safe-area-inset-right, 0px));
+  z-index: 2800;
   display: none;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.65rem;
+  gap: 0.2rem;
+  height: 52px;
+  padding: 0 0.5rem;
+  border-radius: 26px;
+  background: var(--panel);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+@media (max-width: 900px) {
+  .gmSearchBar { display: flex; }
+}
+
+.gmSearchMenuBtn,
+.gmSearchLocateBtn,
+.gmSearchInfoBtn {
+  flex-shrink: 0;
+  width: 38px;
   height: 38px;
-  border-radius: 999px;
-  background: rgba(11, 18, 32, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(55, 82, 128, 0.55);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  transition: opacity 200ms ease, transform 200ms ease;
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events: none;
-}
-
-.mobileSearchBar.mobileSearchBarVisible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: all;
-}
-
-.mobileSearchIcon {
-  flex-shrink: 0;
-  color: #8fafd4;
-}
-
-.mobileSearchInput {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: #e6eef9;
-  font-size: 0.88rem;
-  min-width: 0;
-}
-
-.mobileSearchInput::placeholder {
-  color: #6a8fb3;
-}
-
-.mobileSearchClear {
-  flex-shrink: 0;
-  background: none;
-  border: none;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  color: #8fafd4;
-  padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--muted);
+  padding: 0;
+  transition: background 120ms ease;
 }
 
-body.mapFullscreenActive .mobileSearchBar {
-  z-index: 2600;
+.gmSearchMenuBtn:active,
+.gmSearchLocateBtn:active,
+.gmSearchInfoBtn:active {
+  background: rgba(100, 120, 160, 0.12);
 }
+
+.gmSearchLocateBtn.active {
+  color: #1a73e8;
+}
+
+.gmSearchIconSvg {
+  flex-shrink: 0;
+  color: var(--muted);
+  margin: 0 0.1rem;
+}
+
+.gmSearchInput {
+  flex: 1;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+.gmSearchInput::placeholder {
+  color: var(--muted);
+}
+
+.gmSearchClearBtn {
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.gmSearchDivider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  margin: 0 0.1rem;
+}
+
+/* ---- Domain filter chip bar ---- */
+.gmChipBar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem + 52px + 0.45rem);
+  left: 0;
+  right: 0;
+  z-index: 2800;
+  display: none;
+  gap: 0.45rem;
+  padding: 0 0.65rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gmChipBar::-webkit-scrollbar { display: none; }
 
 @media (max-width: 900px) {
-  .mobileSearchBar {
-    display: flex;
-  }
+  .gmChipBar { display: flex; }
 }
 
-/* ---- Drawer lang row (mobile only) ---- */
+.gmChip {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 0.85rem;
+  border-radius: 17px;
+  background: var(--panel);
+  border: 1px solid rgba(0, 0, 0, 0.09);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.gmChip.gmChipActive {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.35);
+}
+
+.gmChip.gmChipAlert.gmChipActive {
+  background: #ea4335;
+  border-color: #ea4335;
+  box-shadow: 0 2px 6px rgba(234, 67, 53, 0.35);
+}
+
+/* ---- Drawer lang row (also inside filter sheet) ---- */
 .drawerLangRow {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0;
+  padding: 0.2rem 0;
 }
 
 .drawerLangLabel {
-  font-size: 0.78rem;
-  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  color: var(--muted);
   flex-shrink: 0;
 }
 
+/* Hide sidebar drawer on mobile — filters live in bottom sheet */
 @media (max-width: 900px) {
-  .drawerLangRow {
-    display: flex;
-  }
+  .drawer { display: none !important; }
+  .drawerBackdrop { display: none !important; }
 }
 
 /* ---- Teardrop pin pulse animation ---- */
