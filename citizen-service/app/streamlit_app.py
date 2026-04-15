@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import html
-import json
 import logging
 import math
 from datetime import datetime, timezone
@@ -25,8 +24,13 @@ from folium.plugins import MarkerCluster
 from jinja2 import Template
 from streamlit_folium import st_folium
 
+# `load_snapshot` lives in its own small module so that Streamlit's cache-key
+# computation (which calls `inspect.getsource` on the decorated function) does
+# not have to tokenize this large file. On Python 3.14 that can fail with
+# `tokenize.TokenError` due to the multi-line CSS/JS strings embedded below.
+from snapshot_cache import SNAPSHOT_PATH, load_snapshot  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
-SNAPSHOT_PATH = ROOT / "citizen-service" / "artifacts" / "snapshot.json"
 MODEL_PATH = ROOT / "citizen-service" / "artifacts" / "citizen_model.joblib"
 
 _LOG = logging.getLogger("citizen.streamlit")
@@ -531,23 +535,6 @@ _NEAR_ME_BTN_HTML = (
     'width:100%;height:40px;cursor:pointer;font-size:18px;line-height:1;'
     'display:flex;align-items:center;justify-content:center;">📍</button>'
 )
-
-
-@st.cache_data(show_spinner=False)
-def load_snapshot() -> dict | None:
-    _ensure_streamlit_logging()
-    if not SNAPSHOT_PATH.is_file():
-        _LOG.warning("Файл снимка отсутствует: %s", SNAPSHOT_PATH)
-        return None
-    st_sz = SNAPSHOT_PATH.stat().st_size
-    with open(SNAPSHOT_PATH, encoding="utf-8") as f:
-        data = json.load(f)
-    _LOG.info(
-        "Снимок загружен с диска в кэш Streamlit (%s байт, generated_at=%s)",
-        st_sz,
-        (data or {}).get("generated_at"),
-    )
-    return data
 
 
 def _available_models(snap: dict) -> list[str]:
