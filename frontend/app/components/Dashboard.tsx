@@ -1936,16 +1936,50 @@ export default function Dashboard({ snapshot }: Props) {
                 </button>
               );
             })}
-            {alertsOnly ? (
-              <button
-                className="gmChip gmChipIcon gmChipActive gmChipAlert"
-                onClick={() => setAlertsOnly(false)}
-                aria-label={lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")}
-                title={lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")}
-              >
-                <Icon name="alert" />
-              </button>
-            ) : null}
+            {(() => {
+              const alertsLabel = alertsOnly
+                ? lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")
+                : lruet(lang, "Только тревоги", "Ainult häired", "Alerts only");
+              return (
+                <button
+                  type="button"
+                  className={`gmChip gmChipIcon gmChipAlert ${alertsOnly ? "gmChipActive" : ""}`}
+                  onClick={() => setAlertsOnly((v) => !v)}
+                  aria-label={alertsLabel}
+                  aria-pressed={alertsOnly}
+                  title={alertsLabel}
+                >
+                  <Icon name="alert" />
+                </button>
+              );
+            })()}
+            {(() => {
+              const nearLabel = nearbyOnly
+                ? lruet(lang, "Снять фильтр «рядом»", "Eemalda läheduse filter", "Clear near-me filter")
+                : lruet(lang, "Рядом со мной", "Minu lähedal", "Near me");
+              return (
+                <button
+                  type="button"
+                  className={`gmChip gmChipIcon ${nearbyOnly ? "gmChipActive" : ""}`}
+                  onClick={() => {
+                    if (nearbyOnly) {
+                      setNearbyOnly(false);
+                      setGeoError(null);
+                    } else if (userCoords) {
+                      setNearbyOnly(true);
+                      setGeoError(null);
+                    } else {
+                      activateNearMe();
+                    }
+                  }}
+                  aria-label={nearLabel}
+                  aria-pressed={nearbyOnly}
+                  title={nearLabel}
+                >
+                  <Icon name="locate" />
+                </button>
+              );
+            })()}
             {risk !== "all" ? (
               <button
                 className="gmChip gmChipIcon gmChipActive"
