@@ -149,8 +149,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_service": "О сервисе",
         "last_measured": "Последнее измерение",
         "no_snap": "Нет файла снимка данных.",
-        "snap_info": "Снимок: `{ts}`.",
-        "points_on_map": "Точек на карте: {n} (всего в снимке: {total}).",
     },
     "EN": {
         "page_title": "Water Quality (citizen view)",
@@ -165,8 +163,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_service": "About Service",
         "last_measured": "Last measured",
         "no_snap": "No snapshot file found.",
-        "snap_info": "Snapshot: `{ts}`.",
-        "points_on_map": "Points on map: {n} (total in snapshot: {total}).",
     },
     "ET": {
         "page_title": "Vee kvaliteet (kodanikuvaade)",
@@ -181,10 +177,206 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_service": "Teenuse kohta",
         "last_measured": "Viimati mõõdetud",
         "no_snap": "Hetktõmmise fail puudub.",
-        "snap_info": "Hetktõmmis: `{ts}`.",
-        "points_on_map": "Punkte kaardil: {n} (kokku hetktõmmises: {total}).",
     },
 }
+
+
+# ── CSS / JS for sliding filter panel ─────────────────────────────────────────
+
+_PANEL_CSS = """<style>
+/* == global font == */
+html,body,[class*="css"],[data-testid="stAppViewContainer"]{
+  font-family:"Proxima Nova","ProximaNova","Segoe UI",Roboto,sans-serif !important;
+}
+
+/* == sidebar: fixed overlay, never pushes main content == */
+section[data-testid="stSidebar"]{
+  position:fixed !important;
+  top:0 !important; left:0 !important;
+  height:100vh !important;
+  z-index:1000 !important;
+  overflow-y:auto !important;
+  background:#ffffff !important;
+  border-right:2px solid #0369a1 !important;
+  border-radius:0 16px 16px 0 !important;
+  box-shadow:6px 0 32px rgba(3,105,161,.18) !important;
+  transition:transform .32s cubic-bezier(.4,0,.2,1) !important;
+}
+section[data-testid="stSidebar"][aria-expanded="false"]{
+  transform:translateX(-110%) !important;
+  box-shadow:none !important;
+}
+
+/* == main content: always full-width == */
+section[data-testid="stMain"],.main{
+  margin-left:0 !important; padding-left:0 !important; width:100% !important;
+}
+[data-testid="stAppViewBlockContainer"]{
+  max-width:100% !important;
+  padding-left:1rem !important; padding-right:1rem !important;
+}
+
+/* == hide Streamlit's own toggle buttons (still clickable via JS) == */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"]{
+  visibility:hidden !important;
+  pointer-events:none !important;
+  position:absolute !important;
+}
+
+/* == FAB: filter toggle == */
+#fp-fab{position:fixed;top:70px;left:12px;z-index:1002;}
+#fp-fab-btn{
+  background:#0369a1;color:#fff;
+  border:none;border-radius:10px;
+  width:44px;height:44px;font-size:20px;
+  cursor:pointer;
+  box-shadow:0 3px 14px rgba(3,105,161,.35);
+  transition:background .18s,transform .13s;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+}
+#fp-fab-btn:hover{background:#0284c7;transform:scale(1.07);}
+#fp-fab-btn.is-open{background:#0c4a6e;}
+
+/* == backdrop (unpinned mode) == */
+#fp-backdrop{
+  display:none;position:fixed;inset:0;
+  z-index:999;background:rgba(0,0,0,.28);cursor:pointer;
+}
+#fp-backdrop.active{display:block;}
+
+/* == sidebar header == */
+.fp-header{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 0 10px;margin-bottom:4px;
+  border-bottom:1.5px solid #e2e8f0;
+}
+.fp-title{flex:1;font-size:15px;font-weight:700;color:#0369a1;letter-spacing:.01em;}
+.fp-pin-btn{
+  background:none;border:1.5px solid #e2e8f0;border-radius:7px;
+  padding:3px 8px;cursor:pointer;font-size:15px;color:#0369a1;
+  transition:border-color .15s,opacity .15s;line-height:1.3;
+}
+.fp-pin-btn:hover{border-color:#94a3b8;}
+.fp-pin-btn.unpinned{opacity:.5;}
+
+/* == compact icon-only action buttons in sidebar == */
+section[data-testid="stSidebar"]
+  [data-testid="stHorizontalBlock"] .stButton>button{
+  padding:0 !important;
+  font-size:18px !important;
+  min-height:40px !important;
+  border-radius:9px !important;
+  line-height:1 !important;
+}
+
+/* == stats row below map == */
+.fp-stats{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-top:14px;padding:12px 14px;
+  background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;
+}
+.fp-stat{
+  flex:1;min-width:88px;background:#fff;
+  border:1px solid #e2e8f0;border-radius:9px;
+  padding:9px 10px;text-align:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.fp-stat-val{font-size:21px;font-weight:700;line-height:1.15;}
+.fp-stat-lbl{font-size:10px;color:#64748b;margin-top:2px;
+             text-transform:uppercase;letter-spacing:.04em;}
+.sv-blue {color:#0369a1;}
+.sv-red  {color:#ef4444;}
+.sv-green{color:#16a34a;}
+.sv-amber{color:#d97706;}
+</style>
+"""
+
+_PANEL_JS_HTML = """\
+<div id="fp-fab"><button id="fp-fab-btn" title="Фильтры" onclick="fpToggle()">⚙</button></div>
+<div id="fp-backdrop" onclick="fpOnBackdrop()"></div>
+<script>
+(function(){
+  var OK='fp_open',PK='fp_pinned';
+  function isOpen()  {return localStorage.getItem(OK)!=='false';}
+  function isPinned(){return localStorage.getItem(PK)!=='false';}
+  function setOpen(v){localStorage.setItem(OK,v?'true':'false');}
+  function setPin(v) {localStorage.setItem(PK,v?'true':'false');}
+  function getSB()   {return document.querySelector('section[data-testid="stSidebar"]');}
+  function isExp()   {var s=getSB();return s&&s.getAttribute('aria-expanded')==='true';}
+  function nativeOpen(){
+    var b=document.querySelector('[data-testid="collapsedControl"] button');
+    if(b)b.click();
+  }
+  function nativeClose(){
+    var s=getSB(),b=s&&s.querySelector('[data-testid="stSidebarCollapseButton"] button');
+    if(b)b.click();
+  }
+  window.fpToggle=function(){
+    if(isExp()){nativeClose();setOpen(false);}
+    else{nativeOpen();setOpen(true);}
+    setTimeout(sync,80);
+  };
+  window.fpOnBackdrop=function(){
+    if(!isPinned()){nativeClose();setOpen(false);sync();}
+  };
+  window.fpTogglePin=function(){
+    setPin(!isPinned());updatePin();sync();
+  };
+  window.fpNearMe=function(){
+    if(!navigator.geolocation){alert('Геолокация недоступна в этом браузере');return;}
+    navigator.geolocation.getCurrentPosition(function(p){
+      var u=new URL(window.location.href);
+      u.searchParams.set('geo_lat',p.coords.latitude.toFixed(6));
+      u.searchParams.set('geo_lon',p.coords.longitude.toFixed(6));
+      window.location.href=u.toString();
+    },function(e){alert('Ошибка геолокации: '+e.message);});
+  };
+  function sync(){
+    var bd=document.getElementById('fp-backdrop');
+    if(bd)bd.className=(!isPinned()&&isExp())?'active':'';
+    var fb=document.getElementById('fp-fab-btn');
+    if(fb)fb.className=isExp()?'is-open':'';
+  }
+  function updatePin(){
+    var b=document.getElementById('fp-pin-btn');
+    if(!b)return;
+    var p=isPinned();
+    b.textContent=p?'📌':'📍';
+    b.title=p?'Открепить панель':'Закрепить панель';
+    b.className='fp-pin-btn'+(p?'':' unpinned');
+  }
+  function onRender(){
+    sync();updatePin();
+    if(isOpen()&&!isExp())nativeOpen();
+    if(!isOpen()&&isExp())nativeClose();
+  }
+  new MutationObserver(function(muts){
+    if(muts.some(function(m){return m.addedNodes.length||m.removedNodes.length;}))onRender();
+  }).observe(document.body,{childList:true,subtree:false});
+  function watchSB(){
+    var sb=getSB();
+    if(!sb){setTimeout(watchSB,150);return;}
+    new MutationObserver(function(){sync();}).observe(sb,{attributes:true,attributeFilter:['aria-expanded']});
+    onRender();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchSB);
+  else watchSB();
+})();
+</script>
+"""
+
+_PIN_BTN_HTML = (
+    '<button id="fp-pin-btn" class="fp-pin-btn" onclick="fpTogglePin()"'
+    ' title="Закрепить/открепить панель">📌</button>'
+)
+
+_NEAR_ME_BTN_HTML = (
+    '<button onclick="fpNearMe()" title="Рядом со мной (нужен доступ к геолокации)"'
+    ' style="background:#fff;border:1.5px solid #e2e8f0;border-radius:9px;'
+    'width:100%;height:40px;cursor:pointer;font-size:18px;line-height:1;'
+    'display:flex;align-items:center;justify-content:center;">📍</button>'
+)
 
 
 @st.cache_data(show_spinner=False)
@@ -339,6 +531,68 @@ def _filtered_places(
             continue
         out.append(p)
     return out
+
+
+def _compute_map_stats(filtered: list[dict], prob_col: str) -> dict:
+    """Summary statistics for the currently visible / filtered places."""
+    n_vis = sum(1 for p in filtered if p.get("lat") is not None)
+    probs = [
+        float(p[prob_col])
+        for p in filtered
+        if isinstance(p.get(prob_col), (int, float)) and p.get("lat") is not None
+    ]
+    n_mdl = len(probs)
+    n_hi  = sum(1 for x in probs if x > 0.5)
+    n_lo  = n_mdl - n_hi
+    avg_p = (sum(probs) / n_mdl) if n_mdl else None
+
+    cv     = [p.get("official_compliant") for p in filtered
+              if p.get("official_compliant") is not None and p.get("lat") is not None]
+    n_viol = sum(1 for v in cv if v == 0)
+    n_val  = len(cv)
+    health = int(round((1 - n_viol / n_val) * 100)) if n_val else None
+
+    if avg_p is not None:
+        if avg_p > 0.55:   fc, fcc = "Критично", "#ef4444"
+        elif avg_p > 0.25: fc, fcc = "Умеренно", "#d97706"
+        else:              fc, fcc = "Хорошо",   "#16a34a"
+    elif health is not None:
+        if health < 60:    fc, fcc = "Критично", "#ef4444"
+        elif health < 85:  fc, fcc = "Умеренно", "#d97706"
+        else:              fc, fcc = "Хорошо",   "#16a34a"
+    else:
+        fc, fcc = "н/д", "#64748b"
+
+    return dict(n_vis=n_vis, n_hi=n_hi, n_lo=n_lo, n_viol=n_viol,
+                n_mdl=n_mdl, health=health, fc=fc, fcc=fcc, avg_p=avg_p)
+
+
+def _render_stats_html(s: dict) -> str:
+    avg_str = f"{s['avg_p']:.2f}" if s["avg_p"] is not None else "н/д"
+    hi      = s["health"]
+    hi_str  = f"{hi}/100" if hi is not None else "н/д"
+    hi_col  = ("#16a34a" if (hi or 0) >= 85 else
+               "#d97706" if (hi or 0) >= 60 else "#ef4444") if hi is not None else "#64748b"
+
+    def card(v: str, lbl: str) -> str:
+        return (f'<div class="fp-stat">'
+                f'<div class="fp-stat-val">{v}</div>'
+                f'<div class="fp-stat-lbl">{html.escape(lbl)}</div>'
+                f'</div>')
+
+    return (
+        '<div class="fp-stats">'
+        + card(f'<span class="sv-blue">{s["n_vis"]}</span>',    "Видимых")
+        + card(f'<span class="sv-red">{s["n_hi"]}</span>',      "Высокий риск")
+        + card(f'<span class="sv-green">{s["n_lo"]}</span>',    "Низкий риск")
+        + card(f'<span class="sv-red">{s["n_viol"]}</span>',    "Офиц. нарушения")
+        + card(f'<span class="sv-blue">{s["n_mdl"]}</span>',    "С моделью")
+        + card(f'<span style="color:{hi_col}">{hi_str}</span>', "Индекс здоровья")
+        + card(f'<span style="color:{s["fcc"]};font-size:14px">{html.escape(s["fc"])}</span>',
+               "Прогноз")
+        + card(f'<span class="sv-amber">{avg_str}</span>',      "Ср. P(нарушения)")
+        + '</div>'
+    )
 
 
 def _sample_age_label(sample_date_str: str | None) -> str:
@@ -529,7 +783,10 @@ def build_map(
         meas_html = _measurements_html(meas)
         if meas_html:
             meas_date_display = sample_date_str[:10] if sample_date_str else ""
-            meas_heading = f"{html.escape(last_measured_label)}: {html.escape(meas_date_display)}" if meas_date_display else html.escape(last_measured_label)
+            meas_heading = (
+                f"{html.escape(last_measured_label)}: {html.escape(meas_date_display)}"
+                if meas_date_display else html.escape(last_measured_label)
+            )
             meas_section = (
                 f"<hr style='margin:6px 0'/>"
                 f"<b style='font-size:12px'>{meas_heading}</b><br/>"
@@ -762,9 +1019,8 @@ def _render_diagnostics(places: list, has_model: bool, snap: dict) -> None:
 
 
 def _render_about_model() -> None:
-    """Standalone page: how the model works and how to read predictions."""
+    """Standalone info page: how the model works and how to read predictions."""
     st.markdown("## Как работает модель и как читать прогноз")
-
     st.markdown(
         """
 Прогноз модели — это **вероятность нарушения** (от 0 до 1) для каждой точки на карте.
@@ -775,8 +1031,6 @@ def _render_about_model() -> None:
 
 ### 4 уровня оценки ML-модели
 
-В этом проекте мы используем **4 уровня** для понимания качества модели:
-
 | Уровень | Вопрос | Метрика |
 |---------|--------|---------|
 | 1 | Умеет ли модель **вообще** разделять чистую и грязную воду? | **ROC-AUC** (0.988 — отлично) |
@@ -785,67 +1039,49 @@ def _render_about_model() -> None:
 | 4 | **Почему** она приняла решение? | **SHAP** — вклад каждого параметра |
 """
     )
-
     with st.expander("ROC-AUC — разделение классов", expanded=False):
         st.markdown(
             """
-**ROC-AUC** (Area Under the ROC Curve) отвечает на вопрос:
-*«Умеет ли модель отличать нарушения от норм — лучше, чем случайно?»*
+**ROC-AUC** показывает, насколько хорошо модель **ранжирует** пробы: грязные должны
+получать высокий score, чистые — низкий.
 
-- AUC = **0.5** — модель угадывает случайно
-- AUC = **1.0** — идеальное разделение
-- AUC LightGBM: **0.988** — почти идеальное
+- **AUC = 0.5** — случайное угадывание (монетка)
+- **AUC = 0.9+** — отлично
+- **AUC = 0.988** (наш LightGBM) — в 98.8% случаев модель правильно ранжирует пару
+  «грязная проба + чистая проба»
 
-**Что это значит:** если взять случайную точку с нарушением и случайную без — с вероятностью 98.8% модель поставит нарушению более высокий риск.
+*ROC-кривая и числа — в ноутбуке `06_advanced_models.ipynb`.*
 """
         )
-
     with st.expander("Precision / Recall — баланс ошибок", expanded=False):
         st.markdown(
             """
-Два типа ошибок:
+Два вида ошибок:
 
-- **False Positive (FP)** — модель говорит «нарушение», но официально всё хорошо → лишние тревоги
-- **False Negative (FN)** — модель говорит «норма», но на самом деле нарушение → **опасно**
+| Тип | Что это | Последствия |
+|-----|---------|-------------|
+| **False Positive** (ложная тревога) | Чистую воду назвали грязной | Лишняя проверка |
+| **False Negative** (пропуск) | Грязную воду назвали чистой | **Люди в опасности!** |
 
-Для воды важнее **не пропускать нарушения** → оптимизируем **Recall**:
+- **Precision** = из всего «нарушение» — сколько реально нарушений? (0.881)
+- **Recall** = из всех реальных нарушений — сколько нашли? (**0.956**)
 
-| Метрика | Значение |
-|---------|---------|
-| Precision | 0.881 (88% тревог обоснованы) |
-| Recall | 0.956 (ловим 95.6% нарушений) |
-
-Порог (threshold) выбран через `best_threshold_max_recall_at_precision()`.
+Для безопасности воды **Recall важнее**: лучше ложная тревога, чем пропущенное загрязнение.
+**Порог** подбирается через `best_threshold_max_recall_at_precision()`: max Recall при Precision ≥ 0.70.
 """
         )
-
     with st.expander("Калибровка вероятностей", expanded=False):
         st.markdown(
             """
-**Калибровка** — это соответствие между предсказанной вероятностью и реальной частотой нарушений.
-
-Если модель говорит «риск 0.8» — значит, среди таких точек ~80% реально нарушают нормы.
-
-Используется **isotonic regression** (неубывающее монотонное преобразование) поверх сырых вероятностей.
-Сырые вероятности RF могут быть занижены из-за структуры деревьев.
+Если модель говорит P = 0.90, это должно значить: в ~90% таких случаев реально нарушение.
+Используется **isotonic regression** — сырые вероятности RF могут быть занижены.
+*Графики калибровки — в ноутбуке `06_advanced_models.ipynb`.*
 """
         )
-
     with st.expander("SHAP — объяснение решений модели", expanded=False):
         st.markdown(
             """
-**SHAP** (SHapley Additive exPlanations) отвечает на вопрос:
-*«Сколько каждый параметр **внёс** в конкретное предсказание?»*
-
-Пример разложения:
-```
-baseline (средний риск):         0.30
-+ iron (железо высокое)        → +0.28
-+ coliforms (бактерии)         → +0.18
-+ turbidity (мутность)         → +0.12
-− ph (pH в норме)              → −0.06
-= итого                        → 0.82
-```
+**SHAP** отвечает на вопрос: *«Сколько каждый параметр внёс в конкретное предсказание?»*
 
 #### Главные предикторы нарушений (SHAP, LightGBM)
 
@@ -858,35 +1094,28 @@ baseline (средний риск):         0.30
 | **Энтерококки** (enterococci) | Средний | Кишечные бактерии |
 | **Мутность** (turbidity) | Средний | Взвешенные частицы |
 | **Месяц** (month) | Заметный | Лето → повышенный риск |
-
-*Визуализации SHAP (beeswarm plot, bar plot) — в ноутбуке `06_advanced_models.ipynb`.*
 """
         )
-
     st.markdown("---")
     st.markdown(
         """
 ### О модели на карте
 
-Модель на карте — это **Random Forest** (120 деревьев), обученный на всех доступных
-данных Terviseamet для быстрого деплоя. Это **упрощённая** версия: основная модель
-проекта — **LightGBM** с темпоральным split, калибровкой и SHAP (см. ноутбук 06).
+Модель на карте — **Random Forest** (120 деревьев). Основная модель проекта — **LightGBM**
+с темпоральным split, калибровкой и SHAP (ноутбук 06).
 
-**Как читать цвет маркера (режим «прогноз модели»):**
-- 🟢 Зелёный — модель оценивает риск нарушения как **низкий**
-- 🟡 Жёлтый — **средний** уровень риска
-- 🔴 Красный — модель оценивает риск как **высокий**
+**Как читать цвет маркера (режим «прогноз»):**
+- 🟢 Зелёный — низкий риск нарушения
+- 🟡 Жёлтый — средний риск
+- 🔴 Красный — высокий риск
 
 > ⚠️ Прогноз модели — **не** официальное заключение Terviseamet.
-> Это ориентир на основе машинного обучения.
-
-Подробнее: [`docs/ml_metrics_guide.md`](https://github.com/user/water-quality-ee/blob/main/docs/ml_metrics_guide.md)
 """
     )
 
 
 def _render_about_service() -> None:
-    """Standalone page: what this service is and how it works."""
+    """Standalone info page: what this service is and how it works."""
     st.markdown(
         """
 ## О сервисе
@@ -908,17 +1137,18 @@ def _render_about_service() -> None:
 | **Gradient Boosting** | Последовательный бустинг. Обычно точнее на несбалансированных данных. |
 | **LightGBM** | Градиентный бустинг Microsoft. Быстрее, нативная обработка NaN. |
 
-Все модели обучены на **одних данных** (все годы). Значение `P(нарушение)` — вероятность класса "нарушение" (0 = безопасно, 1 = точно нарушение). Порог по умолчанию: 0.5.
-
-Расхождение между моделями — признак **пограничного случая**: одни параметры сигнализируют о нарушении, другие — нет.
+Все модели обучены на **одних данных** (все годы). `P(нарушение)` — вероятность класса "нарушение"
+(0 = безопасно, 1 = точно нарушение). Порог по умолчанию: 0.5.
 
 ### Координаты
 
-Координаты в снимке: **OpenCage** (при сборке с ключом), **кэш**, **центроид уезда** и **приблизительная точка** (`approximate_ee`). Водопроводные точки часто геокодируются грубо.
+Координаты в снимке: **OpenCage** (при сборке с ключом), **кэш**, **центроид уезда** и
+**приблизительная точка** (`approximate_ee`). Водопроводные точки часто геокодируются грубо.
 
 ### Обновление данных
 
-GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам 05:00 UTC и 1-е число 04:00 UTC).
+GitHub Actions по расписанию: `citizen-snapshot.yml` (полный снимок с моделями: по понедельникам
+05:00 UTC и 1-е число 04:00 UTC).
 """
     )
 
@@ -933,9 +1163,16 @@ def main() -> None:
     lang: str = st.session_state["lang"]
     T = TRANSLATIONS.get(lang, TRANSLATIONS["RU"])
 
-    st.set_page_config(page_title=T["page_title"], layout="wide")
+    st.set_page_config(
+        page_title=T["page_title"],
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+    # Inject overlay-sidebar CSS + FAB/backdrop JS
+    st.markdown(_PANEL_CSS, unsafe_allow_html=True)
+    st.markdown(_PANEL_JS_HTML, unsafe_allow_html=True)
 
-    # ── global CSS: IBM Plex Sans + header/nav styling ─────────────────────
+    # ── IBM Plex Sans + header/nav styling ────────────────────────────────
     st.markdown(
         """
 <style>
@@ -944,17 +1181,14 @@ def main() -> None:
 html, body, [class*="css"], [data-testid="stAppViewContainer"] {
   font-family: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif !important;
 }
-
-/* ── title ────────────────────────────────────────────────────────── */
 .wq-title {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: #0c4a6e;
   margin: 0;
-  padding: 0.2rem 0;
+  padding: 0.15rem 0;
 }
-
-/* ── language radio → compact pill buttons ────────────────────────── */
+/* language radio → compact pill buttons */
 div[data-testid="stRadio"][data-key="lang_radio"] > div {
   flex-direction: row;
   gap: 4px;
@@ -980,9 +1214,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] label:hover:not(:has(input:che
   background: #e0f2fe;
 }
 div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
-
-/* ── info-page nav buttons (Diagnostics / About Model / About Service) */
-.info-nav-row div[data-testid="column"] > div { text-align: right; }
+/* info-page nav buttons */
 .info-nav-row .stButton > button {
   background: transparent !important;
   border: 1.5px solid #cbd5e1 !important;
@@ -1009,7 +1241,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         unsafe_allow_html=True,
     )
 
-    # ── header row: title (left) + language pills (right) ─────────────────
+    # ── header: title (left) + language pills (right) ─────────────────────
     hcol_t, hcol_l = st.columns([8, 2])
     with hcol_t:
         st.markdown(f"<h1 class='wq-title'>💧 {T['title']}</h1>", unsafe_allow_html=True)
@@ -1026,9 +1258,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
             st.session_state["lang"] = new_lang
             st.rerun()
 
-    # ── load data ──────────────────────────────────────────────────────────
     snap = load_snapshot()
-
     if snap is None:
         st.error(T["no_snap"] + "\n\n"
             "`python citizen-service/scripts/build_citizen_snapshot.py --map-only`\n\n"
@@ -1037,10 +1267,136 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
 
     _log_snapshot_coordinate_health(snap)
 
-    has_model = snapshot_has_model_predictions(snap)
+    has_model    = snapshot_has_model_predictions(snap)
     avail_models = _available_models(snap) if has_model else []
     model_labels: dict[str, str] = {**MODEL_LABELS_DEFAULT, **(snap.get("model_labels") or {})}
+    places       = snap.get("places", [])
+    kind_labels  = {**DEFAULT_PLACE_KIND_LABELS, **(snap.get("place_kinds") or {})}
 
+    # ── geo-location from URL query params (written by fpNearMe JS) ───────────
+    map_center: tuple[float, float] | None = None
+    map_zoom = 7
+    try:
+        qp = st.query_params
+        gl, gn = qp.get("geo_lat"), qp.get("geo_lon")
+        if gl and gn:
+            map_center = (float(gl), float(gn))
+            map_zoom   = 12
+    except Exception:
+        pass
+
+    # ── normalise places for the table DataFrame ───────────────────────────────
+    rows_for_df = []
+    for p in places:
+        d = dict(p)
+        pk = _place_kind(d)
+        d["place_kind"] = pk
+        d["Тип места"]  = kind_labels.get(pk, pk)
+        rows_for_df.append(d)
+    df_full = pd.json_normalize(rows_for_df, sep="_")
+
+    # ── session-state defaults (set once on first render) ─────────────────────
+    _ss_defaults = {
+        "f_swimming": True, "f_pool_spa": True,
+        "f_drinking_water": True, "f_drinking_source": True,
+        "f_other": False, "alerts_only": False, "use_cluster": True,
+    }
+    for k, v in _ss_defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SIDEBAR — sliding filter panel
+    # ══════════════════════════════════════════════════════════════════════════
+    with st.sidebar:
+        # Header: title + pin button
+        st.markdown(
+            f'<div class="fp-header">'
+            f'<span class="fp-title">⚙ Фильтры</span>'
+            f'{_PIN_BTN_HTML}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # ── action row: Alerts / Near-me / Reset (icon-only) ─────────────────
+        alerts_on = bool(st.session_state.get("alerts_only", False))
+        ab_col, nb_col, rb_col = st.columns(3)
+        with ab_col:
+            if st.button(
+                "🚨",
+                key="btn_alerts",
+                help="Только нарушения / высокий риск",
+                type="primary" if alerts_on else "secondary",
+                use_container_width=True,
+            ):
+                st.session_state.alerts_only = not alerts_on
+                st.rerun()
+        with nb_col:
+            # Pure-JS button — no Streamlit rerun needed
+            st.markdown(_NEAR_ME_BTN_HTML, unsafe_allow_html=True)
+        with rb_col:
+            if st.button(
+                "↺",
+                key="btn_reset",
+                help="Сбросить все фильтры",
+                type="secondary",
+                use_container_width=True,
+            ):
+                for k in list(_ss_defaults.keys()) + ["county_filter", "color_mode"]:
+                    if k in st.session_state:
+                        del st.session_state[k]
+                st.rerun()
+
+        st.divider()
+
+        # ── color mode ────────────────────────────────────────────────────────
+        if has_model and avail_models:
+            color_fmt = {
+                "official": "Офиц. статус",
+                **{m: model_labels.get(m, m) for m in avail_models},
+            }
+            st.radio(
+                "Раскраска",
+                options=["official"] + avail_models,
+                format_func=lambda x: color_fmt.get(x, x),
+                key="color_mode",
+            )
+        else:
+            st.markdown("**Раскраска:** только официальный статус.")
+
+        st.divider()
+
+        # ── place-type checkboxes ─────────────────────────────────────────────
+        st.markdown("**Типы мест**")
+        st.checkbox(kind_labels.get("swimming",        "🏊 Купание"),         value=True,  key="f_swimming")
+        st.checkbox(kind_labels.get("pool_spa",        "🏊 Бассейн / СПА"),   value=True,  key="f_pool_spa")
+        st.checkbox(kind_labels.get("drinking_water",  "🚰 Водопровод"),       value=True,  key="f_drinking_water")
+        st.checkbox(kind_labels.get("drinking_source", "💧 Источник"),         value=True,  key="f_drinking_source")
+        st.checkbox(kind_labels.get("other",           "📍 Прочее"),           value=False, key="f_other")
+
+        st.divider()
+
+        # ── county filter ─────────────────────────────────────────────────────
+        all_counties = sorted({
+            (str(p.get("county") or "").strip() or "Не указан")
+            for p in places
+        })
+        st.multiselect(
+            "Уезд",
+            options=all_counties,
+            default=[],
+            key="county_filter",
+            placeholder="Все уезды",
+        )
+
+        st.divider()
+
+        # ── clustering ────────────────────────────────────────────────────────
+        st.checkbox("Кластеризация маркеров", value=True, key="use_cluster")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MAIN CONTENT
+    # ══════════════════════════════════════════════════════════════════════════
     if has_model:
         models_str = ", ".join(model_labels.get(m, m) for m in avail_models)
         st.caption(T["caption_model"].format(models=models_str))
@@ -1049,7 +1405,6 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
 
     st.info(snap.get("disclaimer", ""))
 
-    places = snap.get("places", [])
     n_places = len(places)
     n_approx = sum(1 for p in places if p.get("coord_source") == "approximate_ee")
     if n_places and n_approx / n_places >= 0.2:
@@ -1058,18 +1413,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
             f"(`coord_source: approximate_ee`). Пересоберите с `--infer-county` и/или `--geocode-limit …`."
         )
 
-    kind_labels = {**DEFAULT_PLACE_KIND_LABELS, **(snap.get("place_kinds") or {})}
-
-    rows_for_df = []
-    for p in places:
-        d = dict(p)
-        pk = _place_kind(d)
-        d["place_kind"] = pk
-        d["Тип места"] = kind_labels.get(pk, pk)
-        rows_for_df.append(d)
-    df_full = pd.json_normalize(rows_for_df, sep="_")
-
-    # ── info-page nav buttons (slim row, right-aligned in header area) ─────
+    # ── info-page nav buttons (slim row, right-aligned) ────────────────────
     info_page: str | None = st.session_state.get("info_page")
 
     st.markdown('<div class="info-nav-row">', unsafe_allow_html=True)
@@ -1097,7 +1441,7 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ── route to info page OR main tabs ───────────────────────────────────
+    # ── route to info pages ────────────────────────────────────────────────
     if info_page == "diagnostics":
         _render_diagnostics(places, has_model, snap)
         return
@@ -1108,108 +1452,80 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         _render_about_service()
         return
 
-    # ── main tabs: Map / Table / Compare (slim — 3 items only) ────────────
+    # ── main tabs: Map / Table / Compare ──────────────────────────────────
     tab_map, tab_table, tab_compare = st.tabs(
         [T["tab_map"], T["tab_table"], T["tab_compare"]]
     )
 
+    # ── derive filter state from session_state ─────────────────────────────────
+    kinds_filter: set[str] = set()
+    if st.session_state.get("f_swimming",        True):  kinds_filter.add("swimming")
+    if st.session_state.get("f_pool_spa",         True):  kinds_filter.add("pool_spa")
+    if st.session_state.get("f_drinking_water",   True):  kinds_filter.add("drinking_water")
+    if st.session_state.get("f_drinking_source",  True):  kinds_filter.add("drinking_source")
+    if st.session_state.get("f_other",            False): kinds_filter.add("other")
+    if not kinds_filter:
+        kinds_filter.add("swimming")
+
+    # Map "Не указан" label back to the "__none__" key used by _filtered_places
+    raw_counties = st.session_state.get("county_filter") or []
+    counties_filter: set[str] | None = None
+    if raw_counties:
+        counties_filter = {"__none__" if c == "Не указан" else c for c in raw_counties}
+
+    use_cluster    = bool(st.session_state.get("use_cluster", True))
+    color_mode     = st.session_state.get("color_mode", "official") if (has_model and avail_models) else "official"
+    selected_model = color_mode if color_mode != "official" else (avail_models[0] if avail_models else "rf")
+
+    # ── alerts-only pre-filter ────────────────────────────────────────────────
+    places_for_map = places
+    if st.session_state.get("alerts_only", False) and has_model:
+        _pc = MODEL_PROB_COLS.get(selected_model, "rf_violation_prob")
+        places_for_map = [
+            p for p in places
+            if p.get("official_compliant") == 0
+            or (isinstance(p.get(_pc), (int, float)) and float(p[_pc]) > 0.5)
+        ]
+
     with tab_map:
-        c1, c2, c3 = st.columns([2, 1, 1])
-        with c1:
-            if has_model and avail_models:
-                color_options = ["official"] + avail_models
-                color_format = {
-                    "official": "Официальный статус",
-                    **{m: f"Прогноз: {model_labels.get(m, m)}" for m in avail_models},
-                }
-                color_mode = st.radio(
-                    "Раскраска точек",
-                    options=color_options,
-                    format_func=lambda x: color_format.get(x, x),
-                    horizontal=True,
-                )
-            else:
-                color_mode = "official"
-                st.markdown("**Раскраска:** только по официальному статусу.")
-        with c2:
-            use_cluster = st.checkbox("Кластеризация маркеров", value=True)
-        with c3:
-            st.caption("Нажмите маркер для параметров пробы и прогнозов всех моделей.")
-
-        st.subheader("Типы объектов")
-        fc1, fc2, fc3, fc4 = st.columns(4)
-        kinds_filter: set[str] = set()
-        with fc1:
-            if st.checkbox(kind_labels.get("swimming", "Купание"), value=True):
-                kinds_filter.add("swimming")
-        with fc2:
-            if st.checkbox(kind_labels.get("pool_spa", "Бассейн / СПА"), value=True):
-                kinds_filter.add("pool_spa")
-        with fc3:
-            if st.checkbox(kind_labels.get("drinking_water", "Питьевая (водопровод)"), value=True):
-                kinds_filter.add("drinking_water")
-        with fc4:
-            if st.checkbox(kind_labels.get("drinking_source", "Питьевая (источник)"), value=True):
-                kinds_filter.add("drinking_source")
-        if st.checkbox(kind_labels.get("other", "Прочее"), value=False):
-            kinds_filter.add("other")
-
-        if not kinds_filter:
-            st.warning("Выберите хотя бы один тип объектов.")
-            kinds_filter.add("swimming")
-
-        # Опциональный debug-блок: быстрый переход к конкретной точке на карте.
-        # Полностью отключается одним переключателем и не влияет на обычный режим.
-        debug_enabled = st.checkbox("Debug mode: переход к локации", value=False, key="map_debug_enabled")
+        # ── map ───────────────────────────────────────────────────────────────
+        debug_enabled    = False
         debug_focus_name: str | None = None
-        debug_only_selected = False
-        map_center: tuple[float, float] | None = None
-        map_zoom = 7
 
-        if debug_enabled:
-            with st.expander("Debug инструменты карты", expanded=True):
-                options = sorted(
-                    {
-                        str(p.get("location") or "").strip()
-                        for p in places
-                        if p.get("lat") is not None and p.get("lon") is not None and str(p.get("location") or "").strip()
-                    }
-                )
+        with st.expander("🛠 Debug: переход к локации", expanded=False):
+            debug_enabled = st.checkbox("Включить debug-режим", value=False, key="map_debug_on")
+            if debug_enabled:
+                opt_list = sorted({
+                    str(p.get("location") or "").strip()
+                    for p in places
+                    if p.get("lat") is not None and str(p.get("location") or "").strip()
+                })
                 debug_focus_name = st.selectbox(
                     "Локация для проверки",
-                    options=options,
-                    index=0 if options else None,
-                    key="map_debug_focus_name",
+                    options=opt_list,
+                    index=0 if opt_list else None,
+                    key="map_debug_loc",
                 )
-                debug_only_selected = st.checkbox(
-                    "Показывать на карте только выбранную локацию",
-                    value=False,
-                    key="map_debug_only_selected",
-                )
-
+                if st.checkbox("Показывать только выбранную локацию", value=False, key="map_debug_only"):
+                    places_for_map = [p for p in places if str(p.get("location") or "") == debug_focus_name]
                 if debug_focus_name:
                     for p in places:
-                        if str(p.get("location") or "") == debug_focus_name and p.get("lat") is not None and p.get("lon") is not None:
+                        if str(p.get("location") or "") == debug_focus_name and p.get("lat") is not None:
                             map_center = (float(p["lat"]), float(p["lon"]))
-                            map_zoom = 11
+                            map_zoom   = 11
                             st.caption(
-                                f"DEBUG: центр карты -> `{debug_focus_name}` "
+                                f"DEBUG: `{debug_focus_name}` "
                                 f"({float(p['lat']):.6f}, {float(p['lon']):.6f}), "
                                 f"source={p.get('coord_source','?')}"
                             )
                             break
-
-        selected_model = color_mode if color_mode != "official" else "rf"
-
-        places_for_map = places
-        if debug_enabled and debug_only_selected and debug_focus_name:
-            places_for_map = [p for p in places if str(p.get("location") or "") == debug_focus_name]
 
         m_map = build_map(
             places_for_map,
             color_mode,
             kinds_filter,
             use_cluster=use_cluster,
+            counties_filter=counties_filter,
             has_model_predictions=has_model,
             available_models=avail_models,
             model_labels=model_labels,
@@ -1220,26 +1536,26 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
             debug_focus_name=debug_focus_name if debug_enabled else None,
             last_measured_label=T["last_measured"],
         )
-        st_folium(m_map, width=None, height=560, returned_objects=[])
+        st_folium(m_map, width=None, height=580, returned_objects=[])
 
-        n_on_map = sum(
-            1
-            for p in places
-            if _place_kind(p) in kinds_filter
-            and p.get("lat") is not None
-            and p.get("lon") is not None
-        )
-        st.markdown(
-            T["points_on_map"].format(n=n_on_map, total=len(places))
-            + "  " + T["snap_info"].format(ts=snap.get("generated_at", "?"))
-        )
+        # ── stats row ─────────────────────────────────────────────────────────
+        _prob_col      = MODEL_PROB_COLS.get(selected_model, "rf_violation_prob")
+        _filtered_vis  = _filtered_places(places_for_map, kinds_filter, counties_filter)
+        _stats         = _compute_map_stats(_filtered_vis, _prob_col)
+        st.markdown(_render_stats_html(_stats), unsafe_allow_html=True)
+
+        # ── legend ────────────────────────────────────────────────────────────
         if color_mode != "official" and has_model:
             st.markdown(
-                f"Легенда прогноза **{model_labels.get(selected_model, selected_model)}**: "
-                "**зелёный** — риск нарушения низкий, **красный** — высокий."
+                f"**Прогноз {model_labels.get(selected_model, selected_model)}:** "
+                "🟢 низкий риск — 🔴 высокий риск нарушения. "
+                f"Снимок: `{snap.get('generated_at', '?')}`."
             )
         else:
-            st.markdown("Легенда: **зелёный** — официально соответствует, **красный** — зафиксировано нарушение.")
+            st.markdown(
+                "**Легенда:** 🟢 официально соответствует — 🔴 зафиксировано нарушение. "
+                f"Снимок: `{snap.get('generated_at', '?')}`."
+            )
 
     with tab_table:
         search = st.text_input("Поиск по названию места", key="table_search")
@@ -1247,16 +1563,8 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         if search.strip() and "location" in view.columns:
             view = view[view["location"].astype(str).str.contains(search.strip(), case=False, na=False)]
         pref = [
-            "location",
-            "Тип места",
-            "domain",
-            "county",
-            "sample_date",
-            "official_compliant",
-            "lr_violation_prob",
-            "rf_violation_prob",
-            "gb_violation_prob",
-            "lgbm_violation_prob",
+            "location", "Тип места", "domain", "county", "sample_date", "official_compliant",
+            "lr_violation_prob", "rf_violation_prob", "gb_violation_prob", "lgbm_violation_prob",
             "coord_source",
         ]
         if not has_model:
@@ -1267,7 +1575,6 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
 
     with tab_compare:
         _render_model_comparison_tab(places, avail_models, model_labels)
-
 
 if __name__ == "__main__":
     main()
