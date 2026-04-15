@@ -510,8 +510,14 @@ function MapClient({
       mapRef.current?.invalidateSize();
       // After entering fullscreen (especially on mobile), re-fit Estonia so the
       // map doesn't shift or show the wrong region due to container resize.
+      // Use asymmetric padding to keep Estonia clear of the search+chip overlay
+      // at top (≈120px) and the sheet peek at bottom (≈70px).
       if (isFullscreen) {
-        mapRef.current?.fitBounds(ESTONIA_BOUNDS, { animate: false, padding: [20, 20] });
+        mapRef.current?.fitBounds(ESTONIA_BOUNDS, {
+          animate: false,
+          paddingTopLeft: [10, 120],
+          paddingBottomRight: [10, 70]
+        });
       }
     }, 250);
     return () => window.clearTimeout(t);

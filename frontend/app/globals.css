@@ -937,6 +937,65 @@ body.mapFullscreenActive {
   padding-bottom: 1.5rem;
 }
 
+/* ---- Mobile place sheet content elements ---- */
+.gmPlaceKindRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+
+.gmPlaceKindEmoji {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.gmPlaceKindLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gmPlaceCounty {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.gmPlaceMeta {
+  margin: 0.1rem 0 0.4rem;
+  font-size: 0.82rem;
+}
+
+.gmStatusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Section title separator inside the place sheet */
+.gmSectionTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-top: 0.6rem;
+  margin-bottom: 0.2rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Measurement row with norm violation highlight */
+.rowViolated td {
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.valueViolated {
+  color: var(--bad) !important;
+  font-weight: 600;
+}
+
 /* "Done" close button — icon-only on desktop, shows label on mobile */
 .drawerDoneLabel {
   display: none;
@@ -1881,12 +1940,15 @@ body.mapFullscreenActive {
     transform: translateY(calc(100% - 62px + var(--sheet-drag-offset)));
   }
 
+  /* Half: sheet occupies ~50% of screen from the bottom, leaving map fully usable above */
   .mobileBottomSheet.half {
-    transform: translateY(calc(42% + var(--sheet-drag-offset)));
+    transform: translateY(calc(48% + var(--sheet-drag-offset)));
   }
 
+  /* Full: sheet stops below the chip bar so search+chips are always reachable.
+     env(safe-area-inset-top) + search bar (52px) + chip bar (34px) + gap (10px) = ~100px+safe-area */
   .mobileBottomSheet.full {
-    transform: translateY(calc(3% + var(--sheet-drag-offset)));
+    transform: translateY(calc(env(safe-area-inset-top, 0px) + 6.2rem + var(--sheet-drag-offset)));
   }
 
   .infoCardGrid {
