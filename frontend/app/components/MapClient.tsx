@@ -351,6 +351,12 @@ function MarkerClusterLayer({
   return null;
 }
 
+// Module-level constant so it's stable across renders
+const ESTONIA_BOUNDS: [[number, number], [number, number]] = [
+  [57.1, 20.7],
+  [60.15, 29.4]
+];
+
 type Props = {
   places: FrontendPlace[];
   onSelectPoint?: (id: string) => void;
@@ -431,11 +437,6 @@ function MapClient({
   }, [places]);
 
   const center: [number, number] = [58.75, 25.0];
-  // Estonia viewport bounds (southWest, northEast)
-  const estoniaBounds: [[number, number], [number, number]] = [
-    [57.1, 20.7],
-    [60.15, 29.4]
-  ];
   const mapRef = useRef<L.Map | null>(null);
   const [countyGeoJson, setCountyGeoJson] = useState<GeoJSON.GeoJsonObject | null>(null);
 
@@ -507,7 +508,12 @@ function MapClient({
     if (!mapRef.current) return;
     const t = window.setTimeout(() => {
       mapRef.current?.invalidateSize();
-    }, 220);
+      // After entering fullscreen (especially on mobile), re-fit Estonia so the
+      // map doesn't shift or show the wrong region due to container resize.
+      if (isFullscreen) {
+        mapRef.current?.fitBounds(ESTONIA_BOUNDS, { animate: false, padding: [20, 20] });
+      }
+    }, 250);
     return () => window.clearTimeout(t);
   }, [isFullscreen]);
 
@@ -580,7 +586,7 @@ function MapClient({
         zoom={7}
         minZoom={6}
         maxZoom={15}
-        maxBounds={estoniaBounds}
+        maxBounds={ESTONIA_BOUNDS}
         maxBoundsViscosity={0.35}
         zoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
