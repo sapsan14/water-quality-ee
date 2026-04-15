@@ -2374,25 +2374,27 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="mapHeaderRow">
           <h3 className="sectionTitle">{t.mapTitle}</h3>
         </div>
-        {/* On-map filter FAB — large, distinct icon button sitting on the
-            map itself (not glued to the screen edge). Desktop only. */}
-        {!filtersPinned && !isMobile ? (
-          <button
-            className={`filterFab desktopOnly ${drawerOpen ? "filterFabOpen" : ""}`}
-            onClick={() => setDrawerOpen((v) => !v)}
-            aria-label={drawerOpen ? t.close : t.openFilters}
-            title={drawerOpen ? t.close : t.openFilters}
-          >
-            <span className="filterFabIcon" aria-hidden="true">
-              <Icon name={drawerOpen ? "filter-x" : "filters"} />
-            </span>
-          </button>
-        ) : null}
         {/* On-map filter chips — desktop overlay matching the mobile UX
             (domain segment, alerts-only, near-me). Sits on the map so
-            users can toggle quick filters without opening the drawer. */}
+            users can toggle quick filters without opening the drawer.
+            The first chip opens the full filter drawer. */}
         {!isMobile ? (
           <div className="mapChipBar desktopOnly" role="toolbar" aria-label={t.filters}>
+            {!filtersPinned ? (
+              <>
+                <button
+                  type="button"
+                  className={`mapChip mapChipDrawer ${drawerOpen ? "mapChipActive" : ""}`}
+                  onClick={() => setDrawerOpen((v) => !v)}
+                  aria-label={drawerOpen ? t.close : t.openFilters}
+                  aria-pressed={drawerOpen}
+                  title={drawerOpen ? t.close : t.openFilters}
+                >
+                  <Icon name={drawerOpen ? "filter-x" : "filters"} />
+                </button>
+                <div className="mapChipDivider" aria-hidden="true" />
+              </>
+            ) : null}
             {(() => {
               const allLabel = lruet(lang, "Все", "Kõik", "All");
               return (
