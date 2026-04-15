@@ -449,7 +449,6 @@ function FocusOnSelectedPoint({
       return;
     }
     map.flyTo(target, targetZoom, { duration: 0.6 });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, selectedPoint]);
   return null;
 }
