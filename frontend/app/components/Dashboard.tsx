@@ -2290,6 +2290,7 @@ export default function Dashboard({ snapshot }: Props) {
                   aria-label={drawerOpen ? t.close : t.openFilters}
                   aria-pressed={drawerOpen}
                   title={drawerOpen ? t.close : t.openFilters}
+                  data-tooltip={drawerOpen ? t.close : t.openFilters}
                 >
                   <Icon name={drawerOpen ? "filter-x" : "filters"} />
                 </button>
@@ -2298,13 +2299,23 @@ export default function Dashboard({ snapshot }: Props) {
             ) : null}
             {(() => {
               const allLabel = lruet(lang, "Все", "Kõik", "All");
+              const countText = lruet(
+                lang,
+                `Все точки: ${filtered.length}`,
+                `Kõik punktid: ${filtered.length}`,
+                `All points: ${filtered.length}`
+              );
               return (
                 <button
                   type="button"
                   className={`mapChip ${segment === "all" ? "mapChipActive" : ""}`}
-                  onClick={() => setSegment("all")}
+                  onClick={() => {
+                    setSegment("all");
+                    showCountBubble(countText);
+                  }}
                   aria-label={allLabel}
                   title={allLabel}
+                  data-tooltip={allLabel}
                 >
                   <Icon name="grid" />
                 </button>
@@ -2321,14 +2332,20 @@ export default function Dashboard({ snapshot }: Props) {
                   : k === "drinking_water"
                   ? lruet(lang, "Питьевая", "Joogivesi", "Drinking")
                   : lruet(lang, "Источники", "Allikad", "Sources");
+              const domainCount = snapshot.places.filter((p) => p.place_kind === k).length;
               return (
                 <button
                   key={`mapchip-${k}`}
                   type="button"
                   className={`mapChip ${segment === k ? "mapChipActive" : ""}`}
-                  onClick={() => setSegment(segment === k ? "all" : k)}
+                  onClick={() => {
+                    const next = segment === k ? "all" : k;
+                    setSegment(next);
+                    showCountBubble(`${label}: ${domainCount}`);
+                  }}
                   aria-label={label}
                   title={label}
+                  data-tooltip={label}
                 >
                   <Icon name={iconName} />
                 </button>
@@ -2343,10 +2360,21 @@ export default function Dashboard({ snapshot }: Props) {
                 <button
                   type="button"
                   className={`mapChip mapChipAlert ${alertsOnly ? "mapChipActive" : ""}`}
-                  onClick={() => setAlertsOnly((v) => !v)}
+                  onClick={() => {
+                    setAlertsOnly((v) => !v);
+                    showCountBubble(
+                      lruet(
+                        lang,
+                        `Тревог на карте: ${mapAlertsCount}`,
+                        `Häireid kaardil: ${mapAlertsCount}`,
+                        `Alerts on map: ${mapAlertsCount}`
+                      )
+                    );
+                  }}
                   aria-label={alertsLabel}
                   aria-pressed={alertsOnly}
                   title={alertsLabel}
+                  data-tooltip={alertsLabel}
                 >
                   <Icon name="alert" />
                 </button>
@@ -2370,10 +2398,20 @@ export default function Dashboard({ snapshot }: Props) {
                     } else {
                       activateNearMe();
                     }
+                    const n = mapNearMeCount ?? 0;
+                    showCountBubble(
+                      lruet(
+                        lang,
+                        `Рядом на карте: ${n}`,
+                        `Läheduses kaardil: ${n}`,
+                        `Near me on map: ${n}`
+                      )
+                    );
                   }}
                   aria-label={nearLabel}
                   aria-pressed={nearbyOnly}
                   title={nearLabel}
+                  data-tooltip={nearLabel}
                 >
                   <Icon name="locate" />
                 </button>
@@ -2386,6 +2424,7 @@ export default function Dashboard({ snapshot }: Props) {
                 onClick={() => setRisk("all")}
                 aria-label={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
                 title={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
+                data-tooltip={lruet(lang, "Сбросить риск", "Lähtesta risk", "Clear risk filter")}
               >
                 <Icon name="signal" />
               </button>
@@ -2396,6 +2435,7 @@ export default function Dashboard({ snapshot }: Props) {
               onClick={clearFilters}
               aria-label={t.clearFilters}
               title={t.clearFilters}
+              data-tooltip={t.clearFilters}
             >
               <Icon name="filter-x" />
             </button>
