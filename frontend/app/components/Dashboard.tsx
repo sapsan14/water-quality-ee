@@ -2134,7 +2134,12 @@ export default function Dashboard({ snapshot }: Props) {
       {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
       <aside className={`drawer panel ${drawerOpen || filtersPinned ? "open" : ""} ${filtersPinned ? "pinned" : ""}`}>
         <div className="drawerHeader">
-          <h3 className="sectionTitle">{t.filters}</h3>
+          <h3 className="sectionTitle drawerSectionTitle">
+            <span className="drawerTitleIcon" aria-hidden="true">
+              <Icon name="filters" />
+            </span>
+            {t.filters}
+          </h3>
           <div className="drawerHeaderActions">
             <button
               className={`btn btnSmall iconBtn drawerPinBtn ${filtersPinned ? "btnActive" : ""}`}
@@ -2189,26 +2194,45 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         ) : null}
         {geoError ? <p className="hint">{geoError}</p> : null}
-        <div className="field">
+        <div className="field drawerSearchField">
           <label htmlFor="search-input">{t.search}</label>
-          <input
-            id="search-input"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={lruet(lang, "например: Tallinn, Harku, rand", "nt Tallinn, Harku, rand", "e.g. Tallinn, Harku, beach")}
-            aria-label={lruet(
-              lang,
-              "Поиск мест по названию или уезду",
-              "Otsi kohti nime või maakonna järgi",
-              "Search places by location or county"
-            )}
-            inputMode="search"
-            enterKeyHint="search"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-          />
+          <div className="drawerSearchWrap">
+            <span className="drawerSearchIcon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="9" cy="9" r="6" />
+                <path d="m13.5 13.5 4 4" />
+              </svg>
+            </span>
+            <input
+              id="search-input"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={lruet(lang, "например: Tallinn, Harku, rand", "nt Tallinn, Harku, rand", "e.g. Tallinn, Harku, beach")}
+              aria-label={lruet(
+                lang,
+                "Поиск мест по названию или уезду",
+                "Otsi kohti nime või maakonna järgi",
+                "Search places by location or county"
+              )}
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            {query ? (
+              <button
+                type="button"
+                className="drawerSearchClear"
+                onClick={() => setQuery("")}
+                aria-label={lruet(lang, "Очистить", "Tühjenda", "Clear")}
+                title={lruet(lang, "Очистить", "Tühjenda", "Clear")}
+              >
+                <Icon name="close" />
+              </button>
+            ) : null}
+          </div>
         </div>
         {isMobile ? (
           <>
@@ -2227,64 +2251,114 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           </>
         ) : null}
-        <div className="field">
-          <label htmlFor="segment-select">{lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}</label>
-          <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">
-            <option value="all">{lruet(lang, "Все типы", "Kõik tüübid", "All types")}</option>
-            {placeKinds.map((k) => (
-              <option key={`k-${k}`} value={k}>
-                {placeKindLabel(k)}
-              </option>
-            ))}
-          </select>
+        <div className="filterGroup">
+          <div className="filterGroupHead">
+            <span className="filterGroupIcon" aria-hidden="true"><Icon name="globe" /></span>
+            <span>{lruet(lang, "Где", "Kus", "Where")}</span>
+          </div>
+          <div className="field">
+            <label htmlFor="segment-select">
+              <span className="fieldIcon" aria-hidden="true"><Icon name="grid" /></span>
+              {lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}
+            </label>
+            <div className="selectWrap">
+              <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">
+                <option value="all">{lruet(lang, "Все типы", "Kõik tüübid", "All types")}</option>
+                {placeKinds.map((k) => (
+                  <option key={`k-${k}`} value={k}>
+                    {placeKindLabel(k)}
+                  </option>
+                ))}
+              </select>
+              <span className="selectChevron" aria-hidden="true"><Icon name="chevron-down" /></span>
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="county-select">
+              <span className="fieldIcon" aria-hidden="true"><Icon name="globe" /></span>
+              {t.county}
+            </label>
+            <div className="selectWrap">
+              <select id="county-select" value={county} onChange={(e) => setCounty(e.target.value)} aria-label="Filter by county">
+                <option value="all">{lruet(lang, "Все уезды", "Kõik maakonnad", "All counties")}</option>
+                {counties.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <span className="selectChevron" aria-hidden="true"><Icon name="chevron-down" /></span>
+            </div>
+          </div>
         </div>
-        <div className="field">
-          <label htmlFor="county-select">{t.county}</label>
-          <select id="county-select" value={county} onChange={(e) => setCounty(e.target.value)} aria-label="Filter by county">
-            <option value="all">{lruet(lang, "Все уезды", "Kõik maakonnad", "All counties")}</option>
-            {counties.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+
+        <div className="filterGroup">
+          <div className="filterGroupHead">
+            <span className="filterGroupIcon" aria-hidden="true"><Icon name="alert" /></span>
+            <span>{lruet(lang, "Статус и риск", "Staatus ja risk", "Status & risk")}</span>
+          </div>
+          <div className="field">
+            <label htmlFor="risk-select">
+              <span className="fieldIcon" aria-hidden="true"><Icon name="signal" /></span>
+              {t.risk}
+            </label>
+            <div className="selectWrap">
+              <select id="risk-select" value={risk} onChange={(e) => setRisk(e.target.value)} aria-label="Filter by risk level">
+                {riskOrder.map((r) => (
+                  <option key={r} value={r}>
+                    {riskLabel(r)}
+                  </option>
+                ))}
+              </select>
+              <span className="selectChevron" aria-hidden="true"><Icon name="chevron-down" /></span>
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="official-select">
+              <span className="fieldIcon" aria-hidden="true"><Icon name="check-circle" /></span>
+              {t.official}
+            </label>
+            <div className="selectWrap">
+              <select id="official-select" value={official} onChange={(e) => setOfficial(e.target.value as (typeof officialOrder)[number])}>
+                {officialOrder.map((s) => (
+                  <option key={s} value={s}>
+                    {officialLabel(s)}
+                  </option>
+                ))}
+              </select>
+              <span className="selectChevron" aria-hidden="true"><Icon name="chevron-down" /></span>
+            </div>
+          </div>
+          <div className="field rangeField">
+            <label htmlFor="min-prob">
+              <span className="fieldIcon" aria-hidden="true"><Icon name="alert" /></span>
+              {t.minProb}
+              <span className="rangeValue">{minProb.toFixed(2)}</span>
+            </label>
+            <input
+              id="min-prob"
+              className="rangeSlider"
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={minProbInput}
+              onInput={(e) => setMinProbInput(Number((e.target as HTMLInputElement).value))}
+              style={{ "--range-fill": `${minProbInput * 100}%` } as React.CSSProperties}
+            />
+            <div className="rangeScale" aria-hidden="true">
+              <span>0</span><span>0.5</span><span>1</span>
+            </div>
+          </div>
         </div>
-        <div className="field">
-          <label htmlFor="risk-select">{t.risk}</label>
-          <select id="risk-select" value={risk} onChange={(e) => setRisk(e.target.value)} aria-label="Filter by risk level">
-            {riskOrder.map((r) => (
-              <option key={r} value={r}>
-                {riskLabel(r)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="official-select">{t.official}</label>
-          <select id="official-select" value={official} onChange={(e) => setOfficial(e.target.value as (typeof officialOrder)[number])}>
-            {officialOrder.map((s) => (
-              <option key={s} value={s}>
-                {officialLabel(s)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="min-prob">
-            {t.minProb}: <b>{minProb.toFixed(2)}</b>
-          </label>
-          <input
-            id="min-prob"
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={minProbInput}
-            onInput={(e) => setMinProbInput(Number((e.target as HTMLInputElement).value))}
-          />
-        </div>
-        <div className="field">
-          <label>{t.latestSampleDate}</label>
+
+        <div className="filterGroup">
+          <div className="filterGroupHead">
+            <span className="filterGroupIcon" aria-hidden="true"><Icon name="calendar" /></span>
+            <span>{lruet(lang, "Дата пробы", "Proovi kuupäev", "Sample date")}</span>
+          </div>
+          <div className="field">
+            <label>{t.latestSampleDate}</label>
           <div className="dateRangeRow">
             <div className="dateRangeField">
               <span className="dateRangeIcon" aria-hidden="true">
@@ -2329,7 +2403,8 @@ export default function Dashboard({ snapshot }: Props) {
               </button>
             ) : null}
           </div>
-          <p className="hint">{t.latestSampleDateHint}</p>
+            <p className="hint">{t.latestSampleDateHint}</p>
+          </div>
         </div>
 
         <div className="panel reportPanel">
