@@ -1806,23 +1806,24 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </div>
         <div className="topBarControls">
-          <button className={`btn langBtn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>
-            RU
+          {/* Info nav buttons — About Model + About Service */}
+          <button
+            className={`btn headerInfoNav ${activeTab === "aboutModel" ? "btnActive" : ""}`}
+            onClick={() => switchTab("aboutModel")}
+          >
+            {t.tabs.aboutModel}
           </button>
-          <button className={`btn langBtn ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>
-            ET
+          <button
+            className={`btn headerInfoNav ${activeTab === "aboutService" ? "btnActive" : ""}`}
+            onClick={() => switchTab("aboutService")}
+          >
+            {t.tabs.aboutService}
           </button>
-          <button className={`btn langBtn ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>
-            EN
-          </button>
-          <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
-            <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>
-              IBM
-            </button>
-            <button className={`btn btnSmall ${cyrillicFont === "manrope" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("manrope")}>
-              MAN
-            </button>
-          </div>
+          <div className="headerDivider" aria-hidden="true" />
+          {/* Language pills */}
+          <button className={`btn langBtn ${lang === "et" ? "btnActive" : ""}`} onClick={() => { setLang("et"); pushHeaderLang("et"); }}>ET</button>
+          <button className={`btn langBtn ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
+          <button className={`btn langBtn ${lang === "ru" ? "btnActive" : ""}`} onClick={() => { setLang("ru"); pushHeaderLang("ru"); }}>RU</button>
         </div>
       </div>
 
@@ -1949,18 +1950,19 @@ export default function Dashboard({ snapshot }: Props) {
         <div className="filterActionRow">
           <button
             type="button"
-            className={`btn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
+            className={`btn iconBtn alertFocusBtn ${alertsOnly ? "btnActive alertFocusBtnActive" : ""}`}
             onClick={() => setAlertsOnly((v) => !v)}
             aria-pressed={alertsOnly}
+            aria-label={t.alertsOnly}
+            title={t.alertsOnly}
           >
             <span className="btnIcon" aria-hidden="true">
               <Icon name="alert" />
             </span>
-            {t.alertsOnly}
           </button>
           <button
             type="button"
-            className={`btn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
+            className={`btn iconBtn nearMeBtn ${nearbyOnly ? "btnActive" : ""}`}
             onClick={() => {
               if (nearbyOnly) {
                 setNearbyOnly(false);
@@ -1975,9 +1977,12 @@ export default function Dashboard({ snapshot }: Props) {
               activateNearMe();
             }}
             aria-pressed={nearbyOnly}
+            aria-label={t.nearMe}
+            title={t.nearMe}
           >
-            <span aria-hidden="true">📍</span>
-            {t.nearMe}
+            <span className="btnIcon" aria-hidden="true">
+              <Icon name="locate" />
+            </span>
           </button>
           {nearbyOnly && userCoords ? (
             <div className="nearbyPanel">
@@ -2037,6 +2042,13 @@ export default function Dashboard({ snapshot }: Props) {
             <button className={`btn btnSmall ${lang === "en" ? "btnActive" : ""}`} onClick={() => { setLang("en"); pushHeaderLang("en"); }}>EN</button>
           </div>
         ) : null}
+        <div className="drawerLangRow">
+          <span className="drawerLangLabel">{lruet(lang, "Шрифт", "Font", "Font")}</span>
+          <div className="fontToggle" role="group" aria-label="Cyrillic font switch">
+            <button className={`btn btnSmall ${cyrillicFont === "ibm" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("ibm")}>IBM</button>
+            <button className={`btn btnSmall ${cyrillicFont === "manrope" ? "btnActive" : ""}`} onClick={() => setCyrillicFont("manrope")}>MAN</button>
+          </div>
+        </div>
         <div className="field">
           <label htmlFor="segment-select">{lruet(lang, "Тип точки", "Punkti tüüp", "Point type")}</label>
           <select id="segment-select" value={segment} onChange={(e) => setSegment(e.target.value)} aria-label="Filter by source category">
@@ -2202,20 +2214,26 @@ export default function Dashboard({ snapshot }: Props) {
       </aside>
 
       <div className="mainContent">
+      {/* FAB — fixed ⚙ button to open/close filter drawer on desktop when unpinned */}
+      {!filtersPinned && !isMobile ? (
+        <button
+          className={`filterFab desktopOnly ${drawerOpen ? "filterFabOpen" : ""}`}
+          onClick={() => setDrawerOpen((v) => !v)}
+          aria-label={drawerOpen ? t.close : t.openFilters}
+          title={drawerOpen ? t.close : t.openFilters}
+        >
+          <span className="btnIcon" aria-hidden="true">
+            <Icon name={drawerOpen ? "filter-x" : "filters"} />
+          </span>
+        </button>
+      ) : null}
+
       <section
         ref={mapPanelRef}
         className={`panel mapTopPanel ${isMapFullscreen ? "mapPanelFullscreen" : ""} ${isMobile ? "mobileMapPanel" : ""}`}
       >
         <div className="mapHeaderRow">
           <h3 className="sectionTitle">{t.mapTitle}</h3>
-          {!isMobile && !filtersPinned ? (
-            <button className="btn openFiltersBtn" type="button" onClick={() => setDrawerOpen(true)}>
-              <span className="btnIcon" aria-hidden="true">
-                <Icon name="filters" />
-              </span>
-              {t.filters}
-            </button>
-          ) : null}
         </div>
         <MapClient
           places={mapPlaces}
@@ -2243,6 +2261,42 @@ export default function Dashboard({ snapshot }: Props) {
           topOverlayPx={isMobile ? 105 : 20}
         />
       </section>
+
+      {/* Stats row — always visible below map on desktop */}
+      <div className="mapStatsRow desktopOnly">
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Видимых", "Nähtav", "Visible")}</span>
+          <span className="mapStatV">{filtered.length}</span>
+        </div>
+        <div className="mapStat mapStatBad">
+          <span className="mapStatK">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</span>
+          <span className="mapStatV">{filtered.filter((p) => p.risk_level === "high").length}</span>
+        </div>
+        <div className="mapStat mapStatGood">
+          <span className="mapStatK">{lruet(lang, "Низкий риск", "Madal risk", "Low risk")}</span>
+          <span className="mapStatV">{filtered.filter((p) => p.risk_level === "low").length}</span>
+        </div>
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Офиц. нарушения", "Ametlik rikkumine", "Violations")}</span>
+          <span className="mapStatV mapStatBadText">{filtered.filter((p) => p.official_compliant === 0).length}</span>
+        </div>
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "С моделью", "Mudeli katvus", "With model")}</span>
+          <span className="mapStatV">{filtered.filter((p) => p.model_violation_prob !== null).length}</span>
+        </div>
+        <div className={`mapStat ${healthIndex >= 75 ? "mapStatGood" : healthIndex >= 50 ? "mapStatWarn" : "mapStatBad"}`}>
+          <span className="mapStatK">{lruet(lang, "Индекс здоровья", "Tervise indeks", "Health index")}</span>
+          <span className="mapStatV">{healthIndex}/100</span>
+        </div>
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Прогноз", "Prognoos", "Outlook")}</span>
+          <span className="mapStatV">{prognosis}</span>
+        </div>
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Ср. P(нарушения)", "Kesk. P(rikkumine)", "Avg P(viol.)")}</span>
+          <span className="mapStatV">{avgProb === null ? "n/a" : avgProb.toFixed(2)}</span>
+        </div>
+      </div>
 
       <section className="panel selectedPointDesktop desktopOnly">
         <h3 className="sectionTitle">{t.selectedPoint}</h3>
@@ -2818,10 +2872,12 @@ export default function Dashboard({ snapshot }: Props) {
           <button className={`tabBtn ${activeTab === "analytics" ? "tabBtnActive" : ""}`} onClick={() => switchTab("analytics")}>
             {t.tabs.analytics}
           </button>
-          <button className={`tabBtn ${activeTab === "aboutModel" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutModel")}>
+          {/* aboutModel and aboutService are accessible via header info-nav buttons on desktop;
+              shown as tabs on mobile where the header buttons are hidden */}
+          <button className={`tabBtn mobileOnly ${activeTab === "aboutModel" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutModel")}>
             {t.tabs.aboutModel}
           </button>
-          <button className={`tabBtn ${activeTab === "aboutService" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutService")}>
+          <button className={`tabBtn mobileOnly ${activeTab === "aboutService" ? "tabBtnActive" : ""}`} onClick={() => switchTab("aboutService")}>
             {t.tabs.aboutService}
           </button>
         </div>
