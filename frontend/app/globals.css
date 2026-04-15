@@ -2852,6 +2852,22 @@ html[data-theme="dark"] .dateRangeSep {
 }
 
 @media (max-width: 900px) {
+  /* Lock the body scroll on mobile: `.mapTopPanel` is position:fixed +
+     inset:0 (see below), so any body scroll would only reveal empty
+     space from `.desktopOnly` nodes that are still in the DOM. This
+     matches `body.mapFullscreenActive` (toggled by Dashboard after
+     hydration) but applies from the first paint, so there is no brief
+     flash of the desktop layout scrolling before React takes over. */
+  html,
+  body {
+    overflow: hidden;
+    /* `vh` first as fallback, `dvh` second so modern browsers use the
+       dynamic (visible) viewport — matches the convention used by
+       `.mobileBottomSheet` / `.mapShell`. */
+    height: 100vh;
+    height: 100dvh;
+  }
+
   .page {
     padding: 0;
   }
@@ -2906,7 +2922,16 @@ html[data-theme="dark"] .dateRangeSep {
      on the JS-added `.mobileMapPanel` class) so the overrides apply
      during SSR / pre-hydration paint — otherwise `.panel` padding +
      border remains visible as a thin frame around the map until React
-     hydrates and toggles the `mobileMapPanel` class. */
+     hydrates and toggles the `mobileMapPanel` class.
+
+     The panel is ALSO promoted to the fullscreen overlay position
+     (`position: fixed; inset: 0; z-index: 2500`) by default. Mobile is
+     always fullscreen — `toggleMapFullscreen` is disabled on mobile in
+     Dashboard.tsx. Applying fullscreen from CSS (not from the
+     `.mapPanelFullscreen` class added by React state) means the SSR
+     paint already matches the hydrated layout, so users no longer see
+     a brief flash of the in-flow 58vh map + desktop chrome before
+     React hydrates and flips `isMapFullscreen` to true. */
   .mapTopPanel,
   .mobileMapPanel {
     padding: 0 !important;
@@ -2915,6 +2940,10 @@ html[data-theme="dark"] .dateRangeSep {
     box-shadow: none !important;
     /* Ensure the map fills the viewport with no gap from the page chrome. */
     overflow: hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    margin: 0;
   }
 
   /* Belt-and-suspenders: pin the map shell + leaflet root to the
@@ -2953,15 +2982,17 @@ html[data-theme="dark"] .dateRangeSep {
     display: none;
   }
 
-  .mapShell {
-    /* See .mobileBottomSheet comment: keep `vh` first as fallback and
-       `dvh` second so modern browsers use the dynamic (visible) viewport,
-       matching window.innerHeight. */
-    height: 58vh;
-    height: 58dvh;
-    min-height: 360px;
-  }
+  /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
+     position:fixed + inset:0 on mobile (see above), so the shell must
+     be 100vh to match — otherwise the leaflet canvas would still size
+     to a smaller height and leave an empty strip at the bottom of the
+     viewport during SSR / before hydration.
 
+     Unit order follows the project convention documented on
+     `.mobileBottomSheet`: `vh` first as fallback, `dvh` second so
+     modern browsers use the dynamic (visible) viewport, matching
+     window.innerHeight. */
+  .mapShell,
   .mapPanelFullscreen .mapShell {
     height: 100vh;
     height: 100dvh;
