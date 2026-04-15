@@ -402,25 +402,59 @@ type Props = {
   showCountyOverlay?: boolean;
   fitBoundsKey?: string;
   fitBoundsPlaces?: [number, number][];
+  /** Pixels obscured by the bottom sheet (peek/half) + on-screen keyboard. */
+  bottomOverlayPx?: number;
+  /** Pixels obscured by the top search bar + chip bar. */
+  topOverlayPx?: number;
 };
 
-function FocusOnSelectedPoint({ selectedPoint }: { selectedPoint?: FrontendPlace | null }) {
+/**
+ * Pan the selected point so it stays above the bottom-sheet header and the
+ * on-screen keyboard, instead of vanishing under either overlay.
+ *
+ * `bottomOverlayPx` = pixels obscured at the bottom (sheet peek/half + IME).
+ */
+function FocusOnSelectedPoint({
+  selectedPoint,
+  bottomOverlayPx = 0
+}: {
+  selectedPoint?: FrontendPlace | null;
+  bottomOverlayPx?: number;
+}) {
   const map = useMap();
   useEffect(() => {
     if (!selectedPoint) return;
-    map.flyTo([selectedPoint.lat, selectedPoint.lon], Math.max(map.getZoom(), 10), {
-      duration: 0.7
-    });
-  }, [map, selectedPoint]);
+    const target: [number, number] = [selectedPoint.lat, selectedPoint.lon];
+    const targetZoom = Math.max(map.getZoom(), 11);
+    if (bottomOverlayPx > 0) {
+      // Project, shift up by half the overlay height so the marker centers
+      // in the visible portion of the map, then unproject and fly.
+      const point = map.project(target, targetZoom);
+      point.y -= bottomOverlayPx / 2;
+      const adjusted = map.unproject(point, targetZoom);
+      map.flyTo(adjusted, targetZoom, { duration: 0.6 });
+      return;
+    }
+    map.flyTo(target, targetZoom, { duration: 0.6 });
+  }, [map, selectedPoint, bottomOverlayPx]);
   return null;
 }
 
+/**
+ * When filters/search shrink the result set, fit the visible bounds — but
+ * if it collapses to a single (or near-single) match, fly to the first hit
+ * with offsets that account for the search bar, chips and bottom sheet.
+ */
 function FitBoundsOnVersion({
   fitBoundsKey,
-  places
+  places,
+  topOverlayPx = 95,
+  bottomOverlayPx = 62
 }: {
   fitBoundsKey?: string;
   places?: [number, number][];
+  topOverlayPx?: number;
+  bottomOverlayPx?: number;
 }) {
   const map = useMap();
   const prevKeyRef = useRef<string | undefined>(undefined);
@@ -428,17 +462,21 @@ function FitBoundsOnVersion({
     if (!fitBoundsKey || fitBoundsKey === prevKeyRef.current || !places || places.length === 0) return;
     prevKeyRef.current = fitBoundsKey;
     if (places.length === 1) {
-      map.flyTo(places[0], Math.max(map.getZoom(), 11), { duration: 0.6 });
+      const targetZoom = Math.max(map.getZoom(), 12);
+      const point = map.project(places[0], targetZoom);
+      point.y -= Math.max(0, (bottomOverlayPx - topOverlayPx) / 2);
+      const adjusted = map.unproject(point, targetZoom);
+      map.flyTo(adjusted, targetZoom, { duration: 0.6 });
       return;
     }
     const bounds = L.latLngBounds(places.map(([lat, lon]) => [lat, lon]));
     map.fitBounds(bounds, {
       animate: true,
-      paddingTopLeft: [10, 95],
-      paddingBottomRight: [10, 62],
+      paddingTopLeft: [10, topOverlayPx],
+      paddingBottomRight: [10, bottomOverlayPx],
       maxZoom: 13
     });
-  }, [fitBoundsKey, places, map]);
+  }, [fitBoundsKey, places, map, topOverlayPx, bottomOverlayPx]);
   return null;
 }
 
@@ -473,7 +511,9 @@ function MapClient({
   isMobile = false,
   showCountyOverlay = true,
   fitBoundsKey,
-  fitBoundsPlaces
+  fitBoundsPlaces,
+  bottomOverlayPx = 0,
+  topOverlayPx = 95
 }: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
   const countyRisk = useMemo(() => {
@@ -660,8 +700,13 @@ function MapClient({
           keepBuffer={isMobile ? 2 : 5}
         />
         <FocusOnUserLocation userLocation={userLocation} />
-        <FocusOnSelectedPoint selectedPoint={selectedPoint} />
-        <FitBoundsOnVersion fitBoundsKey={fitBoundsKey} places={fitBoundsPlaces} />
+        <FocusOnSelectedPoint selectedPoint={selectedPoint} bottomOverlayPx={bottomOverlayPx} />
+        <FitBoundsOnVersion
+          fitBoundsKey={fitBoundsKey}
+          places={fitBoundsPlaces}
+          topOverlayPx={topOverlayPx}
+          bottomOverlayPx={bottomOverlayPx}
+        />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
