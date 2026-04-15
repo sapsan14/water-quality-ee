@@ -1212,9 +1212,10 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 /* ── Desktop on-map chip bar (filter icons overlaying the map) ──
-   A floating pill on top of the map, holding all filter icons in a
-   single horizontal row. Solid translucent background makes the icons
-   legible over any map tile without relying on per-glyph drop shadows. */
+   A transparent, borderless horizontal row of filter chips floating
+   above the map tiles. `display: inline-flex` + `flex-wrap: nowrap`
+   keep every chip on a single line; each chip's own circular hover/
+   active background provides the per-icon legibility. */
 .mapChipBar {
   position: absolute;
   top: 0.9rem;
@@ -1226,12 +1227,10 @@ html[data-theme="dark"] .langDropdownItem:hover {
   align-items: center;
   gap: 0.25rem;
   padding: 0.35rem 0.55rem;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(191, 211, 234, 0.85);
-  border-radius: 999px;
-  box-shadow: 0 6px 20px rgba(13, 40, 80, 0.18), 0 1px 3px rgba(13, 40, 80, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   width: max-content;
   max-width: calc(100% - 2rem);
   white-space: nowrap;
@@ -1339,9 +1338,9 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 html[data-theme="dark"] .mapChipBar {
-  background: rgba(17, 27, 45, 0.9);
-  border-color: rgba(92, 121, 165, 0.5);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 html[data-theme="dark"] .mapChip {
@@ -1458,11 +1457,10 @@ body.mapFullscreenActive {
 }
 
 /* CSS-driven responsive visibility helpers — used so initial render
-   doesn't depend on JS state (no desktop-to-mobile flicker). */
-.desktopOnly {
-  display: revert;
-}
-
+   doesn't depend on JS state (no desktop-to-mobile flicker).
+   Intentionally does NOT set `display` on the desktop side: each
+   component keeps its own display mode (e.g. `.mapChipBar` needs
+   `inline-flex`), and we only override it on mobile to hide the node. */
 @media (max-width: 900px) {
   .desktopOnly { display: none !important; }
 }
