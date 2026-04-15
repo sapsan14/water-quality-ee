@@ -3108,7 +3108,6 @@ export default function Dashboard({ snapshot }: Props) {
 
         {visitedTabs.aboutModel ? (
           <div className={`tabPanel ${activeTab === "aboutModel" ? "isActive" : ""}`}>
-          <div className="reportsGrid">
           <div className="panel reportPanel">
             <h4>{lruet(lang, "О модели", "Mudelist", "About model")}</h4>
             <div className="stats">
@@ -3224,12 +3223,51 @@ export default function Dashboard({ snapshot }: Props) {
               </table>
             </div>
           </div>
-          <div className="panel reportPanel">
-            <p className="hint">
-              {lang === "ru"
-                ? "Базовые формулы (для понимания):"
-                : "Põhivalemid (intuitsiooni jaoks):"}
-            </p>
+          <div className="panel reportPanel" style={{ marginTop: "0.75rem" }}>
+            <h4>{lruet(lang, "Базовые формулы (для понимания)", "Põhivalemid (arusaamiseks)", "Core formulas (for understanding)")}</h4>
+            <div className="tableWrap compact">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>{lruet(lang, "Обозначение", "Lühend", "Symbol")}</th>
+                    <th>{lruet(lang, "Полное название", "Täistähendus", "Full name")}</th>
+                    <th>{lruet(lang, "Что означает", "Tähendus", "Meaning")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>TP</b></td>
+                    <td>True Positive</td>
+                    <td>{lruet(lang, "Модель предсказала нарушение — оно реально есть", "Mudel ennustas rikkumist — see on olemas", "Model predicted violation — it is real")}</td>
+                  </tr>
+                  <tr>
+                    <td><b>FP</b></td>
+                    <td>False Positive</td>
+                    <td>{lruet(lang, "Ложная тревога: модель предсказала нарушение, но его нет", "Valepositiivne: mudel ennustas rikkumist, kuid seda pole", "False alarm: model predicted violation, but there is none")}</td>
+                  </tr>
+                  <tr>
+                    <td><b>FN</b></td>
+                    <td>False Negative</td>
+                    <td>{lruet(lang, "Пропуск: модель не нашла нарушение, а оно есть — опасно!", "Valeneg.: mudel ei leidnud rikkumist, kuigi see on olemas — ohtlik!", "Miss: model did not flag a real violation — dangerous!")}</td>
+                  </tr>
+                  <tr>
+                    <td><b>TN</b></td>
+                    <td>True Negative</td>
+                    <td>{lruet(lang, "Верно: модель предсказала норму — нарушения нет", "Õige neg.: mudel ennustas normi — rikkumist pole", "Correct: model predicted compliant — no violation")}</td>
+                  </tr>
+                  <tr>
+                    <td><b>P</b></td>
+                    <td>Precision</td>
+                    <td>{lruet(lang, "Точность: TP / (TP + FP)", "Täpsus: TP / (TP + FP)", "Precision: TP / (TP + FP)")}</td>
+                  </tr>
+                  <tr>
+                    <td><b>R</b></td>
+                    <td>Recall</td>
+                    <td>{lruet(lang, "Полнота: TP / (TP + FN)", "Täielikkus: TP / (TP + FN)", "Recall: TP / (TP + FN)")}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <div className="tableWrap compact">
               <table className="table">
                 <thead>
@@ -3252,7 +3290,7 @@ export default function Dashboard({ snapshot }: Props) {
                   </tr>
                   <tr>
                     <td>F1</td>
-                    <td>2PR / (P + R)</td>
+                    <td>2·P·R / (P + R)</td>
                     <td>{lruet(lang, "Компромисс Precision и Recall", "Tasakaal Precisioni ja Recalli vahel", "Precision/Recall trade-off")}</td>
                   </tr>
                 </tbody>
@@ -3317,7 +3355,6 @@ export default function Dashboard({ snapshot }: Props) {
                 ? "Для water safety важнее высокий Recall (лучше ложная тревога, чем пропущенное нарушение)."
                 : "Veeohutuses on Recall prioriteetne (parem valehäire kui märkamata rikkumine)."}
             </p>
-          </div>
           </div>
           </div>
         ) : null}
