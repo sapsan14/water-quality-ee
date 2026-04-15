@@ -33,7 +33,7 @@
   --bad: #dc3545;
   --warn: #e38f00;
   --font-cyrillic-ui: var(--font-cyrillic-ibm);
-  --topbar-h: 78px; /* approximate sticky header height — used to offset drawer */
+  --topbar-h: 86px; /* approximate sticky header height — used to offset drawer */
 }
 
 * {
@@ -170,13 +170,13 @@ a {
 .drawer {
   position: fixed;
   left: -390px;
-  top: calc(var(--topbar-h) + 12px);
-  height: calc(100vh - var(--topbar-h) - 12px);
+  top: calc(var(--topbar-h) + 1.1rem);
+  height: calc(100vh - var(--topbar-h) - 1.5rem);
   width: min(360px, 92vw);
-  /* Must sit ABOVE the sticky topBar (.topBar z-index: 1300) so the
-     drawer header (“Filters” title + pin/close buttons) stays visible
-     and the drawer is never clipped under the translucent heading. */
-  z-index: 1400;
+  /* Sit BELOW the sticky topBar (.topBar z-index: 1300) so the solid
+     heading always stays on top and the drawer never visually crosses
+     into the header area. The drawer opens beneath the heading. */
+  z-index: 1200;
   border-radius: 0 14px 14px 0;
   transition: left 0.24s ease;
   background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
@@ -233,17 +233,18 @@ a {
 
 .unifiedTopBar {
   gap: 0.85rem;
-  padding: 0.55rem 0.7rem;
+  padding: 0.6rem 1rem;
   border: 1px solid rgba(191, 211, 234, 0.85);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  /* Solid panel background so the header is never translucent and stays
+     fully legible regardless of what sits beneath it. */
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(13, 40, 80, 0.12);
   /* Force a single-row layout so the info-nav buttons can't wrap under
      the brand block on narrow desktop widths. */
   flex-wrap: nowrap;
   justify-content: space-between;
+  width: 100%;
 }
 
 /* Keep the brand block on the left and let it shrink if the subtitle is
@@ -251,6 +252,7 @@ a {
 .unifiedTopBar .unifiedBrandBlock {
   flex: 0 1 auto;
   min-width: 0;
+  margin-right: auto;
 }
 
 .unifiedTopBar .topBarControls {
@@ -263,9 +265,12 @@ a {
   justify-content: flex-end;
 }
 
+/* The auto-fade "compact" behaviour was dropping the header opacity to
+   0.25 on scroll, which read as "disappearing/transparent". Per the
+   design request the header stays solid and fully visible at all times. */
 .unifiedTopBar.compact {
-  opacity: 0.25;
-  transform: translateY(-4px);
+  opacity: 1;
+  transform: none;
 }
 
 .unifiedTopBar:hover,
@@ -584,45 +589,35 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 /* ── Map stats row ──────────────────────────────────────────
-   Always horizontal, single-row, scrolls sideways if needed.
-   Keeps the "at-a-glance numbers" tight below the map without
-   eating vertical space. */
+   Horizontally centred label strip below the map. Wraps onto a
+   second line on narrow viewports so every stat stays readable
+   without a horizontal scrollbar. */
 .mapStatsRow {
   grid-column: 1 / -1;
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.55rem 0.9rem;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  gap: 0.9rem 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0.75rem 1.1rem;
+  background: var(--panel);
   border: 1px solid rgba(191, 211, 234, 0.7);
   border-radius: 12px;
-  margin-top: -0.4rem;
-  scrollbar-width: thin;
-}
-
-.mapStatsRow::-webkit-scrollbar {
-  height: 6px;
-}
-
-.mapStatsRow::-webkit-scrollbar-thumb {
-  background: rgba(13, 40, 80, 0.18);
-  border-radius: 3px;
+  margin-top: -0.3rem;
+  box-shadow: 0 4px 14px rgba(13, 40, 80, 0.08);
 }
 
 .mapStat {
   display: inline-flex;
   flex: 0 0 auto;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 8px;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
   background: #f6faff;
   border: 1px solid #dce9f8;
   white-space: nowrap;
+  min-height: 42px;
 }
 
 .mapStat.mapStatGood {
@@ -642,12 +637,13 @@ html[data-theme="dark"] .langDropdownItem:hover {
 
 .mapStatK {
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
 .mapStatV {
-  font-size: 1rem;
+  font-size: 1.02rem;
   font-weight: 700;
   line-height: 1.3;
 }
@@ -1216,35 +1212,37 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 /* ── Desktop on-map chip bar (filter icons overlaying the map) ──
-   Transparent strip — icons float directly on the map, single row,
-   no pill background. Drop-shadow on each glyph keeps them legible
-   against both light and dark map tiles. */
+   A floating pill on top of the map, holding all filter icons in a
+   single horizontal row. Solid translucent background makes the icons
+   legible over any map tile without relying on per-glyph drop shadows. */
 .mapChipBar {
   position: absolute;
-  top: 0.85rem;
+  top: 0.9rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 650;
-  display: flex;
-  flex-wrap: nowrap;
+  display: inline-flex;
+  flex-wrap: nowrap !important;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  /* Leave only a small side margin so the full row fits in a single
-     line even when every optional chip (clear filters, clear risk) is
-     rendered — was `- 10rem` which clipped chips on narrower maps. */
+  gap: 0.25rem;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(13, 40, 80, 0.18), 0 1px 3px rgba(13, 40, 80, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  width: max-content;
   max-width: calc(100% - 2rem);
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .mapChip {
+  position: relative;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   border: 1px solid transparent;
   background: transparent;
@@ -1255,18 +1253,17 @@ html[data-theme="dark"] .langDropdownItem:hover {
   cursor: pointer;
   transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
   padding: 0;
-  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.9))
-    drop-shadow(0 2px 6px rgba(13, 40, 80, 0.35));
 }
 
 .mapChip:hover {
+  background: rgba(15, 110, 253, 0.08);
   color: var(--brand);
   transform: translateY(-1px);
 }
 
 .mapChip svg {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   display: block;
 }
 
@@ -1275,7 +1272,6 @@ html[data-theme="dark"] .langDropdownItem:hover {
   border-color: #1a73e8;
   color: #fff;
   box-shadow: 0 2px 8px rgba(26, 115, 232, 0.45);
-  filter: drop-shadow(0 2px 6px rgba(13, 40, 80, 0.35));
 }
 
 .mapChip.mapChipAlert.mapChipActive {
@@ -1289,28 +1285,76 @@ html[data-theme="dark"] .langDropdownItem:hover {
   transition: transform 160ms ease;
 }
 
+/* Hover bubble tooltip — mirrors the mobile `countBubble` look
+   so desktop filter icons surface their label on hover and focus. */
+.mapChip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.38rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 760;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+}
+
+.mapChip[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 0.15rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.92);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 760;
+}
+
+.mapChip[data-tooltip]:hover::after,
+.mapChip[data-tooltip]:focus-visible::after,
+.mapChip[data-tooltip]:hover::before,
+.mapChip[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .mapChipDivider {
   width: 1px;
   height: 22px;
-  background: rgba(13, 40, 80, 0.35);
+  background: rgba(13, 40, 80, 0.22);
   flex-shrink: 0;
-  margin: 0 0.25rem;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+  margin: 0 0.2rem;
+}
+
+html[data-theme="dark"] .mapChipBar {
+  background: rgba(17, 27, 45, 0.9);
+  border-color: rgba(92, 121, 165, 0.5);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme="dark"] .mapChip {
   color: #eaf2ff;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85))
-    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
 }
 
 html[data-theme="dark"] .mapChip:hover {
+  background: rgba(99, 164, 255, 0.15);
   color: #9cc4ff;
 }
 
 html[data-theme="dark"] .mapChipDivider {
-  background: rgba(200, 220, 255, 0.5);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  background: rgba(200, 220, 255, 0.3);
 }
 
 .mapHeaderRow {
@@ -2414,9 +2458,9 @@ html[data-theme="dark"] .modalCloseBtn {
   .drawer.pinned {
     position: fixed;
     left: 0;
-    top: calc(var(--topbar-h) + 12px);
+    top: calc(var(--topbar-h) + 1.1rem);
     width: min(360px, 92vw);
-    max-height: calc(100vh - var(--topbar-h) - 12px);
+    max-height: calc(100vh - var(--topbar-h) - 1.5rem);
   }
 
   .reportsGrid {
@@ -2544,8 +2588,9 @@ html[data-theme="dark"] .badge.warn {
 }
 
 html[data-theme="dark"] .unifiedTopBar {
-  background: rgba(11, 18, 32, 0.93);
+  background: var(--panel);
   border-color: rgba(55, 82, 128, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
 html[data-theme="dark"] .drawer {
