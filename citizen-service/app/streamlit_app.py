@@ -417,6 +417,32 @@ section[data-testid="stSidebar"]
 .sv-red  {color:#ef4444;}
 .sv-green{color:#16a34a;}
 .sv-amber{color:#d97706;}
+
+/* == map: edge-to-edge, no border/frame == */
+[data-testid="stCustomComponentV1"],
+iframe[title^="streamlit_folium"]{
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+iframe[title^="streamlit_folium"]{
+  display:block !important;
+  width:100% !important;
+}
+@media (max-width: 768px){
+  /* Break the folium map out of the block-container horizontal padding
+     so it spans the full viewport width on mobile. */
+  [data-testid="stCustomComponentV1"]:has(iframe[title^="streamlit_folium"]){
+    width:100vw !important;
+    max-width:100vw !important;
+    margin-left:calc(50% - 50vw) !important;
+    margin-right:calc(50% - 50vw) !important;
+  }
+  iframe[title^="streamlit_folium"]{
+    width:100vw !important;
+    max-width:100vw !important;
+  }
+}
 </style>
 """
 
