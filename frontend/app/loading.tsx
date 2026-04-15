@@ -1,7 +1,12 @@
 export default function Loading() {
   return (
     <main className="page">
-      <div className="panel" aria-busy="true" aria-live="polite">
+      {/* Desktop-only: on mobile `.desktopOnly` is display:none via
+          `@media (max-width: 900px)`, so users only see the blank page
+          background during the route-segment Suspense fallback instead
+          of a desktop-styled "Loading water quality dashboard..." panel
+          flashing before the mobile shell hydrates. */}
+      <div className="panel desktopOnly" aria-busy="true" aria-live="polite">
         <h2 className="title" style={{ fontSize: "1.2rem" }}>
           Loading water quality dashboard...
         </h2>
