@@ -410,8 +410,8 @@ function FitBoundsOnVersion({
     const bounds = L.latLngBounds(places.map(([lat, lon]) => [lat, lon]));
     map.fitBounds(bounds, {
       animate: true,
-      paddingTopLeft: [10, 120],
-      paddingBottomRight: [10, 70],
+      paddingTopLeft: [10, 95],
+      paddingBottomRight: [10, 62],
       maxZoom: 13
     });
   }, [fitBoundsKey, places, map]);
@@ -539,15 +539,13 @@ function MapClient({
     if (!mapRef.current) return;
     const t = window.setTimeout(() => {
       mapRef.current?.invalidateSize();
-      // After entering fullscreen (especially on mobile), re-fit Estonia so the
-      // map doesn't shift or show the wrong region due to container resize.
-      // Use asymmetric padding to keep Estonia clear of the search+chip overlay
-      // at top (≈120px) and the sheet peek at bottom (≈70px).
+      // After entering fullscreen, re-fit Estonia keeping it clear of
+      // the search+chips overlay (≈95px top) and sheet peek (≈62px bottom).
       if (isFullscreen) {
         mapRef.current?.fitBounds(ESTONIA_BOUNDS, {
           animate: false,
-          paddingTopLeft: [10, 120],
-          paddingBottomRight: [10, 70]
+          paddingTopLeft: [10, 95],
+          paddingBottomRight: [10, 62]
         });
       }
     }, 250);

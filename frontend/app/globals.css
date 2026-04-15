@@ -40,6 +40,10 @@
   font-family: inherit;
 }
 
+html {
+  overflow-x: hidden; /* prevent horizontal scroll from fixed-overlay bleed on mobile */
+}
+
 html,
 body {
   padding: 0;
