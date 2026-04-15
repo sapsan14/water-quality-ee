@@ -417,6 +417,37 @@ a {
   font-size: 0.8rem;
 }
 
+.modelAbbr {
+  cursor: help;
+  border-bottom: 1px dotted var(--muted);
+  position: relative;
+  display: inline-block;
+}
+
+.modelAbbr::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+}
+
+.modelAbbr:hover::after {
+  opacity: 1;
+}
+
 .reportsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
