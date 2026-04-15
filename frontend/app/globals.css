@@ -3117,6 +3117,39 @@ html[data-theme="dark"] .dateRangeSep {
   to { opacity: 0; }
 }
 
+/* ---- Transient count bubble (Alerts / Near-me chip feedback) ----
+   A small, border-less, frosted "cloud" that flashes above the map when
+   the user taps an Alerts or Near-me icon on the mobile chip bar. Shows
+   a count, fades in, drifts up a few pixels and fades out on its own. */
+.countBubble {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3150;
+  padding: 0.45rem 0.95rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: countBubbleFade 1.8s ease-out forwards;
+}
+
+@keyframes countBubbleFade {
+  0%   { opacity: 0; transform: translate(-50%, 6px) scale(0.94); }
+  18%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  75%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -6px) scale(0.98); }
+}
+
 /* ---- Mobile table fix ---- */
 .mobileResponsiveTable {
   overflow-x: auto;

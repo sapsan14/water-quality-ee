@@ -414,6 +414,10 @@ export default function Dashboard({ snapshot }: Props) {
   const [infoPageOpen, setInfoPageOpen] = useState(false);
   const [infoPageTab, setInfoPageTab] = useState<TabKey>("alerts");
   const [toast, setToast] = useState<string | null>(null);
+  // Transient count bubble shown when the user taps the Alerts / Near-me
+  // chip icon on top of the map. `seq` keeps each invocation distinct so
+  // repeated taps restart the fade-out animation.
+  const [countBubble, setCountBubble] = useState<{ seq: number; text: string } | null>(null);
   const [infoTitle, setInfoTitle] = useState("");
   const [infoText, setInfoText] = useState("");
   const [query, setQuery] = useState("");
@@ -1265,18 +1269,17 @@ export default function Dashboard({ snapshot }: Props) {
   }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
 
-  // Standalone counts for the "Alerts only" / "Near me" toggle chips —
-  // these reflect how many points match the *toggle predicate* over the
-  // whole snapshot, independent of current alerts/near-me state so the
-  // number doesn't flicker when the user toggles the chip itself.
-  const alertsCount = useMemo(
-    () => snapshot.places.filter((p) => p.risk_level === "high" || p.official_compliant === 0).length,
-    [snapshot.places]
+  // Counts restricted to what's currently rendered on the map (after the
+  // other active filters). These feed the transient bubble shown when the
+  // user taps the alerts / near-me icon on the mobile chip bar.
+  const mapAlertsCount = useMemo(
+    () => filtered.filter((p) => p.risk_level === "high" || p.official_compliant === 0).length,
+    [filtered]
   );
-  const nearMeCount = useMemo(() => {
+  const mapNearMeCount = useMemo(() => {
     if (!userCoords) return null;
-    return snapshot.places.filter((p) => distanceKm(userCoords.lat, userCoords.lon, p.lat, p.lon) <= nearbyRadiusKm).length;
-  }, [snapshot.places, userCoords, nearbyRadiusKm]);
+    return filtered.filter((p) => distanceKm(userCoords.lat, userCoords.lon, p.lat, p.lon) <= nearbyRadiusKm).length;
+  }, [filtered, userCoords, nearbyRadiusKm]);
 
   // Auto-fit map to visible places whenever filters produce a meaningful subset.
   // Derived as a string key (no setState in effect) — FitBoundsOnVersion reacts to key changes.
@@ -1699,6 +1702,18 @@ export default function Dashboard({ snapshot }: Props) {
     setGeoError(null);
   };
 
+  // Pop a short-lived count bubble above the map. Self-cleans after ~1.8s
+  // so no extra interaction is needed — the user just sees "N alerts on map"
+  // fade in and out.
+  const countBubbleSeqRef = useRef(0);
+  const showCountBubble = useCallback((text: string) => {
+    const seq = ++countBubbleSeqRef.current;
+    setCountBubble({ seq, text });
+    window.setTimeout(() => {
+      setCountBubble((cur) => (cur && cur.seq === seq ? null : cur));
+    }, 1800);
+  }, []);
+
   const activateNearMe = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setGeoError(t.geoUnsupported);
@@ -1843,6 +1858,11 @@ export default function Dashboard({ snapshot }: Props) {
   return (
     <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
       {toast ? <div className="toastBanner">{toast}</div> : null}
+      {countBubble ? (
+        <div key={countBubble.seq} className="countBubble" aria-live="polite">
+          {countBubble.text}
+        </div>
+      ) : null}
 
       {showLangDialog ? (
         <div className="langDialogBackdrop">
@@ -2042,16 +2062,26 @@ export default function Dashboard({ snapshot }: Props) {
               );
             })}
             {(() => {
-              const alertsLabel = alertsOnly
-                ? lruet(lang, "Снять фильтр тревог", "Eemalda häirete filter", "Clear alerts filter")
-                : lruet(lang, "Только тревоги", "Ainult häired", "Alerts only");
+              // Mobile alerts icon: tapping it does NOT toggle a filter
+              // (those drawer buttons were removed as visually redundant
+              // with this chip). Instead it flashes a small count bubble
+              // showing how many alerts are currently visible on the map.
+              const alertsLabel = lruet(lang, "Тревоги на карте", "Häired kaardil", "Alerts on map");
               return (
                 <button
                   type="button"
-                  className={`gmChip gmChipIcon gmChipAlert ${alertsOnly ? "gmChipActive" : ""}`}
-                  onClick={() => setAlertsOnly((v) => !v)}
+                  className="gmChip gmChipIcon gmChipAlert"
+                  onClick={() =>
+                    showCountBubble(
+                      lruet(
+                        lang,
+                        `Тревог на карте: ${mapAlertsCount}`,
+                        `Häireid kaardil: ${mapAlertsCount}`,
+                        `Alerts on map: ${mapAlertsCount}`
+                      )
+                    )
+                  }
                   aria-label={alertsLabel}
-                  aria-pressed={alertsOnly}
                   title={alertsLabel}
                 >
                   <Icon name="alert" />
@@ -2059,26 +2089,39 @@ export default function Dashboard({ snapshot }: Props) {
               );
             })()}
             {(() => {
-              const nearLabel = nearbyOnly
-                ? lruet(lang, "Снять фильтр «рядом»", "Eemalda läheduse filter", "Clear near-me filter")
-                : lruet(lang, "Рядом со мной", "Minu lähedal", "Near me");
+              // Mobile near-me icon: same treatment as the alerts chip —
+              // it only flashes a count bubble. If the user hasn't granted
+              // location yet, we request it first (the count becomes
+              // meaningful only once `userCoords` is known).
+              const nearLabel = lruet(lang, "Рядом на карте", "Lähedal kaardil", "Near me on map");
               return (
                 <button
                   type="button"
-                  className={`gmChip gmChipIcon ${nearbyOnly ? "gmChipActive" : ""}`}
+                  className="gmChip gmChipIcon"
                   onClick={() => {
-                    if (nearbyOnly) {
-                      setNearbyOnly(false);
-                      setGeoError(null);
-                    } else if (userCoords) {
-                      setNearbyOnly(true);
-                      setGeoError(null);
-                    } else {
+                    if (!userCoords) {
                       activateNearMe();
+                      showCountBubble(
+                        lruet(
+                          lang,
+                          "Определяем местоположение…",
+                          "Määrame asukohta…",
+                          "Finding your location…"
+                        )
+                      );
+                      return;
                     }
+                    const n = mapNearMeCount ?? 0;
+                    showCountBubble(
+                      lruet(
+                        lang,
+                        `Рядом на карте: ${n}`,
+                        `Läheduses kaardil: ${n}`,
+                        `Near me on map: ${n}`
+                      )
+                    );
                   }}
                   aria-label={nearLabel}
-                  aria-pressed={nearbyOnly}
                   title={nearLabel}
                 >
                   <Icon name="locate" />
@@ -2802,35 +2845,10 @@ export default function Dashboard({ snapshot }: Props) {
               {sheetMode === "filter" ? (
                 /* ---- FILTER MODE / BURGER PANEL ---- */
                 <div className="gmSheetFilterContent">
-                  {/* Primary toggle chips pinned to the top of filters —
-                      "Alerts only" + "Near me" with live counts so users
-                      see how many points each predicate exposes. */}
-                  <div className="gmQuickToggleRow">
-                    <button
-                      type="button"
-                      className={`gmQuickToggle gmQuickAlert ${alertsOnly ? "active" : ""}`}
-                      onClick={() => setAlertsOnly((v) => !v)}
-                      aria-pressed={alertsOnly}
-                    >
-                      <span className="gmQuickToggleIcon" aria-hidden="true"><Icon name="alert" /></span>
-                      <span className="gmQuickToggleLabel">{t.alertsOnly}</span>
-                      <span className="gmQuickToggleCount">{alertsCount}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`gmQuickToggle gmQuickNear ${nearbyOnly ? "active" : ""}`}
-                      onClick={() => {
-                        if (nearbyOnly) { setNearbyOnly(false); setGeoError(null); }
-                        else if (userCoords) { setNearbyOnly(true); setGeoError(null); }
-                        else { activateNearMe(); }
-                      }}
-                      aria-pressed={nearbyOnly}
-                    >
-                      <span className="gmQuickToggleIcon" aria-hidden="true"><Icon name="locate" /></span>
-                      <span className="gmQuickToggleLabel">{t.nearMe}</span>
-                      <span className="gmQuickToggleCount">{nearMeCount ?? "—"}</span>
-                    </button>
-                  </div>
+                  {/* Alerts-only + Near-me toggles removed from this sheet —
+                      they were visually covered by the matching icons on the
+                      top chip bar. Those chips now flash a small count bubble
+                      instead of toggling a filter. */}
                   {nearbyOnly && userCoords ? (
                     <div className="nearbyPanel">
                       <label htmlFor="gm-nearby-radius">{t.nearRadius}: <b>{nearbyRadiusKm} km</b></label>
