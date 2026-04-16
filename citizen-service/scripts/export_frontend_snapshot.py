@@ -237,6 +237,8 @@ def main() -> None:
 
     out_payload = {
         "generated_at": payload.get("generated_at"),
+        "data_fetched_at": payload.get("data_fetched_at"),
+        "model_trained_at": payload.get("model_trained_at"),
         "has_model_predictions": bool(payload.get("has_model_predictions")),
         "available_models": payload.get("available_models") or [],
         "model_labels": payload.get("model_labels") or {},

@@ -627,6 +627,7 @@ def main() -> None:
     if args.infer_county:
         LOG.info("load_all: --infer-county — Google→OpenCage для локаций без county в кэше (лимит HTTP снят)")
     _timer_print("1) load_all — загрузка и парсинг XML → DataFrame", t_run, last)
+    data_fetched_at = pd.Timestamp.now("UTC").isoformat()
 
     if args.map_only:
         LOG.info("Режим --map-only: без матрицы X и без обучения моделей (только meta для карты)")
@@ -712,6 +713,7 @@ def main() -> None:
             print("[citizen] lightgbm не установлен — lgbm_violation_prob не будет в снимке")
 
         _timer_print("5) predict_proba всех моделей → violation_prob в full DataFrame", t_run, last)
+    model_trained_at = pd.Timestamp.now("UTC").isoformat() if not args.map_only else None
     full["sample_date"] = pd.to_datetime(full["sample_date"], errors="coerce")
     full = full.sort_values("sample_date")
 
@@ -1043,6 +1045,8 @@ def main() -> None:
 
     snapshot = {
         "generated_at": pd.Timestamp.now("UTC").isoformat(),
+        "data_fetched_at": data_fetched_at,
+        "model_trained_at": model_trained_at,
         "has_model_predictions": not args.map_only,
         "available_models": available_models,
         "model_labels": {
