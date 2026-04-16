@@ -1555,7 +1555,7 @@ export default function Dashboard({ snapshot }: Props) {
   //   - own height:           92dvh        (≈ 0.92 × innerHeight)
   //   - half translateY:      46% of own   (→ visible = 54% of own)
   //   - full translateY:      6rem + safe-area-inset-top
-  //   - collapsed translateY: 100% - 84px - safe-area-inset-bottom
+  //   - collapsed translateY: 100% - 66px - safe-area-inset-bottom
   // Previous values (0.5*vh for half, 0.55*vh for full, 72 for collapsed)
   // were ballpark — the "full" one was off by ~30 percentage points of vh,
   // hiding the pin behind the expanded sheet.
@@ -1567,7 +1567,7 @@ export default function Dashboard({ snapshot }: Props) {
         ? Math.max(0, Math.round(sheetOwnHeight - 96))
         : mobilePanelState === "half"
           ? Math.round(sheetOwnHeight * 0.54)
-          : 84;
+          : 66;
     return sheetPx + keyboardOffset;
   }, [isMobile, mobilePanelState, viewportHeight, keyboardOffset]);
 
