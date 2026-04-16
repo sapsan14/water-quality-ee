@@ -24,11 +24,33 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "H2O Atlas - Water Quality Map",
-  description: "Estonia water quality map powered by open data and ML assessments.",
-  icons: {
-    icon: "/favicon.svg"
-  }
+  title: "H2O Atlas \u2014 Water Quality Map of Estonia",
+  description:
+    "Interactive map of Estonian water quality powered by Terviseamet open data and ML risk assessments. 69,000+ samples across swimming, drinking water, pools, and source domains.",
+  icons: { icon: "/favicon.svg" },
+  metadataBase: new URL("https://h2oatlas.ee"),
+  openGraph: {
+    title: "H2O Atlas \u2014 Water Quality Map of Estonia",
+    description:
+      "Interactive map of Estonian water quality powered by Terviseamet open data and ML risk assessments.",
+    url: "https://h2oatlas.ee",
+    siteName: "H2O Atlas",
+    locale: "en",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "H2O Atlas \u2014 Water Quality Map of Estonia",
+    description:
+      "Interactive map of Estonian water quality powered by open data and ML assessments.",
+  },
+  alternates: {
+    languages: {
+      ru: "https://h2oatlas.ee",
+      et: "https://h2oatlas.ee",
+      en: "https://h2oatlas.ee",
+    },
+  },
 };
 
 // Explicit mobile viewport — Next 16 no longer injects a default tag, so

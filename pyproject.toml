@@ -5,9 +5,22 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "water-quality-ee"
 version = "0.1.0"
-description = "TalTech water quality ML course project"
+description = "Probabilistic risk estimator for water quality compliance in Estonia"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Anton Sokolov"}]
+keywords = ["water-quality", "machine-learning", "estonia", "classification", "environmental-monitoring"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
     "pandas>=2.0.0",
     "numpy>=1.24.0",
@@ -27,3 +40,9 @@ dependencies = [
 
 [tool.setuptools]
 py-modules = ["data_loader", "features", "evaluate", "county_infer", "terviseamet_reference_coords"]
+
+[project.urls]
+Homepage = "https://h2oatlas.ee"
+Repository = "https://github.com/sapsan14/water-quality-ee"
+Documentation = "https://github.com/sapsan14/water-quality-ee/tree/main/docs"
+"Bug Tracker" = "https://github.com/sapsan14/water-quality-ee/issues"

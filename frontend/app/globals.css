@@ -130,6 +130,21 @@ a {
   margin: 0;
 }
 
+.footerNote .footerSub {
+  font-size: 0.76rem;
+  margin-top: 0.2rem;
+  opacity: 0.75;
+}
+
+.footerNote a {
+  color: var(--brand, #0f6efd);
+  text-decoration: none;
+}
+
+.footerNote a:hover {
+  text-decoration: underline;
+}
+
 .dashboard {
   display: flex;
   flex-direction: column;
