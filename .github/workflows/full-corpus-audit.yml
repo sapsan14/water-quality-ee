@@ -1,0 +1,119 @@
+# Phase 14: Download raw XML from vtiav.sm.ee, commit to repo, run full audit.
+#
+# Triggered manually. Downloads 4 domains × 6 years of open-data XML,
+# commits them to data/raw/ (gitignore temporarily lifted), runs the
+# deterministic label-vs-norms audit on the full corpus, and commits
+# audit artifacts to data/audit/.
+#
+# After the workflow completes:
+#   - data/raw/*.xml is in the repo (for local re-runs without network)
+#   - data/audit/full_corpus_divergences.csv — all hidden_violation + hidden_pass rows
+#   - data/audit/full_corpus_summary.json — bucket counts, agree rate, top unmeasured params
+#   - scripts/audit_xml_field_coverage.py results in data/audit/xml_field_inventory.csv
+
+name: Full corpus audit
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-audit-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-audit-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install -r requirements.txt
+
+      - name: Download raw XML from vtiav.sm.ee
+        run: python src/data_loader.py
+
+      - name: Show raw data inventory
+        run: |
+          echo "=== data/raw/ contents ==="
+          ls -lh data/raw/*.xml 2>/dev/null || echo "No XML files found"
+          echo ""
+          echo "Total size:"
+          du -sh data/raw/ 2>/dev/null || echo "data/raw/ not found"
+
+      - name: Run XML field coverage audit
+        run: |
+          python scripts/audit_xml_field_coverage.py --out data/audit/xml_field_inventory.csv
+
+      - name: Run full corpus audit
+        run: |
+          python scripts/full_corpus_audit.py \
+            --out data/audit/full_corpus_divergences.csv \
+            --summary data/audit/full_corpus_summary.json
+
+      - name: Run temporal hidden-violation analysis
+        run: |
+          if [ -f scripts/temporal_hidden_violation_analysis.py ]; then
+            python scripts/temporal_hidden_violation_analysis.py || echo "Temporal analysis skipped (non-critical)"
+          fi
+
+      - name: Commit raw data + audit artifacts
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage raw XML
+          git add data/raw/*.xml 2>/dev/null || true
+
+          # Stage audit artifacts
+          git add data/audit/ 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "data: raw XML + full-corpus audit artifacts (Phase 14)
+
+Downloaded $(ls data/raw/*.xml 2>/dev/null | wc -l) XML files from vtiav.sm.ee.
+Full audit results in data/audit/full_corpus_summary.json.
+See workflow run for detailed console output."
+            git pull --rebase origin "${{ github.ref_name }}"
+            git push
+          fi
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-corpus-audit-${{ github.run_number }}
+          path: |
+            data/audit/full_corpus_divergences.csv
+            data/audit/full_corpus_summary.json
+            data/audit/xml_field_inventory.csv
+          retention-days: 90
+
+      - name: Print summary for PR / review
+        run: |
+          echo ""
+          echo "============================================="
+          echo "  AUDIT SUMMARY (from JSON)"
+          echo "============================================="
+          cat data/audit/full_corpus_summary.json
+          echo ""
+          echo "============================================="
+          echo "  DIVERGENCES CSV head"
+          echo "============================================="
+          head -30 data/audit/full_corpus_divergences.csv

@@ -1,7 +1,7 @@
-# Данные — не коммитим (могут быть большими, регенерируем)
-data/raw/
+# Данные — processed и audit регенерируемы
 data/processed/
-data/audit/
+# data/raw/ — temporarily tracked for full-corpus audit (Phase 14)
+# data/audit/ — temporarily tracked for audit artifacts
 
 # Python
 __pycache__/
