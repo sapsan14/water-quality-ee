@@ -415,6 +415,8 @@ type Props = {
   bottomOverlayPx?: number;
   /** Pixels obscured by the top search bar + chip bar. */
   topOverlayPx?: number;
+  /** Optional content rendered inside the map shell (e.g. freshness overlay). */
+  children?: React.ReactNode;
 };
 
 /**
@@ -616,7 +618,8 @@ function MapClient({
   fitBoundsKey,
   fitBoundsPlaces,
   bottomOverlayPx = 0,
-  topOverlayPx = 95
+  topOverlayPx = 95,
+  children
 }: Props) {
   const selectedCountyNorm = selectedCounty ? countyNameNorm(selectedCounty) : null;
   const countyRisk = useMemo(() => {
@@ -843,6 +846,7 @@ function MapClient({
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
+      {children}
     </div>
   );
 }
