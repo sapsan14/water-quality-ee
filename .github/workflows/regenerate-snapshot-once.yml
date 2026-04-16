@@ -1,0 +1,73 @@
+# One-shot workflow: regenerate snapshot with sample_history.
+# Triggers on push (i.e. when this file is created).
+# After the snapshot is committed, this file should be removed.
+
+name: Regenerate snapshot with history
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/regenerate-snapshot-once.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt', 'citizen-service/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install -r requirements.txt
+          pip install -r citizen-service/requirements.txt
+
+      - name: Download open data from vtiav.sm.ee
+        id: download
+        run: |
+          python src/data_loader.py && echo "status=ok" >> "$GITHUB_OUTPUT" || echo "status=fallback" >> "$GITHUB_OUTPUT"
+
+      - name: Warn if data download failed
+        if: steps.download.outputs.status == 'fallback'
+        run: |
+          echo "::warning::vtiav.sm.ee unavailable — using cached XML if present."
+
+      - name: Build snapshot (full, with sample_history)
+        run: |
+          python citizen-service/scripts/build_citizen_snapshot.py 
+            --log-level INFO
+
+      - name: Export frontend snapshot
+        run: python citizen-service/scripts/export_frontend_snapshot.py
+
+      - name: Commit refreshed snapshot
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(citizen): regenerate snapshot with sample_history"
+          file_pattern: |
+            citizen-service/artifacts/snapshot.json
+            citizen-service/artifacts/citizen_model.joblib
+            frontend/public/data/snapshot.frontend.json
+
+      - name: Remove one-shot workflow
+        run: |
+          git rm .github/workflows/regenerate-snapshot-once.yml
+          git commit -m "chore: remove one-shot snapshot regeneration workflow"
+          git push
