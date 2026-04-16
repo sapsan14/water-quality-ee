@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-04-16T14:58:37.728294Z",
+  "n_total": 69536,
+  "n_labelled": 69536,
+  "bucket_counts": {
+    "agree_pass": 53409,
+    "agree_violate": 6161,
+    "hidden_violation": 2207,
+    "hidden_pass": 7759,
+    "unknown": 0
+  },
+  "agree_rate": 0.8567,
+  "self_check_pass": true,
+  "by_domain": {
+    "agree_pass": {
+      "basseinid": 18031,
+      "joogivesi": 121,
+      "supluskoha": 3361,
+      "veevark": 31896
+    },
+    "agree_violate": {
+      "basseinid": 4269,
+      "joogivesi": 86,
+      "supluskoha": 133,
+      "veevark": 1673
+    },
+    "hidden_violation": {
+      "basseinid": 1260,
+      "joogivesi": 7,
+      "supluskoha": 163,
+      "veevark": 777
+    },
+    "hidden_pass": {
+      "basseinid": 6943,
+      "joogivesi": 162,
+      "supluskoha": 374,
+      "veevark": 280
+    },
+    "unknown": {
+      "basseinid": 0,
+      "joogivesi": 0,
+      "supluskoha": 0,
+      "veevark": 0
+    }
+  },
+  "hidden_violation": {
+    "total": 2207,
+    "by_domain": {
+      "basseinid": 1260,
+      "veevark": 777,
+      "supluskoha": 163,
+      "joogivesi": 7
+    },
+    "n_measured_stats": {
+      "count": 2207.0,
+      "mean": 5.56,
+      "std": 3.07,
+      "min": 0.0,
+      "25%": 4.0,
+      "50%": 4.0,
+      "75%": 7.0,
+      "max": 14.0
+    },
+    "top_unmeasured_params": [
+      [
+        "sulfates",
+        2158
+      ],
+      [
+        "nitrites",
+        2157
+      ],
+      [
+        "fluoride",
+        2155
+      ],
+      [
+        "chlorides",
+        2151
+      ],
+      [
+        "manganese",
+        2150
+      ],
+      [
+        "iron",
+        2144
+      ],
+      [
+        "color",
+        1463
+      ],
+      [
+        "ammonium",
+        1441
+      ],
+      [
+        "nitrates",
+        1380
+      ],
+      [
+        "e_coli",
+        1327
+      ],
+      [
+        "enterococci",
+        1113
+      ],
+      [
+        "turbidity",
+        814
+      ],
+      [
+        "ph",
+        723
+      ],
+      [
+        "free_chlorine",
+        523
+      ],
+      [
+        "combined_chlorine",
+        522
+      ]
+    ],
+    "zero_measured_count": 62
+  },
+  "hidden_pass": {
+    "total": 7759,
+    "by_domain": {
+      "basseinid": 6943,
+      "supluskoha": 374,
+      "veevark": 280,
+      "joogivesi": 162
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "n_hidden_violation_probes": 2164,
+  "n_param_instances": 23027,
+  "h1_pct": 45.1,
+  "h3_pct": 54.9,
+  "verdict": "H3_strongly_supported",
+  "by_domain": {
+    "basseinid": {
+      "n_probes": 1260,
+      "never_measured": 8890,
+      "measured_elsewhere": 5232,
+      "h3_pct": 37.0
+    },
+    "veevark": {
+      "n_probes": 763,
+      "never_measured": 158,
+      "measured_elsewhere": 7311,
+      "h3_pct": 97.9
+    },
+    "supluskoha": {
+      "n_probes": 120,
+      "never_measured": 1320,
+      "measured_elsewhere": 28,
+      "h3_pct": 2.1
+    },
+    "joogivesi": {
+      "n_probes": 7,
+      "never_measured": 19,
+      "measured_elsewhere": 69,
+      "h3_pct": 78.4
+    }
+  },
+  "monthly_distribution": {
+    "1": 177,
+    "2": 170,
+    "3": 165,
+    "4": 151,
+    "5": 190,
+    "6": 167,
+    "7": 203,
+    "8": 214,
+    "9": 181,
+    "10": 195,
+    "11": 176,
+    "12": 175
+  }
+}

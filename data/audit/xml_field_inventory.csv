@@ -1,0 +1,71 @@
+domain,year,parent_tag,xml_tag,occurrences,parsed,sample_value
+supluskoha,2021,proovivott,id,804,1,253753
+supluskoha,2021,proovivott,katseprotokollid,804,0,
+supluskoha,2021,proovivott,proovi_liik,804,0,Seireproov
+supluskoha,2021,proovivott,proovivotja_amet,804,0,autojuht-proovivõtja
+supluskoha,2021,proovivott,proovivotja_atesteerimistunnistuse_number,393,0,1993/21
+supluskoha,2021,proovivott,proovivotja_nimi,804,0,Kristina Lebedeva
+supluskoha,2021,proovivott,proovivotu_aeg,804,1,22.09.2021 00:00
+supluskoha,2021,proovivott,proovivotu_eesmark,804,0,Tellimustöö
+supluskoha,2021,proovivott,proovivotu_metoodika,804,0,"EVS-EN ISO 5667-3, EVS-EN ISO 19458"
+supluskoha,2021,proovivott,proovivotukoht,804,1,
+supluskoha,2021,proovivott,proovivotuprotokolli_number,804,0,EEVPA2021KK0015
+supluskoha,2021,proovivott,supluskoht,804,1,Pelgurand / Stroomi supluskoht
+supluskoha,2021,proovivott,supluskoht_id,804,1,120
+supluskoha,2021,proovivott,veeliik,804,0,Suplusvesi
+supluskoha,2022,proovivott,id,834,1,284388
+supluskoha,2022,proovivott,katseprotokollid,834,0,
+supluskoha,2022,proovivott,proovi_liik,834,0,Lisaproov
+supluskoha,2022,proovivott,proovivotja_amet,834,0,vaneminspektor
+supluskoha,2022,proovivott,proovivotja_atesteerimistunnistuse_number,489,0,1993/21
+supluskoha,2022,proovivott,proovivotja_nimi,834,0,Aare Reinsalu
+supluskoha,2022,proovivott,proovivotu_aeg,834,1,19.09.2022 00:00
+supluskoha,2022,proovivott,proovivotu_eesmark,834,0,Tellimustöö
+supluskoha,2022,proovivott,proovivotu_metoodika,834,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2022,proovivott,proovivotukoht,834,1,
+supluskoha,2022,proovivott,proovivotuprotokolli_number,834,0,EEVIV2022JEM0004
+supluskoha,2022,proovivott,supluskoht,834,1,Pirita rand
+supluskoha,2022,proovivott,supluskoht_id,834,1,119
+supluskoha,2022,proovivott,veeliik,834,0,Suplusvesi
+supluskoha,2023,proovivott,id,817,1,313869
+supluskoha,2023,proovivott,katseprotokollid,817,0,
+supluskoha,2023,proovivott,proovi_liik,817,0,Lisaproov
+supluskoha,2023,proovivott,proovivotja_amet,817,0,inspektor
+supluskoha,2023,proovivott,proovivotja_atesteerimistunnistuse_number,406,0,767
+supluskoha,2023,proovivott,proovivotja_nimi,817,0,Aare Reinsalu
+supluskoha,2023,proovivott,proovivotu_aeg,817,1,18.09.2023 00:00
+supluskoha,2023,proovivott,proovivotu_eesmark,817,0,Tellimustöö
+supluskoha,2023,proovivott,proovivotu_metoodika,817,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2023,proovivott,proovivotukoht,817,1,
+supluskoha,2023,proovivott,proovivotuprotokolli_number,817,0,EEVRA2023VMOS0034
+supluskoha,2023,proovivott,supluskoht,817,1,Pirita rand
+supluskoha,2023,proovivott,supluskoht_id,817,1,119
+supluskoha,2023,proovivott,veeliik,817,0,Suplusvesi
+supluskoha,2024,proovivott,id,788,1,341951
+supluskoha,2024,proovivott,katseprotokollid,788,0,
+supluskoha,2024,proovivott,proovi_liik,788,0,Seireproov
+supluskoha,2024,proovivott,proovivotja_amet,788,0,inspektor
+supluskoha,2024,proovivott,proovivotja_atesteerimistunnistuse_number,405,0,2211/22
+supluskoha,2024,proovivott,proovivotja_nimi,788,0,Aare Reinsalu
+supluskoha,2024,proovivott,proovivotu_aeg,788,1,23.09.2024 00:00
+supluskoha,2024,proovivott,proovivotu_eesmark,788,0,Tellimustöö
+supluskoha,2024,proovivott,proovivotu_metoodika,788,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2024,proovivott,proovivotukoht,788,1,
+supluskoha,2024,proovivott,proovivotuprotokolli_number,788,0,EEVIV2024ANNAK0041
+supluskoha,2024,proovivott,supluskoht,788,1,Pirita rand
+supluskoha,2024,proovivott,supluskoht_id,788,1,119
+supluskoha,2024,proovivott,veeliik,788,0,Suplusvesi
+supluskoha,2025,proovivott,id,788,1,370465
+supluskoha,2025,proovivott,katseprotokollid,788,0,
+supluskoha,2025,proovivott,proovi_liik,788,0,Seireproov
+supluskoha,2025,proovivott,proovivotja_amet,788,0,spetsialist (labor)
+supluskoha,2025,proovivott,proovivotja_atesteerimistunnistuse_number,388,0,2510/24
+supluskoha,2025,proovivott,proovivotja_nimi,788,0,Aare Reinsalu
+supluskoha,2025,proovivott,proovivotu_aeg,788,1,02.10.2025 00:00
+supluskoha,2025,proovivott,proovivotu_eesmark,788,0,Tellimustöö
+supluskoha,2025,proovivott,proovivotu_metoodika,788,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2025,proovivott,proovivotukoht,788,1,
+supluskoha,2025,proovivott,proovivotuprotokolli_number,788,0,EEVSA2025KLB0514
+supluskoha,2025,proovivott,supluskoht,788,1,Pirita rand
+supluskoha,2025,proovivott,supluskoht_id,788,1,119
+supluskoha,2025,proovivott,veeliik,788,0,Suplusvesi
