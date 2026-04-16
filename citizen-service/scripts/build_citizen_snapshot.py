@@ -731,8 +731,41 @@ def main() -> None:
     n_dedup = len(full[full["domain"].isin(map_domains)].groupby(["domain", "location"])) - len(latest)
     if n_dedup > 0:
         LOG.info("Дедупликация по нормализованному имени: объединено %s дублей (переименования в XML)", n_dedup)
+
+    # Build sample_history index: all samples per (domain, _loc_key) sorted by
+    # date descending, excluding the latest sample (which becomes the main record).
+    # History is capped at 30 entries per location.
+    _history_index: dict[str, list[dict]] = {}
+    latest_idx_set = set(latest_idx)
+    full_in_domains = full[full["domain"].isin(map_domains)]
+    for row_idx, row in full_in_domains.iterrows():
+        if row_idx in latest_idx_set:
+            continue
+        loc_key = str(row.get("_loc_key", ""))
+        if not loc_key:
+            continue
+        sd = row.get("sample_date")
+        compliant_raw = row.get("compliant")
+        compliant_val: int | None = None
+        if pd.notna(compliant_raw):
+            try:
+                compliant_val = int(compliant_raw)
+            except (TypeError, ValueError):
+                pass
+        entry: dict = {
+            "sample_date": sd.isoformat() if pd.notna(sd) else None,
+            "official_compliant": compliant_val,
+            "measurements": row_measurements(row),
+        }
+        _history_index.setdefault(loc_key, []).append(entry)
+    for k in _history_index:
+        _history_index[k].sort(key=lambda x: str(x.get("sample_date") or ""), reverse=True)
+        _history_index[k] = _history_index[k][:30]
+    _n_hist = sum(len(v) for v in _history_index.values())
+    LOG.info("История проб: %s записей для %s мест", _n_hist, len(_history_index))
+
     _timer_print(
-        "6) dedupe: последняя проба на (domain, norm_location_key) + фильтр map_domains",
+        "6) dedupe: последняя проба на (domain, norm_location_key) + фильтр map_domains + history index",
         t_run,
         last,
     )
@@ -942,6 +975,8 @@ def main() -> None:
         sid = None
         if "sample_id" in row.index and pd.notna(row.get("sample_id")):
             sid = str(row["sample_id"]).strip() or None
+        loc_key_val = row.get("_loc_key", "")
+        sample_history = _history_index.get(str(loc_key_val), [])
         row_out = {
             "location": loc_name,
             "domain": domain,
@@ -952,6 +987,7 @@ def main() -> None:
             else None,
             "official_compliant": int(row["compliant"]),
             "measurements": row_measurements(row),
+            "sample_history": sample_history,
             "lat": lat,
             "lon": lon,
             "coord_source": coord_source,
