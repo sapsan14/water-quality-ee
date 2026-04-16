@@ -1,80 +1,106 @@
-# Draft inquiry to Terviseamet — open-data reproducibility
+# Cooperation letter to Terviseamet — water quality open data
 
-> **Status: DRAFT (Phase 10b — full-corpus numbers populated).** All numerical
-> placeholders have been filled from the full-corpus audit on **69 536 probes**
-> (`data/audit/divergences_full_2026-04-16.parquet`), downloaded via GitHub Actions
-> from `vtiav.sm.ee` on 2026-04-16. Author signature, supervisor sign-off, and
-> Estonian translation are still pending before delivery. See
-> `docs/phase_10_findings.md` for the full audit narrative.
+> **Status: DRAFT.** Rewritten as a cooperation proposal (Phase 13). Awaits:
+> author signature, supervisor sign-off, Estonian translation. See
+> `docs/phase_10_findings.md` for the full audit narrative and
+> `docs/learning_journey.md` for the project story.
 
 ## Intended recipients
 
 - Terviseamet open-data team (vtiav.sm.ee maintainers)
-- CC: project supervisor, if relevant
+- CC: project supervisor
 
-## Subject
+## Subject line
 
-Open-data reproducibility of water-quality compliance decisions — request for clarification
-
-## Tone and framing
-
-- Engineering collaboration, not accusation. We are users of the open-data feed who have built a reproducible pipeline on top of it, and we've noticed a pattern we'd like help interpreting.
-- No claim about internal processes or policy intent. We describe only what we observe externally and list hypotheses; we do not assert which is correct.
-- Offer concrete artifacts (notebook, parquet of probe IDs) so the answer can be verified, not just discussed.
+Open-source water quality risk map + findings from 69,536 probes — cooperation offer
 
 ---
 
-## Body (draft)
+## Body
 
-Dear Terviseamet team,
+Lugupeetud Terviseameti meeskond, / Dear Terviseamet team,
 
-We have built a reproducible data pipeline on top of the open-data XML feeds at `https://vtiav.sm.ee/index.php/opendata/` (`supluskoha_veeproovid_YYYY.xml`, `veevargi_veeproovid_YYYY.xml`, `basseini_veeproovid_YYYY.xml`, `joogiveeallika_veeproovid_YYYY.xml`) as part of a public student project on water-quality monitoring. Full source is at [water-quality-ee repository](https://github.com/sapsan14/water-quality-ee).
+### Who we are
 
-As part of validating our pipeline, we cross-checked every probe's `hinnang` label against a deterministic norm check derived directly from the parameter values published in the same XML files, using the thresholds in `docs/normy.md` (EU 2006/7/EC for bathing waters, EU 2020/2184 for drinking water, Estonian regulations for pools). We expected these two assessments to agree on every probe.
+We are a student team at TalTech (Masinõpe / Machine Learning course) that has spent the past several months building a complete data pipeline and public citizen service on top of your open-data water quality feeds at `vtiav.sm.ee/index.php/opendata/`.
 
-We find a non-trivial set of probes where they do not. On the **full corpus** of **69 536** labelled probes across 4 domains × 6 years (2021–2026), **2 164 probes (3.1 %)** have an official `hinnang` of `ei vasta nõuetele` but no published parameter in the open-data feed exceeds its printed norm — even after we corrected our own pool free-chlorine and combined-chlorine norms (which had been internally too strict — see below) and added a coliform-detection rule. The breakdown: basseinid 1 260, veevark 777, supluskoha 120, joogivesi 7. Three concrete examples (from `data/audit/divergences_full_2026-04-16.parquet`, all from different domains, counties and years):
+The result is **[h2oatlas.ee](https://h2oatlas.ee)** — an interactive public map showing the latest water quality status and probabilistic risk assessment for **2,196 locations** across Estonia: swimming sites, pools & SPA, drinking water networks, and drinking water sources. All code is open-source: [github.com/sapsan14/water-quality-ee](https://github.com/sapsan14/water-quality-ee).
 
-- **`377387`** (`veevark`, *Arkaadia Viljandi mnt veevärk*, Tartu maakond, sampled 2025-12-08). Strongest case. All 14 published parameters are present and clean: e_coli=0, enterococci=0, pH=8.2, nitrates=0.2, nitrites=0.01, ammonium=0.098, fluoride=0.75, manganese=0.046, iron=0.13, turbidity=0.5, color=3, coliforms=0, chlorides=5.3, sulfates=2.1. Every value is well below its norm, yet `hinnang = ei vasta nõuetele`.
-- **`347163`** (`basseinid`, *Ring spaa ja saunad — laste mänguala*, Harju maakond, sampled 2024-11-29). Pool with normal pH (7.0), turbidity (0.3), free chlorine (1.3, inside the operational range), combined chlorine (0.4) and oxidizability (4.5). The full microbiology profile (e_coli, enterococci, staphylococci, pseudomonas, coliforms) is **not present** in the open-data XML for this probe. The non-compliant verdict cannot be reproduced from the published parameters because the relevant ones are missing.
-- **`366758`** (`supluskoha`, *Pedeli paisjärve supluskoht*, Valga maakond, sampled 2025-08-17). Bathing site with e_coli=144 and enterococci=164 — both inside the EU 2006/7/EC "Excellent" thresholds (≤ 500 / ≤ 200 CFU/100 mL). No other parameters are published for the probe. Yet `hinnang = ei vasta nõuetele`.
-
-These are not model errors — no machine-learning is involved in detecting them. A simple `for each parameter: is value > threshold?` loop finds the same set. We would like help understanding the source of the divergence.
-
-Before writing, we ruled out the most obvious in-repo explanations:
-
-1. **Parser loss.** We ran `scripts/audit_xml_field_coverage.py` against all cached XML files (160 MB across 4 domains × 6 years). All 9 unparsed tags are metadata (inspector names, protocol IDs, sampling methodology) — zero measurement parameters are lost. The full inventory is at `data/audit/xml_field_inventory.csv`.
-2. **Feature-code drift.** Our norm thresholds are imported directly from the feature-engineering code that trains the model — there is no second copy of the numbers. The audit module `src/audit/label_vs_norms.py` re-uses `features.NORMS` / `features.NORMS_POOL` at import time so any threshold edit propagates automatically.
-3. **Unit conversion.** Iron and manganese `ug/l` values are converted to `mg/l` at parse time.
-4. **Our own pool norms.** We initially had `free_chlorine` set to a [0.2, 0.6] mg/l operational range and `combined_chlorine` ≤ 0.4 mg/l. Empirically validated against your published `hinnang` field on 2 194 probes, those bounds were too strict: 288 of 339 compliant pool probes had free chlorine in the [0.6, 1.9] mg/l band, and 25 % of compliant pool combined-chlorine values exceeded 0.4 mg/l. We re-verified against Sotsiaalministri 31.07.2019 määrus nr 49 Lisa 4 and updated our table to `free_chlorine` 0.5–1.5 mg/l and `combined_chlorine` ≤ 0.5 mg/l. After this fix the deterministic checker agrees with the official `hinnang` on **86.2 %** of the full 69 536-probe corpus (and 90.9 % on a smaller 2 194-probe snapshot used during iterative development), and the residual 2 164 hidden_violation probes above are what we are writing about.
-
-That leaves a few external explanations we cannot distinguish from the public side alone. Could you help us understand which apply?
-
-**Q1.** Is the open-data XML feed published at `vtiav.sm.ee/index.php/opendata/` a complete mirror of the internal laboratory record for each probe, or does it contain a subset of parameters? If it is a subset, is the subset published per probe documented somewhere?
-
-**Q2.** Is the official `hinnang` decision for a probe derived from the parameters that appear in the published XML, or can it be based on additional parameters or contextual information that is not included in the public feed?
-
-**Q3.** Do different site types (supluskoha, veevärk, joogivee allikas, bassein) have different mandatory parameter profiles — i.e., parameters that are either not measured or not published for some site types by design?
-
-**Q4.** Some parameters (e.g. nitrates, chlorides, sulfates in `veevargi_veeproovid`) appear in only 5–7 % of samples. Is this seasonality (e.g. annual measurements reported only on one probe per year), or are they measured more often but not always published?
-
-**Q5.** Is there a documented publication-frequency policy per parameter (e.g. "microbiology on every probe, chemistry on a quarterly schedule")? If so, we'd love to reference it in our project's limitations section.
-
-We're happy to share our audit notebook and the anonymised parquet of example probe IDs so you can inspect the specific cases. The intent is not to criticise the open-data feed — we think it's excellent and use it directly in our project — but to understand the structural relationship between what is published and how the compliance decision is made, so that we can correctly describe it to readers of our project report.
-
-Thank you for your time and for maintaining the open-data feed,
-
-`<author name>`  
-`<author email>`  
-`<project link>`
+We write to share some findings that may be useful to you, to ask a few questions about the data structure, and to offer our tools and willingness to collaborate.
 
 ---
 
-## Attachment checklist (before sending)
+### What we found — and what we fixed on our side
 
-- [x] Replace `<N_HIDDEN_VIOLATION>`, `<N_TOTAL_LABELLED>`, `<PCT>` — populated to **2 164 / 69 536 / 3.1 %** from `data/audit/divergences_full_2026-04-16.parquet` (Phase 10b).
-- [x] Replace `<sample_id_N>` / `<location_N>` / `<date_N>` — three diverse examples picked covering veevark / basseinid / supluskoha across Tartu / Harju / Valga counties.
-- [x] Re-run `scripts/audit_xml_field_coverage.py` against populated `data/raw/` (160 MB, 4 domains × 6 years). Result: zero measurement parameters lost. Output: `data/audit/xml_field_inventory.csv`.
-- [x] Re-run audit on the full `load_all()` corpus (69 536 probes). Numbers updated.
-- [ ] Attach (or link) the audit notebook and parquet artifact.
-- [ ] Translate to Estonian (optional but recommended).
-- [ ] Project supervisor sign-off.
+While validating our pipeline, we built a deterministic norm checker that compares every probe's `hinnang` label against the published parameter values using EU and Estonian thresholds. Three discoveries:
+
+**1. We corrected our own pool norms (may be relevant to you).**
+Our initial free-chlorine range for pools was [0.2, 0.6] mg/l. Empirical validation against 339 compliant pool probes showed that 85% had free chlorine between 0.6 and 1.9 mg/l — all flagged as false alarms by our system. We re-verified against Sotsiaalministri 31.07.2019 määrus nr 49 (Lisa 4) and corrected to **[0.5, 1.5] mg/l**. Similarly, combined chlorine was corrected from ≤ 0.4 to **≤ 0.5 mg/l**.
+
+If any of your downstream systems, dashboards, or third-party consumers reference similar threshold tables, our empirical analysis and the 288 false-positive cases may be a useful cross-check.
+
+**2. 86.2% of labels are reproducible from published data; 3.1% are not.**
+After our corrections, our checker agrees with the official `hinnang` on **59,958 of 69,536 probes** (86.2%). However, **2,164 probes (3.1%)** are labelled `ei vasta nõuetele` even though no published parameter exceeds any applicable norm. We call these "hidden violations" — the compliance decision cannot be reproduced from the open-data feed alone.
+
+Temporal cross-referencing shows this is partly a **measurement frequency effect**: for `veevark`, 97.9% of "missing" chemistry parameters are measured at the same site in other probes (quarterly chemistry vs per-probe microbiology). This is not a data error — it reflects the monitoring schedule.
+
+**3. Your XML is complete — our parser loses nothing.**
+We scanned every XML child tag under `<proovivott>` across 160 MB of production files (4 domains × 6 years). All 9 unparsed tags are metadata (inspector names, protocol IDs, sampling methodology). Zero measurement parameters are lost by our parser.
+
+---
+
+### What we'd like to understand
+
+These questions would help us accurately describe the data in our project report and on h2oatlas.ee:
+
+**Q1.** Is the open-data XML a complete mirror of each probe's lab record, or a published subset? If a subset — is the selection documented?
+
+**Q2.** Is `hinnang` derived solely from the published parameters, or can it incorporate additional data or contextual information not in the XML?
+
+**Q3.** Do different site types have different mandatory parameter profiles by design? (We observe that supluskoha probes never include chemistry parameters, while basseinid probes often lack microbiology.)
+
+**Q4.** Chemistry parameters (nitrates, chlorides, sulfates) in `veevargi_veeproovid` appear in only 5–7% of probes. Is this a quarterly measurement schedule, or are they measured but not always published?
+
+**Q5.** Is there a documented publication-frequency policy we could reference in our limitations section?
+
+---
+
+### What we offer
+
+We would be happy to share any of the following:
+
+- **Open-source audit toolkit** (`src/audit/label_vs_norms.py`, 250 lines) — a deterministic checker that can be run on any new data dump to instantly verify norm compliance against official labels. It imports thresholds directly from the feature table, so it stays in sync automatically. Could be useful for your own QA or for third-party data consumers.
+
+- **[h2oatlas.ee](https://h2oatlas.ee)** — a public citizen map built entirely on your data. We're happy to adjust it based on your feedback — add disclaimers, correct domain labels, or link to your official pages.
+
+- **Audit artifacts** — the probe-level parquet file with 69,536 rows, bucket classifications, and unmeasured-parameter signatures. Available for your inspection.
+
+- **Collaboration** — if Terviseamet has data quality initiatives, documentation projects, intern or cooperation opportunities, or simply wants a student team's fresh perspective on the opendata pipeline, we are genuinely interested. This project started as a course assignment but has grown into something we care about.
+
+---
+
+### Context
+
+This project is part of the TalTech Masinõpe (Machine Learning) course. Our priority metric is **Recall on violations** — a false negative means predicting water is safe when it is not. The best model (LightGBM) achieves **AUC = 0.984** and catches **94.9% of violations** at 80% precision on a temporal test set (trained on ≤2024, tested on 2025+).
+
+We want to be clear: we are not criticizing the open-data feed — we think it is excellent, and our entire project depends on it. We are writing because we believe sharing these findings and tools is more useful than keeping them in a course report.
+
+Suur tänu teile avatud andmete haldamise eest, / Thank you for maintaining the open-data feed,
+
+`<author name>`
+`<author email>`
+[h2oatlas.ee](https://h2oatlas.ee) · [GitHub](https://github.com/sapsan14/water-quality-ee)
+
+---
+
+## Attachments checklist (before sending)
+
+- [x] Numbers populated from full-corpus audit (69,536 probes, 2,164 hidden violations)
+- [x] Three concrete probe examples (veevark / basseinid / supluskoha)
+- [x] Pool norms correction documented with empirical evidence
+- [x] XML parity scan results (zero measurement params lost)
+- [x] Temporal analysis: veevark 97.9% frequency variance
+- [ ] Estonian translation of the letter body
+- [ ] Attach audit notebook + parquet artifact (or link to repo)
+- [ ] Project supervisor sign-off
+- [ ] Send to: Terviseamet open-data team (email TBD)

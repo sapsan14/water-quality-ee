@@ -1,6 +1,8 @@
 # Learning Journey — from opendata XML to probabilistic risk estimator
 
 > **Purpose.** This document narrates the project's learning arc for the final TalTech Masinõpe presentation. It is not a log of commits but a story: what we set out to do, what we discovered along the way, what surprised us, and what we now understand differently. Technical details live in the artifacts linked from each section.
+>
+> **Live demo:** [h2oatlas.ee](https://h2oatlas.ee) — public citizen map of water quality risk across Estonia (2,196 locations, 4 domains, 4 ML models).
 
 ---
 
@@ -166,17 +168,63 @@ These constraints improved the architecture: the snapshot adapter, the bathing a
 | 9 | Audit infrastructure | Deterministic checker + draft inquiry + parser parity script + audit notebook |
 | **10** | **Audit execution** | **Found free_chlorine bug (+9.3pp agree rate), 2,164 hidden_violation on 69k probes, XML parity clean** |
 | **11** | **Model retrain** | **Corrected features, RF AUC=0.981, citizen snapshot rebuilt** |
+| **12** | **Presentation docs** | **learning_journey.md, report.md updated, frontend snapshot for h2oatlas.ee** |
+| **13** | **Temporal analysis + LightGBM + Terviseamet** | **H3 confirmed (54.9%), LightGBM AUC=0.984, cooperation letter** |
+
+---
+
+## Act VI — Temporal analysis resolves the frequency question (Phase 13)
+
+### The question
+
+Phase 10 identified 2,164 probes where the official label says "violation" but the published parameters are clean. But *why* are the relevant parameters missing? Are they **never measured** at that site (partial publication, hypothesis #1)? Or are they measured **in other months** but just not in the probe that got the violation label (frequency variance, hypothesis #3)?
+
+### The method
+
+For each hidden_violation probe's unmeasured parameter, we checked whether the same parameter has a non-null value in **any other probe** at the same `(location_key, domain)` across the full 69,536-probe corpus.
+
+### The result
+
+**Hypothesis #3 is strongly supported: 54.9% of unmeasured parameter instances ARE measured at the same site in other probes.** But the pattern is strikingly domain-specific:
+
+| Domain | H1 (never at site) | H3 (measured elsewhere) | Interpretation |
+|---|---|---|---|
+| **veevark** | 2.1% | **97.9%** | Chemistry (nitrates, chlorides, sulfates) is periodic — measured quarterly or annually, not every probe. Microbiology every probe. |
+| **supluskoha** | **97.9%** | 2.1% | Chemistry is simply never measured at bathing sites — EU 2006/7/EC only requires e_coli + enterococci. |
+| **basseinid** | 63.0% | 37.0% | Mixed: e_coli systematically absent at some pools; chemistry periodic. |
+| **joogivesi** | 21.6% | **78.4%** | Similar to veevark — drinking water chemistry is periodic. |
+
+**Key insight for the presentation:** the 2,164 hidden_violation probes are not data errors — they reflect a **structural feature of the monitoring regime**: microbiology is tested every time, chemistry is tested periodically. When a probe fails on a chemistry parameter not measured that day, the open data can't show why.
+
+Hidden_violation is uniformly distributed across months (no seasonal clustering), confirming this is a publication schedule effect, not a seasonal phenomenon.
+
+---
+
+## Act VII — LightGBM completes the model zoo (Phase 13)
+
+### 4-model comparison (temporal split: train ≤2024, test 2025+)
+
+| Model | AUC | Recall(violations) | Precision(violations) | Notes |
+|---|---|---|---|---|
+| LR | 0.947 | 0.890 | 0.560 | Baseline; low precision |
+| RF | 0.981 | 0.929 | 0.791 | Phase 11 best; good balance |
+| GB | 0.982 | 0.887 | **0.887** | Best precision at default threshold |
+| **LightGBM** | **0.984** | 0.796→**0.949*** | 0.947→**0.800*** | **Best AUC; with threshold: best recall** |
+
+*With optimised threshold (0.0224): maximises recall at precision ≥ 80%.
+
+**LightGBM is the new best model** — it catches **94.9% of violations** while maintaining 80% precision. The citizen service at [h2oatlas.ee](https://h2oatlas.ee) now shows predictions from all 4 models.
 
 ---
 
 ## Recommended next actions
 
-| Priority | What | Why |
+| Priority | What | Status |
 |---|---|---|
-| 1 | Send Terviseamet inquiry (after supervisor sign-off + Estonian translation) | Discriminate between hypotheses #1 and #5 |
-| 2 | Temporal analysis on full corpus | Evaluate hypothesis #3 (measurement frequency variance) |
-| 3 | LightGBM retrain (needs `pip install lightgbm`) | GB slightly outperforms RF on AUC; LightGBM handles NaN natively |
-| 4 | Frontend snapshot.frontend.json update | Propagate corrected model predictions to the live Cloudflare Pages map |
+| ~~1~~ | ~~Temporal analysis on full corpus~~ | ✅ Phase 13: H3 strongly supported (54.9%) |
+| ~~2~~ | ~~LightGBM retrain~~ | ✅ Phase 13: AUC=0.984, Recall=0.949 with threshold |
+| ~~3~~ | ~~Frontend snapshot update~~ | ✅ Phase 13: h2oatlas.ee shows 4 models |
+| 4 | Send Terviseamet cooperation letter (supervisor sign-off + Estonian translation) | Draft rewritten as cooperation proposal |
 | 5 | `mineraalvesi` domain | Add when stable opendata URLs appear |
 
 ---
