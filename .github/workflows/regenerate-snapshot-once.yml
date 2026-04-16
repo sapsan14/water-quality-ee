@@ -1,5 +1,5 @@
 # One-shot workflow: regenerate snapshot with sample_history.
-# Triggers on push (i.e. when this file is created).
+# Triggers on push (i.e. when this file is created/updated).
 # After the snapshot is committed, this file should be removed.
 
 name: Regenerate snapshot with history
@@ -50,9 +50,7 @@ jobs:
           echo "::warning::vtiav.sm.ee unavailable — using cached XML if present."
 
       - name: Build snapshot (full, with sample_history)
-        run: |
-          python citizen-service/scripts/build_citizen_snapshot.py 
-            --log-level INFO
+        run: python citizen-service/scripts/build_citizen_snapshot.py --log-level INFO
 
       - name: Export frontend snapshot
         run: python citizen-service/scripts/export_frontend_snapshot.py
