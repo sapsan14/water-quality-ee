@@ -64,6 +64,12 @@ NORMS = {
 # Нормы специфичные для бассейнов/ujula/СПА (Estonian pool regulations / Terviseamet)
 # Отличаются от питьевой воды и от открытых водоёмов.
 # Используются в add_ratio_features при domain == 'basseinid'.
+#
+# Источник: Sotsiaalministri 31.07.2019 määrus nr 49 «Nõuded ujulale, basseinile
+# ja veekeskusele ning veekvaliteedi enesekontrollile», Lisa 4 (vee kvaliteedi
+# nõuded). Эмпирически верифицировано на 2194 пробах из citizen-service snapshot
+# в фазе 10 (см. docs/phase_10_findings.md): для compliant-проб в бассейнах
+# free_chlorine лежит в [0.46, 1.6] (p1–p99), combined_chlorine ≤ 0.6 (p99).
 NORMS_POOL = {
     "e_coli":              0.0,   # КОЕ/100 мл — норма строже: должно быть 0
     "coliforms":           0.0,   # КОЕ/100 мл
@@ -71,9 +77,9 @@ NORMS_POOL = {
     "staphylococci":      20.0,   # КОЕ/100 мл
     "ph_min":              6.5,
     "ph_max":              8.5,   # уже, чем veevark (6.5–9.5)
-    "free_chlorine_min":   0.2,   # мг/л — нижняя граница (мало хлора → риск)
-    "free_chlorine_max":   0.6,   # мг/л — верхняя граница (много хлора → раздражение)
-    "combined_chlorine":   0.4,   # мг/л — верхний предел
+    "free_chlorine_min":   0.5,   # мг/л — нижняя граница операционного диапазона (Sotsiaalministri 49/2019, Lisa 4)
+    "free_chlorine_max":   1.5,   # мг/л — верхняя граница (Sotsiaalministri 49/2019, Lisa 4)
+    "combined_chlorine":   0.5,   # мг/л — верхний предел (Sotsiaalministri 49/2019, Lisa 4)
     "turbidity":           0.5,   # NTU — в 8× строже, чем для питьевой воды
 }
 

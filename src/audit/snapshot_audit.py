@@ -36,7 +36,11 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
-from audit.label_vs_norms import BUCKETS, audit_dataframe
+from audit.label_vs_norms import (
+    BUCKETS,
+    audit_dataframe,
+    audit_dataframe_with_bathing_aggregation,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SNAPSHOT = REPO_ROOT / "citizen-service" / "artifacts" / "snapshot.json"
@@ -139,9 +143,22 @@ def summarise_audit(audited: pd.DataFrame) -> Dict[str, object]:
 def run_snapshot_audit(
     snapshot_path: Optional[Path] = None,
     out_parquet: Optional[Path] = None,
+    bathing_aggregation: bool = False,
 ) -> Tuple[pd.DataFrame, Dict[str, object]]:
     """
     Convenience entry point: load → audit → optional persist → summary.
+
+    Parameters
+    ----------
+    snapshot_path
+        Citizen-service snapshot JSON; defaults to the bundled artifact.
+    out_parquet
+        Optional parquet output path.
+    bathing_aggregation
+        If True, run `audit_dataframe_with_bathing_aggregation` instead of
+        `audit_dataframe`. On the snapshot (one probe per location) this is
+        a no-op for `domain == 'supluskoha'`, but keeps the entry point
+        ready for full-corpus audits via `data_loader.load_all()`.
 
     Returns
     -------
@@ -151,7 +168,10 @@ def run_snapshot_audit(
         Output of `summarise_audit(...)`.
     """
     df = load_snapshot_as_dataframe(snapshot_path)
-    audited = audit_dataframe(df)
+    if bathing_aggregation:
+        audited = audit_dataframe_with_bathing_aggregation(df)
+    else:
+        audited = audit_dataframe(df)
     summary = summarise_audit(audited)
 
     if out_parquet is not None:
@@ -188,9 +208,18 @@ def main() -> int:
         / f"divergences_snapshot_{datetime.utcnow().strftime('%Y-%m-%d')}.parquet",
         help="Parquet output path",
     )
+    ap.add_argument(
+        "--bathing-aggregation",
+        action="store_true",
+        help="Apply EU 2006/7/EC 95-percentile aggregation per (location_key × season) for supluskoha rows",
+    )
     args = ap.parse_args()
 
-    audited, summary = run_snapshot_audit(args.snapshot, out_parquet=args.out)
+    audited, summary = run_snapshot_audit(
+        args.snapshot,
+        out_parquet=args.out,
+        bathing_aggregation=args.bathing_aggregation,
+    )
 
     print("=== snapshot label-vs-norms audit ===")
     print(f"snapshot   : {args.snapshot}")

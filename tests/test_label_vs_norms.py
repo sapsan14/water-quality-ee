@@ -6,6 +6,7 @@ import pytest
 
 from audit.label_vs_norms import (
     audit_dataframe,
+    audit_dataframe_with_bathing_aggregation,
     bucket_name,
     check_probe,
 )
@@ -106,17 +107,18 @@ def test_pool_ph_range_is_tighter_than_drinking():
 
 
 def test_pool_free_chlorine_range_violation_low():
-    row = pd.Series({"domain": "basseinid", "free_chlorine": 0.1})  # below 0.2
+    # Phase 10: range corrected to [0.5, 1.5] per Sotsiaalministri 49/2019
+    row = pd.Series({"domain": "basseinid", "free_chlorine": 0.3})  # below 0.5
     assert "free_chlorine" in check_probe(row)["violated_params"]
 
 
 def test_pool_free_chlorine_range_violation_high():
-    row = pd.Series({"domain": "basseinid", "free_chlorine": 0.8})  # above 0.6
+    row = pd.Series({"domain": "basseinid", "free_chlorine": 1.8})  # above 1.5
     assert "free_chlorine" in check_probe(row)["violated_params"]
 
 
 def test_pool_free_chlorine_in_range_is_compliant():
-    row = pd.Series({"domain": "basseinid", "free_chlorine": 0.4})
+    row = pd.Series({"domain": "basseinid", "free_chlorine": 1.0})  # within [0.5, 1.5]
     assert "free_chlorine" not in check_probe(row)["violated_params"]
 
 
@@ -129,6 +131,53 @@ def test_pool_pseudomonas_any_count_violates():
 def test_pool_staphylococci_over_threshold_violates():
     row = pd.Series({"domain": "basseinid", "staphylococci": 50.0})  # norm 20
     assert "staphylococci" in check_probe(row)["violated_params"]
+
+
+# ── Phase 10 R2: coliforms detection rule ────────────────────────────────────
+
+
+def test_coliforms_positive_violates_in_drinking_water():
+    """coliforms > 0 must be a violation for veevark/joogivesi (EU 2020/2184)."""
+    row = pd.Series({"domain": "veevark", "coliforms": 1.0})
+    verdict = check_probe(row)
+    assert "coliforms" in verdict["violated_params"]
+    assert verdict["any_violation"] is True
+
+
+def test_coliforms_positive_violates_in_drinking_source():
+    row = pd.Series({"domain": "joogivesi", "coliforms": 5.0})
+    assert "coliforms" in check_probe(row)["violated_params"]
+
+
+def test_coliforms_positive_violates_in_pool():
+    row = pd.Series({"domain": "basseinid", "coliforms": 1.0})
+    assert "coliforms" in check_probe(row)["violated_params"]
+
+
+def test_coliforms_zero_is_compliant():
+    row = pd.Series({"domain": "veevark", "coliforms": 0.0})
+    assert "coliforms" not in check_probe(row)["violated_params"]
+
+
+def test_coliforms_rule_skipped_for_supluskoha():
+    """EU 2006/7/EC bathing-water directive does not regulate coliforms.
+
+    Only e_coli and enterococci are bathing-water indicators; total coliforms
+    are not a parameter of the directive. So a supluskoha probe with
+    coliforms > 0 must NOT be flagged by the audit checker.
+    """
+    row = pd.Series({"domain": "supluskoha", "coliforms": 999.0})
+    verdict = check_probe(row)
+    assert "coliforms" not in verdict["violated_params"]
+    assert verdict["any_violation"] is False
+
+
+def test_coliforms_unmeasured_does_not_violate():
+    """Missing coliforms column must be tolerated, not flagged."""
+    row = pd.Series({"domain": "veevark", "e_coli": 100.0})
+    verdict = check_probe(row)
+    assert "coliforms" in verdict["unmeasured_norm_params"]
+    assert "coliforms" not in verdict["violated_params"]
 
 
 def test_drinking_domain_ignores_pool_only_params():
@@ -256,6 +305,127 @@ def test_thresholds_come_from_features_norms_no_duplication():
     row_bad = pd.Series({"domain": "veevark", "iron": NORMS["iron"] + 0.01})
     assert check_probe(row_ok)["any_violation"] is False
     assert "iron" in check_probe(row_bad)["violated_params"]
+
+
+# ── Phase 10 R3: bathing-water 95-percentile aggregation ─────────────────────
+
+
+def _bathing_fixture(probes):
+    """Helper: build a small DataFrame for the aggregation tests.
+
+    `probes` is a list of dicts with keys:
+        location_key, sample_date (str), e_coli, enterococci, compliant
+    """
+    rows = []
+    for p in probes:
+        rows.append(
+            {
+                "domain": "supluskoha",
+                "location_key": p["location_key"],
+                "sample_date": pd.Timestamp(p["sample_date"]),
+                "e_coli": p.get("e_coli"),
+                "enterococci": p.get("enterococci"),
+                "compliant": p.get("compliant"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def test_bathing_aggregation_one_spike_does_not_violate():
+    """A single high probe inside an otherwise clean season is hidden_pass
+    under per-probe rules but agree_pass under EU-2006/7/EC 95-percentile.
+    """
+    df = _bathing_fixture(
+        [
+            {"location_key": "harku jarv", "sample_date": "2024-06-01", "e_coli": 50, "enterococci": 20, "compliant": 1},
+            {"location_key": "harku jarv", "sample_date": "2024-07-01", "e_coli": 60, "enterococci": 25, "compliant": 1},
+            {"location_key": "harku jarv", "sample_date": "2024-08-01", "e_coli": 700, "enterococci": 30, "compliant": 1},  # spike below "Sufficient" 900
+            {"location_key": "harku jarv", "sample_date": "2024-09-01", "e_coli": 80, "enterococci": 25, "compliant": 1},
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    # 95p of [50, 60, 700, 80] = 610 < 900 → no violation; all rows agree_pass
+    assert (aggregated["bucket"] == "agree_pass").all()
+
+
+def test_bathing_aggregation_persistent_high_does_violate():
+    """A whole season above the 95p threshold must still be flagged."""
+    df = _bathing_fixture(
+        [
+            {"location_key": "stroomi rand", "sample_date": "2024-06-01", "e_coli": 1000, "enterococci": 30, "compliant": 0},
+            {"location_key": "stroomi rand", "sample_date": "2024-07-01", "e_coli": 1100, "enterococci": 35, "compliant": 0},
+            {"location_key": "stroomi rand", "sample_date": "2024-08-01", "e_coli": 1200, "enterococci": 40, "compliant": 0},
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    assert (aggregated["bucket"] == "agree_violate").all()
+
+
+def test_bathing_aggregation_per_season_independent():
+    """Two seasons at the same location must be aggregated independently."""
+    df = _bathing_fixture(
+        [
+            # 2023 — clean
+            {"location_key": "pikakari", "sample_date": "2023-07-01", "e_coli": 100, "enterococci": 20, "compliant": 1},
+            {"location_key": "pikakari", "sample_date": "2023-08-01", "e_coli": 120, "enterococci": 25, "compliant": 1},
+            # 2024 — persistent contamination
+            {"location_key": "pikakari", "sample_date": "2024-07-01", "e_coli": 2000, "enterococci": 50, "compliant": 0},
+            {"location_key": "pikakari", "sample_date": "2024-08-01", "e_coli": 2200, "enterococci": 60, "compliant": 0},
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    by_year = aggregated.set_index("sample_date")
+    assert by_year.loc["2023-07-01", "bucket"] == "agree_pass"
+    assert by_year.loc["2023-08-01", "bucket"] == "agree_pass"
+    assert by_year.loc["2024-07-01", "bucket"] == "agree_violate"
+    assert by_year.loc["2024-08-01", "bucket"] == "agree_violate"
+
+
+def test_bathing_aggregation_enterococci_alone_violates():
+    df = _bathing_fixture(
+        [
+            {"location_key": "loksa", "sample_date": "2024-06-01", "e_coli": 100, "enterococci": 200, "compliant": 0},
+            {"location_key": "loksa", "sample_date": "2024-07-01", "e_coli": 100, "enterococci": 350, "compliant": 0},  # > 330
+            {"location_key": "loksa", "sample_date": "2024-08-01", "e_coli": 100, "enterococci": 400, "compliant": 0},
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    assert (aggregated["bucket"] == "agree_violate").all()
+
+
+def test_bathing_aggregation_passthrough_for_other_domains():
+    """Non-supluskoha rows must be unchanged by the aggregator."""
+    df = pd.DataFrame(
+        [
+            {
+                "domain": "veevark",
+                "location_key": "tartu kesklinn",
+                "sample_date": pd.Timestamp("2024-06-01"),
+                "e_coli": 600.0,  # > 500 NORMS
+                "compliant": 0,
+            }
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    # veevark with e_coli > 500 → agree_violate, unchanged.
+    assert aggregated["bucket"].iloc[0] == "agree_violate"
+
+
+def test_bathing_aggregation_skips_when_location_key_missing():
+    """If location_key is absent, aggregator falls back to per-probe verdicts."""
+    df = pd.DataFrame(
+        [
+            {
+                "domain": "supluskoha",
+                "sample_date": pd.Timestamp("2024-06-01"),
+                "e_coli": 700.0,  # > 500 per-probe → would flag
+                "compliant": 1,
+            }
+        ]
+    )
+    aggregated = audit_dataframe_with_bathing_aggregation(df)
+    # No location_key column → no aggregation → per-probe verdict (hidden_pass).
+    assert aggregated["bucket"].iloc[0] == "hidden_pass"
 
 
 def test_pool_turbidity_threshold_from_norms_pool():

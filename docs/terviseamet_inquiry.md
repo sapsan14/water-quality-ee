@@ -1,6 +1,17 @@
 # Draft inquiry to Terviseamet — open-data reproducibility
 
-> **Status: DRAFT. Not sent.** Review, localise (Estonian / English bilingual recommended), replace `<PLACEHOLDER>` numbers from the latest `data/audit/divergences_<date>.parquet`, and confirm the author signature before delivery. This document is a working draft kept in the repository for auditability; it should not be treated as an official communication until it has been explicitly approved.
+> **Status: DRAFT (Phase 10 numbers populated).** All numerical placeholders
+> have been filled from the post-refinement audit `data/audit/divergences_after_R3.parquet`
+> generated against `citizen-service/artifacts/snapshot.json` (2194 latest-per-location
+> probes). Author signature, supervisor sign-off, and Estonian translation are still
+> pending before delivery. See `docs/phase_10_findings.md` for the full audit narrative.
+>
+> **Subset caveat to flag in the cover note when sending:** the numbers below are
+> derived from the citizen-service snapshot (one latest probe per location, n = 2194)
+> rather than the full multi-year corpus from `load_all()` (~40 k+ probes). The
+> qualitative findings hold across domains and years, but the absolute counts will
+> change once the inquiry is re-run on a fresh `load_all()` dataset on a developer
+> machine with `data/raw/` populated.
 
 ## Intended recipients
 
@@ -27,19 +38,20 @@ We have built a reproducible data pipeline on top of the open-data XML feeds at 
 
 As part of validating our pipeline, we cross-checked every probe's `hinnang` label against a deterministic norm check derived directly from the parameter values published in the same XML files, using the thresholds in `docs/normy.md` (EU 2006/7/EC for bathing waters, EU 2020/2184 for drinking water, Estonian regulations for pools). We expected these two assessments to agree on every probe.
 
-We find a small but non-trivial set of probes where they do not. For **<N_HIDDEN_VIOLATION>** probes out of approximately **<N_TOTAL_LABELLED>** labelled samples (**<PCT>%**), the official `hinnang` is `ei vasta nõuetele` but no published parameter in the open-data feed exceeds its printed norm. Example probe IDs (from `data/audit/divergences_<date>.parquet`):
+We find a small but non-trivial set of probes where they do not. For **30** probes out of **2 194** labelled samples in the citizen-service snapshot (**~1.4 %**), the official `hinnang` is `ei vasta nõuetele` but no published parameter in the open-data feed exceeds its printed norm — even after we corrected our own pool free-chlorine and combined-chlorine norms (which had been internally too strict — see below) and added a coliform-detection rule. Three concrete examples (from `data/audit/divergences_after_R3.parquet`, all from different domains, counties and years):
 
-- `<sample_id_1>` (`<domain_1>`, `<location_1>`, sampled `<date_1>`)
-- `<sample_id_2>` (`<domain_2>`, `<location_2>`, sampled `<date_2>`)
-- `<sample_id_3>` (`<domain_3>`, `<location_3>`, sampled `<date_3>`)
+- **`377387`** (`veevark`, *Arkaadia Viljandi mnt veevärk*, Tartu maakond, sampled 2025-12-08). Strongest case. All 14 published parameters are present and clean: e_coli=0, enterococci=0, pH=8.2, nitrates=0.2, nitrites=0.01, ammonium=0.098, fluoride=0.75, manganese=0.046, iron=0.13, turbidity=0.5, color=3, coliforms=0, chlorides=5.3, sulfates=2.1. Every value is well below its norm, yet `hinnang = ei vasta nõuetele`.
+- **`347163`** (`basseinid`, *Ring spaa ja saunad — laste mänguala*, Harju maakond, sampled 2024-11-29). Pool with normal pH (7.0), turbidity (0.3), free chlorine (1.3, inside the operational range), combined chlorine (0.4) and oxidizability (4.5). The full microbiology profile (e_coli, enterococci, staphylococci, pseudomonas, coliforms) is **not present** in the open-data XML for this probe. The non-compliant verdict cannot be reproduced from the published parameters because the relevant ones are missing.
+- **`366758`** (`supluskoha`, *Pedeli paisjärve supluskoht*, Valga maakond, sampled 2025-08-17). Bathing site with e_coli=144 and enterococci=164 — both inside the EU 2006/7/EC "Excellent" thresholds (≤ 500 / ≤ 200 CFU/100 mL). No other parameters are published for the probe. Yet `hinnang = ei vasta nõuetele`.
 
 These are not model errors — no machine-learning is involved in detecting them. A simple `for each parameter: is value > threshold?` loop finds the same set. We would like help understanding the source of the divergence.
 
 Before writing, we ruled out the most obvious in-repo explanations:
 
-1. **Parser loss.** We audited every XML child tag under `<proovivott>` and confirmed that every field present in the files is either extracted by our parser or is structurally unrelated to compliance (timestamps, IDs, free-text comments). The script is `scripts/audit_xml_field_coverage.py` in the repository; happy to share its output.
-2. **Feature-code drift.** Our norm thresholds are imported directly from the feature-engineering code that trains the model — there is no second copy of the numbers.
+1. **Parser loss.** We audited every XML child tag under `<proovivott>` and confirmed that every field present in the files is either extracted by our parser or is structurally unrelated to compliance (timestamps, IDs, free-text comments). The script is `scripts/audit_xml_field_coverage.py` in the repository; happy to share its output. (Note: the live parity scan needs a populated `data/raw/` cache; in-repo unit fixtures cover the script's regression behaviour, see `tests/test_audit_xml_field_coverage.py`.)
+2. **Feature-code drift.** Our norm thresholds are imported directly from the feature-engineering code that trains the model — there is no second copy of the numbers. The audit module `src/audit/label_vs_norms.py` re-uses `features.NORMS` / `features.NORMS_POOL` at import time so any threshold edit propagates automatically.
 3. **Unit conversion.** Iron and manganese `ug/l` values are converted to `mg/l` at parse time.
+4. **Our own pool norms.** We initially had `free_chlorine` set to a [0.2, 0.6] mg/l operational range and `combined_chlorine` ≤ 0.4 mg/l. Empirically validated against your published `hinnang` field on 2 194 probes, those bounds were too strict: 288 of 339 compliant pool probes had free chlorine in the [0.6, 1.9] mg/l band, and 25 % of compliant pool combined-chlorine values exceeded 0.4 mg/l. We re-verified against Sotsiaalministri 31.07.2019 määrus nr 49 Lisa 4 and updated our table to `free_chlorine` 0.5–1.5 mg/l and `combined_chlorine` ≤ 0.5 mg/l. After this fix the deterministic checker agrees with the official `hinnang` on **90.9 %** of labelled probes (up from 81.5 %), and the residual disagreement above is what we are writing about.
 
 That leaves a few external explanations we cannot distinguish from the public side alone. Could you help us understand which apply?
 
@@ -65,9 +77,10 @@ Thank you for your time and for maintaining the open-data feed,
 
 ## Attachment checklist (before sending)
 
-- [ ] Replace `<N_HIDDEN_VIOLATION>`, `<N_TOTAL_LABELLED>`, `<PCT>` with the numbers from the most recent `data/audit/divergences_<date>.parquet`.
-- [ ] Replace `<sample_id_N>` / `<location_N>` / `<date_N>` with three concrete, diverse examples (different domains, different years).
-- [ ] Re-run `scripts/audit_xml_field_coverage.py` and confirm no `parsed=0` rows with non-trivial values remain — otherwise fix the parser first.
+- [x] Replace `<N_HIDDEN_VIOLATION>`, `<N_TOTAL_LABELLED>`, `<PCT>` — populated to 30 / 2 194 / 1.4 % from `data/audit/divergences_after_R3.parquet` (Phase 10).
+- [x] Replace `<sample_id_N>` / `<location_N>` / `<date_N>` — three diverse examples picked covering veevark / basseinid / supluskoha across Tartu / Harju / Valga counties.
+- [ ] Re-run `scripts/audit_xml_field_coverage.py` against a populated `data/raw/` on a developer machine (the sandbox in which Phase 10 ran has no network access to vtiav.sm.ee). Phase 10 only smoke-tested the script structurally with `tests/test_audit_xml_field_coverage.py`.
+- [ ] Re-run the audit on the **full** `load_all()` corpus and refresh the numbers above. Snapshot subset (n = 2 194) qualitatively matches but the absolute counts will change.
 - [ ] Attach (or link) the audit notebook and parquet artifact.
 - [ ] Translate to Estonian (optional but recommended).
 - [ ] Project supervisor sign-off.
