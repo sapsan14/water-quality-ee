@@ -1514,15 +1514,23 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
         return
 
     # ── data freshness badge ─────────────────────────────────────────────
-    _gen_at = snap.get("generated_at", "")
-    try:
-        _gen_dt = datetime.fromisoformat(_gen_at)
-        if _gen_dt.tzinfo is None:
-            _gen_dt = _gen_dt.replace(tzinfo=timezone.utc)
-        _gen_str = _gen_dt.strftime("%Y-%m-%d %H:%M UTC")
-    except Exception:
-        _gen_str = _gen_at or "?"
-    st.caption(f"{T['data_updated']}: **{_gen_str}** · {T['update_schedule']}")
+    def _fmt_ts(raw: str) -> str:
+        try:
+            dt = datetime.fromisoformat(raw)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.strftime("%Y-%m-%d %H:%M UTC")
+        except Exception:
+            return raw or "?"
+
+    _data_ts = snap.get("data_fetched_at") or snap.get("generated_at", "")
+    _model_ts = snap.get("model_trained_at", "")
+    _parts = [f"{T['data_updated']}: **{_fmt_ts(_data_ts)}**"]
+    if _model_ts:
+        _model_label = {"RU": "Модель", "EN": "Model", "ET": "Mudel"}.get(lang, "Model")
+        _parts.append(f"{_model_label}: **{_fmt_ts(_model_ts)}**")
+    _parts.append(T["update_schedule"])
+    st.caption(" · ".join(_parts))
 
     _log_snapshot_coordinate_health(snap)
 

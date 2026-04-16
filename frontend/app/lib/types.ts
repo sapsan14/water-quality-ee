@@ -28,6 +28,8 @@ export type FrontendPlace = {
 
 export type FrontendSnapshot = {
   generated_at: string;
+  data_fetched_at?: string | null;
+  model_trained_at?: string | null;
   has_model_predictions: boolean;
   available_models: string[];
   model_labels: Record<string, string>;

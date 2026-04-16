@@ -658,17 +658,6 @@ html[data-theme="dark"] .langDropdownItem:hover {
   font-weight: 700;
 }
 
-.stat.statMuted {
-  background: transparent;
-  border-color: transparent;
-  min-width: auto;
-}
-.stat.statMuted .v {
-  font-weight: 500;
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
 /* ── Map stats row ──────────────────────────────────────────
    Compact label strip below the map. Sized so the full stat
    set fits a single line on standard desktop widths and only
@@ -736,14 +725,36 @@ html[data-theme="dark"] .langDropdownItem:hover {
   color: var(--bad);
 }
 
-.mapStat.mapStatMuted {
-  background: transparent;
-  border-color: transparent;
+/* ── Data / model freshness overlay on map ───────────────── */
+.mapFreshnessOverlay {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 800;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: #475569;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
-.mapStat.mapStatMuted .mapStatV {
+.mapFreshnessLine {
+  white-space: nowrap;
+}
+.mapFreshnessLabel {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-right: 0.3em;
+  color: #64748b;
+  font-size: 0.62rem;
+}
+.mapFreshnessValue {
   font-weight: 500;
-  font-size: 0.78rem;
-  color: var(--muted);
 }
 
 .tableWrap {
@@ -2782,6 +2793,14 @@ html[data-theme="dark"] .mapPanelFullscreen .sectionTitle {
   color: #e6eef9;
 }
 
+html[data-theme="dark"] .mapFreshnessOverlay {
+  background: rgba(11, 18, 32, 0.85);
+  color: #b0c4de;
+}
+html[data-theme="dark"] .mapFreshnessLabel {
+  color: #7b93b0;
+}
+
 html[data-theme="dark"] .mapFloatingBtn {
   background: rgba(17, 27, 45, 0.93);
   border-color: #314a70;
@@ -3078,6 +3097,14 @@ html[data-theme="dark"] .dateRangeSep {
   .mapTopPanel .mapHeaderRow,
   .mobileMapPanel .mapHeaderRow {
     display: none;
+  }
+
+  /* On mobile, lift the freshness overlay above the collapsed bottom sheet
+     handle (~56px) so it stays readable. */
+  .mapFreshnessOverlay {
+    bottom: 64px;
+    left: 8px;
+    font-size: 0.62rem;
   }
 
   /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
