@@ -537,8 +537,6 @@ export default function Dashboard({ snapshot }: Props) {
         },
         aboutModel:
           "ML-модели (LR, RF, GB, LightGBM) оценивают вероятность нарушения по лабораторным показателям. Это инструмент поддержки решений, а не медицинская рекомендация.",
-        aboutService:
-          "Сервис объединяет открытые данные Terviseamet, карту, аналитику и объяснения параметров воды для жителей, туристов и семей. Данные и модели обновляются автоматически: еженедельно (пн) и 1-го числа каждого месяца.",
         metricGuideTitle: "Как читать метрики: точно + интуитивно",
         metricGuide: {
           roc: {
@@ -619,8 +617,6 @@ export default function Dashboard({ snapshot }: Props) {
         },
         aboutModel:
           "ML-mudelid (LR, RF, GB, LightGBM) hindavad rikkumise tõenäosust laborinäitajate põhjal. See on otsusetugi, mitte meditsiiniline soovitus.",
-        aboutService:
-          "Teenuses on koos Terviseameti avaandmed, kaart, analüütika ja selgitused vee parameetrite kohta. Andmed ja mudelid uuendatakse automaatselt: iganädalaselt (E) ja iga kuu 1. kuupäeval.",
         metricGuideTitle: "Mõõdikud: täpselt + intuitiivselt",
         metricGuide: {
           roc: {
@@ -701,8 +697,6 @@ export default function Dashboard({ snapshot }: Props) {
         },
         aboutModel:
           "ML models (LR, RF, GB, LightGBM) estimate violation probability from lab measurements. This is decision support, not medical advice.",
-        aboutService:
-          "The service combines Terviseamet open data, map, analytics, and explanations of water parameters for residents and visitors. Data and models are refreshed automatically: weekly (Mon) and on the 1st of each month.",
         metricGuideTitle: "How to read metrics: precise + intuitive",
         metricGuide: {
           roc: {
@@ -4218,7 +4212,6 @@ export default function Dashboard({ snapshot }: Props) {
             {infoPageTab === "aboutService" ? (
               <div>
                 <h4>{t.tabs.aboutService}</h4>
-                <p className="hint">{t.aboutService}</p>
 
                 {/* ── Data corpus at a glance ──────────────────────────── */}
                 <div className="stats" style={{ marginTop: "0.75rem" }}>
@@ -4242,10 +4235,10 @@ export default function Dashboard({ snapshot }: Props) {
 
                 <p className="hint" style={{ marginTop: "0.6rem" }}>
                   {lang === "ru"
-                    ? "Этот сервис — публичный инструмент экологической прозрачности для жителей, муниципалитетов и госструктур. Он объединяет официальные открытые данные Terviseamet и аналитический ML-слой, чтобы вода оценивалась не только постфактум, но и через ранние риск-сигналы."
+                    ? "Этот сервис — публичный инструмент экологической прозрачности для жителей, муниципалитетов и госструктур. Он объединяет официальные открытые данные Terviseamet, карту, аналитику и объяснения параметров воды с аналитическим ML-слоем, чтобы вода оценивалась не только постфактум, но и через ранние риск-сигналы. Данные и модели обновляются автоматически: еженедельно (пн) и 1-го числа каждого месяца."
                     : lang === "et"
-                      ? "See teenus on avalik keskkonnaläbipaistvuse tööriist elanikele, omavalitsustele ja riigiasutustele. See ühendab Terviseameti ametlikud avaandmed ning ML-analüüsi kihi."
-                      : "A public environmental-transparency tool for residents, municipalities and authorities. It combines official Terviseamet open data with an ML analytics layer for early risk signals on top of post-fact compliance reporting."}
+                      ? "See teenus on avalik keskkonnaläbipaistvuse tööriist elanikele, omavalitsustele ja riigiasutustele. See ühendab Terviseameti ametlikud avaandmed, kaardi, analüütika ja vee parameetrite selgitused ML-analüüsi kihiga. Andmed ja mudelid uuendatakse automaatselt: iganädalaselt (E) ja iga kuu 1. kuupäeval."
+                      : "A public environmental-transparency tool for residents, municipalities and authorities. It combines official Terviseamet open data, map, analytics and water parameter explanations with an ML analytics layer for early risk signals on top of post-fact compliance reporting. Data and models are refreshed automatically: weekly (Mon) and on the 1st of each month."}
                 </p>
                 <p className="hint">
                   {lang === "ru"
