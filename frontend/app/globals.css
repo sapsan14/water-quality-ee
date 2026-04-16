@@ -874,13 +874,6 @@ html[data-theme="dark"] .langDropdownItem:hover {
   bottom: auto;
 }
 
-/* Elevate the hovered th above sibling sticky headers so the tooltip
-   pseudo-element (which lives inside the th's stacking context) is not
-   painted below adjacent th cells that share the same z-index: 5. */
-.table thead th:has(.iconTooltip:hover) {
-  z-index: 10;
-}
-
 .cellIcon {
   display: inline-flex;
   align-items: center;
@@ -1349,9 +1342,7 @@ html[data-theme="dark"] .langDropdownItem:hover {
   top: 4.4rem;
   left: 50%;
   transform: translateX(-50%);
-  /* Below Leaflet popups (700), above marker pane (600) — was 650, same as
-     tooltip pane: odd hit-testing / stacking with overlays. */
-  z-index: 620;
+  z-index: 650;
   display: inline-flex;
   flex-wrap: nowrap !important;
   align-items: center;
@@ -1368,13 +1359,6 @@ html[data-theme="dark"] .langDropdownItem:hover {
   max-width: calc(100% - 2rem);
   white-space: nowrap;
   overflow: visible;
-  /* Let clicks pass through the pill’s padding/gaps to the map; chips stay usable. */
-  pointer-events: none;
-}
-
-.mapChipBar .mapChip,
-.mapChipBar button {
-  pointer-events: auto;
 }
 
 .mapChip {
@@ -1513,17 +1497,6 @@ html[data-theme="dark"] .mapChipDivider {
 
 .mapShell.isFullscreen {
   height: 100%;
-}
-
-/* Rounded map: clip only the Leaflet root (it already has overflow:hidden).
-   A second overflow:hidden on .mapShell caused marker/tile misalignment on
-   desktop Chromium — double stacking context + GPU clip. */
-.mapShell:not(.isFullscreen) .leaflet-container {
-  border-radius: 12px;
-}
-
-.mapShell.isFullscreen .leaflet-container {
-  border-radius: 0;
 }
 
 .mapFloatingBtn {
@@ -1675,9 +1648,10 @@ body.mapFullscreenActive {
 }
 
 .mobileBottomSheet.collapsed {
-  /* Show enough vertical space for the drag handle + the peek count text.
-     66px keeps the peek compact so map zoom buttons stay fully visible. */
-  transform: translateY(calc(100% - 66px - env(safe-area-inset-bottom, 0px) + var(--sheet-drag-offset)));
+  /* Show enough vertical space for the drag handle + the peek count text
+     without clipping descenders on the last line. 64px was too tight on
+     devices with no safe-area inset (Android Chrome). */
+  transform: translateY(calc(100% - 84px - env(safe-area-inset-bottom, 0px) + var(--sheet-drag-offset)));
 }
 
 /* Half: sheet occupies ~50% of screen, leaving map fully usable above */
@@ -1716,7 +1690,7 @@ body.mapFullscreenActive {
 .gmSheetHandle {
   border: 0;
   background: transparent;
-  padding: 0.4rem 0 0.15rem;
+  padding: 0.55rem 0 0.2rem;
   cursor: pointer;
   touch-action: none;
   display: block;
@@ -1745,7 +1719,7 @@ body.mapFullscreenActive {
   align-items: baseline;
   justify-content: center;
   gap: 0.22rem;
-  padding: 0.05rem 1rem 0.3rem;
+  padding: 0.1rem 1rem 0.55rem;
   flex-shrink: 0;
 }
 
@@ -2502,32 +2476,6 @@ html[data-theme="dark"] .modalCloseBtn {
   background: #e8e0d8;
 }
 
-/* Reset box-sizing for Leaflet internals — Leaflet positions tiles,
-   markers and popups using explicit width/height + negative margins,
-   assuming the CSS default content-box. The project-wide
-   * { box-sizing: border-box } shrinks any bordered/padded element
-   inside the map, causing marker and tile offset on desktop. */
-.leaflet-container,
-.leaflet-container * {
-  box-sizing: content-box;
-}
-
-/* Regression note: do not override this with `border-box` for Leaflet
-   internals — tiles/markers use explicit dimensions + negative margins
-   and assume the browser default (content-box). Custom marker HTML in
-   MapClient.tsx sets box-sizing on those nodes explicitly. */
-
-/* Belt-and-suspenders: any global `img { max-width:100% }` (Bootstrap-style)
-   shrinks tile images and breaks lat/lng projection vs markers. */
-.leaflet-container .leaflet-marker-pane img,
-.leaflet-container .leaflet-shadow-pane img,
-.leaflet-container .leaflet-tile-pane img,
-.leaflet-container img.leaflet-tile,
-.leaflet-container img.leaflet-image-layer {
-  max-width: none !important;
-  max-height: none !important;
-}
-
 .leaflet-container,
 .leaflet-popup-content-wrapper,
 .leaflet-popup-content {
@@ -3190,22 +3138,11 @@ html[data-theme="dark"] .dateRangeSep {
      (🧭 ◎) at bottom-right. Both sit above the collapsed bottom sheet. */
   .leaflet-top.leaflet-left {
     top: auto !important;
-    bottom: calc(66px + 0.6rem + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .leaflet-control-zoom {
     margin-bottom: 0 !important;
-  }
-
-  /* Custom floating controls (zoom +/−, recenter, reset) must sit above
-     the collapsed bottom sheet (66px peek). */
-  .mapFloatingControls {
-    bottom: calc(66px + 0.6rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .mapZoomControls {
-    right: auto;
-    left: calc(0.6rem + env(safe-area-inset-left, 0px));
   }
 
   /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
@@ -3232,7 +3169,7 @@ html[data-theme="dark"] .dateRangeSep {
     right: max(0px, env(safe-area-inset-right, 0px));
     border-top-left-radius: 14px;
     border-top-right-radius: 14px;
-    padding: 0.25rem 0.6rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.35rem 0.6rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
     border-left: 0;
     border-right: 0;
   }
@@ -3304,60 +3241,6 @@ html[data-theme="dark"] .dateRangeSep {
   .tableWrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  /* ── Info page overlay: mobile adjustments ──────────────── */
-  .infoPageBackdrop {
-    padding: 0.5rem;
-    align-items: flex-end;
-  }
-
-  .infoPageOverlay {
-    max-height: 88vh;
-    max-height: 88dvh;
-    border-radius: 16px 16px 0 0;
-  }
-
-  .infoPageBody {
-    padding: 0.75rem 0.85rem;
-  }
-
-  /* Freshness rows: let value wrap instead of pushing off-screen */
-  .freshnessDiagRow {
-    flex-wrap: wrap;
-  }
-
-  .freshnessDiagLabel {
-    font-size: 0.68rem;
-  }
-
-  .freshnessDiagValue {
-    font-size: 0.78rem;
-  }
-
-  /* Stat cards: stack vertically on very narrow screens so text
-     doesn't get squeezed into tiny columns. */
-  .infoPageBody .stats {
-    gap: 0.5rem;
-  }
-
-  .infoPageBody .stat {
-    min-width: 0;
-    flex-basis: calc(50% - 0.5rem);
-  }
-
-  .infoPageBody .stat .k {
-    font-size: 0.7rem;
-    line-height: 1.3;
-  }
-
-  .infoPageBody .stat .v {
-    font-size: 0.95rem;
-  }
-
-  .infoPageBody .stat .hint {
-    font-size: 0.68rem;
-    line-height: 1.35;
   }
 }
 
@@ -3771,6 +3654,8 @@ html[data-theme="dark"] .freshnessDiag {
   .mapFloatingControls {
     gap: 0.32rem;
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
+    /* Keep above the collapsed bottom sheet (62px) */
+    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
   }
 
   .mapZoomControls {
@@ -3780,19 +3665,6 @@ html[data-theme="dark"] .freshnessDiag {
 
   .infoCardGrid {
     grid-template-columns: 1fr;
-  }
-
-  /* On narrow phones, stack stat cards fully so text is readable */
-  .infoPageBody .stat {
-    flex-basis: 100%;
-  }
-
-  .infoPageBody .infoCard {
-    padding: 0.7rem 0.75rem;
-  }
-
-  .infoPageBody .infoCard h5 {
-    font-size: 0.85rem;
   }
 }
 

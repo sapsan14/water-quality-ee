@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
@@ -86,20 +86,18 @@ function placeKindGlyph(kind: string) {
 
 const markerBadgeHtml = (color: string, glyph: string, pulse = false) => `
   <div style="
-    box-sizing:border-box;position:relative;
+    position:relative;
     width:44px;
     height:56px;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,0.45));
   ">
     <div style="
-      box-sizing:border-box;
       width:44px;height:44px;border-radius:50%;background:${color};
       border:3px solid rgba(255,255,255,0.95);display:flex;align-items:center;
       justify-content:center;font-size:22px;line-height:1;
       ${pulse ? "animation:pinPulse 1.8s ease-in-out infinite;" : ""}
     ">${glyph}</div>
     <div style="
-      box-sizing:border-box;
       position:absolute;bottom:0;left:50%;transform:translateX(-50%);
       width:0;height:0;
       border-left:9px solid transparent;border-right:9px solid transparent;
@@ -243,15 +241,13 @@ function MarkerClusterLayer({
   locale,
   onSelectPoint,
   onSelectCluster,
-  disableHoverPopups = false,
-  isMobile = false
+  disableHoverPopups = false
 }: {
   places: FrontendPlace[];
   locale: "ru" | "et" | "en";
   onSelectPoint?: (id: string) => void;
   onSelectCluster?: (ids: string[]) => void;
   disableHoverPopups?: boolean;
-  isMobile?: boolean;
 }) {
   const map = useMap();
   const [clusterReady, setClusterReady] = useState(false);
@@ -275,11 +271,6 @@ function MarkerClusterLayer({
     const markerClusterFactory = (L as unknown as { markerClusterGroup: (opts: unknown) => L.LayerGroup }).markerClusterGroup;
     const group = markerClusterFactory({
       chunkedLoading: true,
-      /* Desktop/tablet viewports are wider — same 80px radius leaves many
-         unclustered markers (heavy DOM). Slightly larger radius = fewer bare
-         pins and less work for Leaflet. */
-      maxClusterRadius: isMobile ? 80 : 105,
-      chunkInterval: 90,
       spiderfyOnMaxZoom: false,
       spiderfyDistanceMultiplier: 1.35,
       showCoverageOnHover: false,
@@ -297,7 +288,7 @@ function MarkerClusterLayer({
         const count = c.getChildCount();
         const size = count > 99 ? 52 : count > 9 ? 48 : 44;
         return L.divIcon({
-          html: `<div style="box-sizing:border-box;background:${color};color:#fff;border-radius:999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,0.95);font-weight:700;font-size:${count > 99 ? 13 : 15}px;box-shadow:0 3px 12px rgba(0,0,0,0.35)">${count}</div>`,
+          html: `<div style="background:${color};color:#fff;border-radius:999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,0.95);font-weight:700;font-size:${count > 99 ? 13 : 15}px;box-shadow:0 3px 12px rgba(0,0,0,0.35)">${count}</div>`,
           className: "",
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2]
@@ -385,7 +376,7 @@ function MarkerClusterLayer({
     return () => {
       map.removeLayer(group as L.Layer);
     };
-  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups, isMobile]);
+  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups]);
   return null;
 }
 
@@ -670,79 +661,34 @@ function MapClient({
     };
   }, []);
 
-  /* Leaflet tile/markers layers share one pixel grid with the map container.
-     We must call invalidateSize() after the container's real size is known
-     (fonts, flex layout, SSR→hydration) and whenever the container resizes.
-     react-leaflet's ref stays null until MapContainer's second render, so a
-     naive `useEffect` on mount often ran too early; useLayoutEffect + rAF
-     waits for the map instance, then ResizeObserver covers header reflows
-     that change position/size without a window resize. */
-  useLayoutEffect(() => {
-    let cancelled = false;
-    let rafId = 0;
-    let attempt = 0;
-    const maxAttempts = 240;
-    const timers: number[] = [];
-    let ro: ResizeObserver | null = null;
-    let onWinResize: (() => void) | null = null;
-
-    const arm = (m: L.Map) => {
-      const el = m.getContainer();
-      const kick = () => {
-        if (cancelled) return;
-        m.invalidateSize({ animate: false });
-      };
-
-      kick();
-      requestAnimationFrame(kick);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(kick);
-      });
-
-      for (const ms of [0, 40, 120, 320, 600]) {
-        timers.push(window.setTimeout(kick, ms));
-      }
-
-      if (typeof document !== "undefined" && document.fonts?.ready) {
-        void document.fonts.ready.then(() => {
-          if (!cancelled) kick();
-        });
-      }
-
-      ro = new ResizeObserver(() => {
-        kick();
-      });
-      ro.observe(el);
-      const shell = el.parentElement;
-      if (shell) ro.observe(shell);
-
-      // trackResize only listens on window; pair with ResizeObserver above.
-      onWinResize = () => {
-        kick();
-      };
-      window.addEventListener("resize", onWinResize, { passive: true });
-    };
-
-    const waitForMap = () => {
-      if (cancelled) return;
+  // Diagnostic: log Leaflet container dims vs internal state after init
+  useEffect(() => {
+    const id = window.setTimeout(() => {
       const m = mapRef.current;
-      if (m) {
-        arm(m);
-        return;
-      }
-      if (++attempt > maxAttempts) return;
-      rafId = requestAnimationFrame(waitForMap);
-    };
-
-    waitForMap();
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      for (const t of timers) window.clearTimeout(t);
-      ro?.disconnect();
-      if (onWinResize) window.removeEventListener("resize", onWinResize);
-    };
+      if (!m) { console.warn("[map-diag] mapRef is null after 2s"); return; }
+      const el = m.getContainer();
+      const rect = el.getBoundingClientRect();
+      const size = m.getSize();
+      const center = m.getCenter();
+      const zoom = m.getZoom();
+      const tallinn = m.latLngToContainerPoint([59.437, 24.7536]);
+      const tartu = m.latLngToContainerPoint([58.378, 26.729]);
+      const pane = (m as unknown as { _mapPane: HTMLElement })._mapPane;
+      const paneTransform = pane ? getComputedStyle(pane).transform : "n/a";
+      console.log("[map-diag]", JSON.stringify({
+        containerClient: { w: el.clientWidth, h: el.clientHeight },
+        containerBCR: { w: Math.round(rect.width), h: Math.round(rect.height), x: Math.round(rect.x), y: Math.round(rect.y) },
+        leafletSize: { w: size.x, h: size.y },
+        leafletCenter: { lat: center.lat.toFixed(4), lng: center.lng.toFixed(4) },
+        zoom,
+        tallinnPx: { x: Math.round(tallinn.x), y: Math.round(tallinn.y) },
+        tartuPx: { x: Math.round(tartu.x), y: Math.round(tartu.y) },
+        paneTransform,
+        boxSizing: getComputedStyle(el).boxSizing,
+        shellOverflow: el.parentElement ? getComputedStyle(el.parentElement).overflow : "n/a"
+      }, null, 2));
+    }, 2000);
+    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {
@@ -916,21 +862,19 @@ function MapClient({
         maxZoom={15}
         maxBounds={ESTONIA_BOUNDS}
         maxBoundsViscosity={0.35}
-        /* Mobile kept these off and the map aligned; desktop animations +
-           preferCanvas can desync tile vs overlay layers in Chromium. */
-        zoomAnimation={false}
-        fadeAnimation={false}
-        markerZoomAnimation={false}
+        zoomAnimation={!isMobile}
+        fadeAnimation={!isMobile}
+        markerZoomAnimation={!isMobile}
         zoomControl={false}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", borderRadius: (isFullscreen || isMobile) ? "0" : "12px" }}
         scrollWheelZoom
-        preferCanvas={false}
+        preferCanvas
       >
         {!isMobile && <ZoomControl position="topleft" />}
         <TileLayer
           attribution='Tiles &copy; Esri, OpenStreetMap contributors'
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-          keepBuffer={isMobile ? 2 : 3}
+          keepBuffer={isMobile ? 2 : 5}
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint
@@ -945,14 +889,7 @@ function MapClient({
           bottomOverlayPx={bottomOverlayPx}
         />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
-      <MarkerClusterLayer
-        places={visiblePlaces}
-        locale={locale}
-        onSelectPoint={onSelectPoint}
-        onSelectCluster={onSelectCluster}
-        disableHoverPopups={disableHoverPopups}
-        isMobile={isMobile}
-      />
+      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
       {children}
     </div>
