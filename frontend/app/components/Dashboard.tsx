@@ -7,7 +7,21 @@ import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 
-const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
+const MapClient = dynamic(() => import("./MapClient"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        /* Esri World Topo base tile color — matches the initial map
+           appearance so there is no white flash before tiles load. */
+        background: "#e8e0d8",
+      }}
+      aria-hidden="true"
+    />
+  ),
+});
 
 type Props = { snapshot: FrontendSnapshot };
 type IconName =

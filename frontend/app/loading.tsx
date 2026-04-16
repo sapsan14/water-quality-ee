@@ -1,11 +1,8 @@
 export default function Loading() {
   return (
     <main className="page">
-      {/* Desktop-only: on mobile `.desktopOnly` is display:none via
-          `@media (max-width: 900px)`, so users only see the blank page
-          background during the route-segment Suspense fallback instead
-          of a desktop-styled "Loading water quality dashboard..." panel
-          flashing before the mobile shell hydrates. */}
+      {/* Desktop skeleton — on mobile `.desktopOnly` is display:none via
+          `@media (max-width: 900px)`. */}
       <div className="panel desktopOnly" aria-busy="true" aria-live="polite">
         <h2 className="title" style={{ fontSize: "1.2rem" }}>
           Loading water quality dashboard...
@@ -26,6 +23,19 @@ export default function Loading() {
           </div>
         </div>
       </div>
+      {/* Mobile: fullscreen placeholder matching the map tile background
+          so the Suspense fallback doesn't flash the page background. */}
+      <div
+        className="mobileOnly"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2500,
+          background: "#e8e0d8",
+        }}
+        aria-busy="true"
+        aria-live="polite"
+      />
     </main>
   );
 }

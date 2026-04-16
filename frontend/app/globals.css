@@ -1677,7 +1677,7 @@ body.mapFullscreenActive {
 /* Mode header (place/filter) */
 .gmSheetModeHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   padding: 0 1rem 0.6rem;
   flex-shrink: 0;
@@ -1689,10 +1689,17 @@ body.mapFullscreenActive {
   font-size: 0.98rem;
   font-weight: 600;
   color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
+  /* Allow up to 2 lines before truncating — matches Google Maps /
+     Apple Maps place-name headers. Keeps the header compact while
+     showing enough text to distinguish long Estonian place names. */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .gmSheetCloseBtn,
@@ -2337,6 +2344,13 @@ html[data-theme="dark"] .modalCloseBtn {
   border-top: 1px solid #d8e5f6;
   display: flex;
   justify-content: flex-end;
+}
+
+.leaflet-container {
+  /* Base color matching Esri World Topo tiles so the map has a solid
+     background even before tiles download. Prevents the transparent /
+     white flash visible on mobile during initial load. */
+  background: #e8e0d8;
 }
 
 .leaflet-container,

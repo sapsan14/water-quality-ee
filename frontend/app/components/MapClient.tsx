@@ -269,6 +269,9 @@ function clusterColor(avg: number) {
 type ClusterLike = {
   getAllChildMarkers: () => Array<L.Marker & { options: L.MarkerOptions & { place?: FrontendPlace } }>;
   getChildCount: () => number;
+  spiderfy: () => void;
+  getBounds: () => L.LatLngBounds;
+  zoomToBounds: (opts?: { padding: [number, number] }) => void;
 };
 
 function MarkerClusterLayer({
@@ -307,6 +310,7 @@ function MarkerClusterLayer({
       spiderfyOnMaxZoom: true,
       spiderfyDistanceMultiplier: 1.35,
       showCoverageOnHover: false,
+      zoomToBoundsOnClick: false,
       iconCreateFunction: (cluster: unknown) => {
         const c = cluster as ClusterLike;
         const children = c.getAllChildMarkers();
@@ -325,6 +329,31 @@ function MarkerClusterLayer({
         });
       }
     });
+
+    // Custom cluster click: if all children share (nearly) the same
+    // coordinates, spiderfy immediately instead of zooming in — which
+    // would just re-cluster them at a higher zoom level. For spread
+    // clusters, zoom to bounds as usual.
+    (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
+      "clusterclick",
+      (e: unknown) => {
+        const evt = e as { layer: ClusterLike };
+        const cluster = evt.layer;
+        const bounds = cluster.getBounds();
+
+        // ~50 meters in lat/lon degrees — any cluster fitting in this
+        // box has all children at effectively the same physical location.
+        const THRESHOLD = 0.0005;
+        const latSpan = bounds.getNorth() - bounds.getSouth();
+        const lngSpan = bounds.getEast() - bounds.getWest();
+
+        if (latSpan < THRESHOLD && lngSpan < THRESHOLD) {
+          cluster.spiderfy();
+        } else {
+          cluster.zoomToBounds({ padding: [20, 20] });
+        }
+      }
+    );
 
     places.forEach((place) => {
       const marker = L.marker([place.lat, place.lon], {
