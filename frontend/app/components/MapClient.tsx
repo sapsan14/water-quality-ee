@@ -916,13 +916,15 @@ function MapClient({
         maxZoom={15}
         maxBounds={ESTONIA_BOUNDS}
         maxBoundsViscosity={0.35}
-        zoomAnimation={!isMobile}
-        fadeAnimation={!isMobile}
-        markerZoomAnimation={!isMobile}
+        /* Mobile kept these off and the map aligned; desktop animations +
+           preferCanvas can desync tile vs overlay layers in Chromium. */
+        zoomAnimation={false}
+        fadeAnimation={false}
+        markerZoomAnimation={false}
         zoomControl={false}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
-        preferCanvas
+        preferCanvas={false}
       >
         {!isMobile && <ZoomControl position="topleft" />}
         <TileLayer

@@ -1349,7 +1349,9 @@ html[data-theme="dark"] .langDropdownItem:hover {
   top: 4.4rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 650;
+  /* Below Leaflet popups (700), above marker pane (600) — was 650, same as
+     tooltip pane: odd hit-testing / stacking with overlays. */
+  z-index: 620;
   display: inline-flex;
   flex-wrap: nowrap !important;
   align-items: center;
@@ -1366,6 +1368,13 @@ html[data-theme="dark"] .langDropdownItem:hover {
   max-width: calc(100% - 2rem);
   white-space: nowrap;
   overflow: visible;
+  /* Let clicks pass through the pill’s padding/gaps to the map; chips stay usable. */
+  pointer-events: none;
+}
+
+.mapChipBar .mapChip,
+.mapChipBar button {
+  pointer-events: auto;
 }
 
 .mapChip {
@@ -1500,12 +1509,20 @@ html[data-theme="dark"] .mapChipDivider {
   position: relative;
   height: 620px;
   width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
 }
 
 .mapShell.isFullscreen {
   height: 100%;
+}
+
+/* Rounded map: clip only the Leaflet root (it already has overflow:hidden).
+   A second overflow:hidden on .mapShell caused marker/tile misalignment on
+   desktop Chromium — double stacking context + GPU clip. */
+.mapShell:not(.isFullscreen) .leaflet-container {
+  border-radius: 12px;
+}
+
+.mapShell.isFullscreen .leaflet-container {
   border-radius: 0;
 }
 
@@ -2499,6 +2516,17 @@ html[data-theme="dark"] .modalCloseBtn {
    internals — tiles/markers use explicit dimensions + negative margins
    and assume the browser default (content-box). Custom marker HTML in
    MapClient.tsx sets box-sizing on those nodes explicitly. */
+
+/* Belt-and-suspenders: any global `img { max-width:100% }` (Bootstrap-style)
+   shrinks tile images and breaks lat/lng projection vs markers. */
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-tile,
+.leaflet-container img.leaflet-image-layer {
+  max-width: none !important;
+  max-height: none !important;
+}
 
 .leaflet-container,
 .leaflet-popup-content-wrapper,
