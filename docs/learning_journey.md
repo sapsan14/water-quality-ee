@@ -1,6 +1,6 @@
 # Learning Journey — from opendata XML to probabilistic risk estimator
 
-> **Purpose.** This document narrates the project's learning arc for the final TalTech Masinõpe presentation. It is not a log of commits but a story: what we set out to do, what we discovered along the way, what surprised us, and what we now understand differently. Technical details live in the artifacts linked from each section.
+> **Purpose.** This document narrates the project's learning arc for the final TalTech [Masinõppe rakendamine](https://taltech.ee/masinope_inseneridele) presentation. It is not a log of commits but a story: what we set out to do, what we discovered along the way, what surprised us, and what we now understand differently. Technical details live in the artifacts linked from each section.
 >
 > **Live demo:** [h2oatlas.ee](https://h2oatlas.ee) — public citizen map of water quality risk across Estonia (2,196 locations, 4 domains, 4 ML models).
 

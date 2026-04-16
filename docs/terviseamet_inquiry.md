@@ -22,7 +22,7 @@ Lugupeetud Terviseameti meeskond, / Dear Terviseamet team,
 
 ### Who we are
 
-We are a student team at TalTech (Masinõpe / Machine Learning course) that has spent the past several months building a complete data pipeline and public citizen service on top of your open-data water quality feeds at `vtiav.sm.ee/index.php/opendata/`.
+We are a student team at TalTech ([Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course) that has spent the past several months building a complete data pipeline and public citizen service on top of your open-data water quality feeds at `vtiav.sm.ee/index.php/opendata/`.
 
 The result is **[h2oatlas.ee](https://h2oatlas.ee)** — an interactive public map showing the latest water quality status and probabilistic risk assessment for **2,196 locations** across Estonia: swimming sites, pools & SPA, drinking water networks, and drinking water sources. All code is open-source: [github.com/sapsan14/water-quality-ee](https://github.com/sapsan14/water-quality-ee).
 
@@ -83,7 +83,7 @@ We would be happy to share any of the following:
 
 ### Context
 
-This project is part of the TalTech Masinõpe (Machine Learning) course. Our priority metric is **Recall on violations** — a false negative means predicting water is safe when it is not. The best model (LightGBM) achieves **AUC = 0.984** and catches **94.9% of violations** at 80% precision on a temporal test set (trained on ≤2024, tested on 2025+).
+This project is part of the TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course. Our priority metric is **Recall on violations** — a false negative means predicting water is safe when it is not. The best model (LightGBM) achieves **AUC = 0.984** and catches **94.9% of violations** at 80% precision on a temporal test set (trained on ≤2024, tested on 2025+).
 
 We want to be clear: we are not criticizing the open-data feed — we think it is excellent, and our entire project depends on it. We are writing because we believe sharing these findings and tools is more useful than keeping them in a course report.
 

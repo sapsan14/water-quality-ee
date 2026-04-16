@@ -1,4 +1,4 @@
-# Presentation Notes — TalTech Masinõpe Final
+# Presentation Notes — TalTech [Masinõppe rakendamine](https://taltech.ee/masinope_inseneridele) Final
 
 > Speaker cheat sheet. Numbers, story arc, demo script, potential Q&A.
 > Companion to `docs/learning_journey.md` (full narrative) and `docs/report.md` (full report).

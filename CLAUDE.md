@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Probabilistic risk estimator** for water quality compliance — a TalTech Masinõpe (Machine Learning) course project. The model estimates P(violation) based on laboratory measurements from Estonian water samples. It does NOT predict physical water quality or safety directly; it classifies whether a sample's measurement profile matches historical violation patterns.
+**Probabilistic risk estimator** for water quality compliance — a TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course project. The model estimates P(violation) based on laboratory measurements from Estonian water samples. It does NOT predict physical water quality or safety directly; it classifies whether a sample's measurement profile matches historical violation patterns.
 
 **What the model predicts:** probability that a water sample violates Estonian health norms (`compliant`: 1 = pass, 0 = violation), based on 15 chemical/biological parameters + engineered features.
 

@@ -1,5 +1,5 @@
 # Зависимости проекта: Качество воды в Эстонии
-# Курс TalTech Masinõpe 2026
+# Курс TalTech «Masinõppe rakendamine tehniliste erialade spetsialistidele» 2026
 
 # Данные
 pandas>=2.0.0

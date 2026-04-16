@@ -1,4 +1,4 @@
-# Качество воды в Эстонии — ML-проект курса Masinõpe
+# Качество воды в Эстонии — ML-проект курса [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele)
 
 <div align="center">
 
@@ -13,7 +13,7 @@
 </div>
 
 **Автор:** Anton Sokolov  
-**Курс:** Masinõpe (TalTech, весна 2026)  
+**Курс:** [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) (TalTech, весна 2026)  
 **Дата старта:** 2026-04-13  
 **Язык обучения:** русский → эстонский (переход в процессе курса)
 
@@ -160,7 +160,7 @@ water-quality-ee/
 
 ---
 
-## Требования курса (TalTech Masinõpe)
+## Требования курса (TalTech [Masinõppe rakendamine](https://taltech.ee/masinope_inseneridele))
 
 Проект покрывает все необходимые компоненты:
 
@@ -202,4 +202,4 @@ npm run dev
 ## Связи
 
 - Дневник: [2026-04-13](../../life/2026-04-13.md)
-- Курс: TalTech Masinõpe 2026
+- Курс: TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele), 2026

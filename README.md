@@ -4,7 +4,7 @@
   # Water Quality Estonia
 
   **Probabilistic risk estimator for water quality compliance**\
-  *TalTech Machine Learning course project (Masinope, spring 2026)*
+  *TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course project, spring 2026*
 
   [![Tests](https://img.shields.io/github/actions/workflow/status/sapsan14/water-quality-ee/tests.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=tests)](https://github.com/sapsan14/water-quality-ee/actions/workflows/tests.yml)
   [![Frontend CI](https://img.shields.io/github/actions/workflow/status/sapsan14/water-quality-ee/frontend-ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=frontend)](https://github.com/sapsan14/water-quality-ee/actions/workflows/frontend-ci.yml)
@@ -293,7 +293,7 @@ pip install -e . pytest && pytest tests/
 
 ## Course Requirements
 
-TalTech Masinope (Machine Learning) -- all required components:
+TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) -- all required components:
 
 - [x] Problem statement and dataset rationale
 - [x] Exploratory data analysis with visualization
@@ -322,7 +322,7 @@ If you use this software or data pipeline in your research, please cite:
   year      = {2026},
   url       = {https://github.com/sapsan14/water-quality-ee},
   version   = {0.1.0},
-  note      = {TalTech Masinope course project}
+  note      = {TalTech -- Masinõppe rakendamine tehniliste erialade spetsialistidele}
 }
 ```
 
@@ -333,7 +333,7 @@ See [`CITATION.cff`](CITATION.cff) for machine-readable citation metadata.
 ## Acknowledgments
 
 - **[Terviseamet](https://vtiav.sm.ee)** (Estonian Health Board) -- open data provider
-- **[Tallinn University of Technology](https://taltech.ee)** -- Masinope (Machine Learning) course, spring 2026
+- **[Tallinn University of Technology](https://taltech.ee)** -- [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course, spring 2026
 - **Estonian open data initiative** -- making government data accessible for research and public benefit
 
 ---
