@@ -15,7 +15,6 @@
   [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
   [![LightGBM](https://img.shields.io/badge/LightGBM-02569B?style=for-the-badge&logo=microsoft&logoColor=white)](https://lightgbm.readthedocs.io/)
   [![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-  [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
   [![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white)](https://jupyter.org/)
 
   [![Data source](https://img.shields.io/badge/Data-Terviseamet_Open_Data-0063AF?style=for-the-badge)](https://vtiav.sm.ee/index.php/?active_tab_id=A)
@@ -114,8 +113,7 @@ water-quality-ee/
 │   ├── 06_advanced_models.ipynb   #   LightGBM, temporal split, calibration, SHAP
 │   └── 07_data_gaps_audit.ipynb   #   Label-vs-norms divergence analysis
 │
-├── citizen-service/               # Streamlit app (h2oatlas.ee backend)
-│   ├── app/streamlit_app.py       #   Interactive map + table UI
+├── citizen-service/               # Data pipeline (h2oatlas.ee backend)
 │   └── scripts/                   #   Snapshot builder, coordinate enrichment
 │
 ├── frontend/                      # Next.js 16 + React 19 + TypeScript
@@ -214,7 +212,6 @@ The project includes a public citizen-facing service deployed at **[h2oatlas.ee]
 | Component | Stack | Deployment |
 |-----------|-------|------------|
 | Data pipeline | Python + GitHub Actions (scheduled) | CI/CD |
-| Map backend | Streamlit | Streamlit Cloud |
 | Web frontend | Next.js 16 + React 19 + TypeScript | Cloudflare Pages |
 
 Documentation: [`citizen-service/README.md`](citizen-service/README.md) | [`frontend/README.md`](frontend/README.md)
@@ -240,10 +237,8 @@ flowchart LR
 
     subgraph Citizen["Citizen Service"]
         SNAP["build_citizen_snapshot.py\nsnapshot.json"]
-        ST["Streamlit App\nh2oatlas.ee"]
         FE2["Next.js Frontend\nh2oatlas.ee"]
         EV --> SNAP
-        SNAP --> ST
         SNAP --> FE2
     end
 

@@ -19,9 +19,7 @@ notebooks/*_executed.ipynb
 .DS_Store
 Thumbs.db
 
-# Streamlit Cloud / локальные секреты (токены не коммитить)
-.streamlit/secrets.toml
-**/.streamlit/secrets.toml
+# Локальные секреты (токены не коммитить)
 .env
 
 # Frontend (Next.js)

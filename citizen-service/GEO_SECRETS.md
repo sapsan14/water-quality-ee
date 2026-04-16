@@ -29,10 +29,6 @@ export OPENCAGE_API_KEY="…"
 ./scripts/refresh_citizen_geo.sh --map-only
 ```
 
-### Streamlit Community Cloud
-
-Приложение **читает координаты из закоммиченного** `snapshot.json`; в рантайме геокодер не вызывается. Секрет в Streamlit для карты **не обязателен**, если снимок обновляется через CI или локально и пушится в `main`.
-
 ## Логи и безопасность
 
 При **`--log-level DEBUG`** логгеры **urllib3** подняты до **WARNING**, чтобы в вывод не попадали URL с `?key=…`. **Не публикуйте ключи** в чатах и issue; при утечке перевыпустите ключ в OpenCage.

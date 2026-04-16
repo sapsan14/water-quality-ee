@@ -28,7 +28,7 @@ Build a fast, professional public UI with production-grade UX while keeping ML i
 
 ## Why this architecture
 
-- Better UX control than Streamlit.
+- Full UX control over the interface.
 - CDN distribution for static assets and map data.
 - Predictable free-tier costs with precomputed probabilities.
 - Clean path to paid scale-up (Workers Paid) without re-architecture.

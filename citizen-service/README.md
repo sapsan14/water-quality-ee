@@ -28,7 +28,7 @@
 pip install -r requirements.txt -r citizen-service/requirements.txt
 # быстро: карта и официальные статусы без обучения RF
 python citizen-service/scripts/build_citizen_snapshot.py --map-only
-# экспорт frontend-оптимизированного JSON для нового web UI
+# экспорт frontend-оптимизированного JSON для web UI
 python citizen-service/scripts/export_frontend_snapshot.py
 # полный снимок: то же + прогноз Random Forest и citizen_model.joblib
 python citizen-service/scripts/build_citizen_snapshot.py
@@ -36,7 +36,6 @@ python citizen-service/scripts/build_citizen_snapshot.py
 python citizen-service/scripts/build_citizen_snapshot.py --include-mineraalvesi
 # автоматически: OpenCage и уезд (OPENCAGE_API_KEY в .env) — см. GEO_SECRETS.md
 ./scripts/refresh_citizen_geo.sh --map-only
-streamlit run citizen-service/app/streamlit_app.py
 ```
 
 Полностью без ручных флагов геокодирования: **GitHub Actions → Citizen snapshot** (cron или ручной запуск) уже собирает снимок с `--resolve-coordinates` и коммитит кэши. Секрет **OPENCAGE_API_KEY**: [GEO_SECRETS.md](GEO_SECRETS.md).
@@ -49,7 +48,7 @@ streamlit run citizen-service/app/streamlit_app.py
 - `data/geocode_cache.json` — кэш простого геокода (создаётся при `--geocode-limit > 0`)
 - `../frontend/public/data/snapshot.frontend.json` — precomputed контракт данных для нового Next.js интерфейса
 
-Логи: у скрипта сборки флаг **`--log-level`** (`INFO` / `DEBUG`); в лог пишутся этапы сборки, HTTP-геокод и попадания в кэш координат. Приложение Streamlit при старте страницы логирует сводку по снимку (число точек, разбивка `coord_source`, наличие `citizen_model.joblib`).
+Логи: у скрипта сборки флаг **`--log-level`** (`INFO` / `DEBUG`); в лог пишутся этапы сборки, HTTP-геокод и попадания в кэш координат.
 
 ### Ручная проверка координат (queue + overrides)
 
@@ -102,6 +101,5 @@ python citizen-service/scripts/build_citizen_snapshot.py --map-only
 
 ## Деплой и доступ
 
-- Пошагово: **[DEPLOY.md](DEPLOY.md)** (создание приложения на [share.streamlit.io](https://share.streamlit.io), `requirements.streamlit.txt`, путь к `streamlit_app.py`).
-- Публичный URL после публикации и заметки про токены: **[STREAMLIT_ACCESS.md](STREAMLIT_ACCESS.md)** — *вставьте туда ссылку вида `https://<subdomain>.streamlit.app` после первого деплоя*.
+- Web frontend (Next.js) деплоится на Cloudflare Pages — см. [`frontend/README.md`](../frontend/README.md).
 - В репозиторий можно коммитить `snapshot.json` (не сырой XML). Общий план — [PLAN.md](PLAN.md).

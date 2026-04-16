@@ -7,8 +7,6 @@
 [![Colab](https://img.shields.io/badge/Open_in_Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/sapsan14/water-quality-ee/blob/main/notebooks/colab_quickstart.ipynb)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white)](https://jupyter.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-
 [![Data source](https://img.shields.io/badge/Data-Terviseamet-0063AF?style=for-the-badge)](https://vtiav.sm.ee/index.php/?active_tab_id=A)
 [![Estonia](https://img.shields.io/badge/Estonia-opendata-0072CE?style=for-the-badge)](https://en.wikipedia.org/wiki/Estonia)
 
@@ -179,16 +177,13 @@ water-quality-ee/
 
 ## Гражданский сервис (карта + оценка рисков)
 
-Отдельная папка **[citizen-service/](citizen-service/)**: Streamlit-приложение с картой точек (открытые места купания, бассейны/СПА, водопровод, источники), официальным статусом и слоем оценки рисков модели.
+Отдельная папка **[citizen-service/](citizen-service/)**: пайплайн данных для карты точек (открытые места купания, бассейны/СПА, водопровод, источники), официальным статусом и слоем оценки рисков модели.
 
-Два слоя информации: **официальный статус** Terviseamet и **P(нарушение)** по Random Forest. Сервис не прогнозирует будущее качество, не заменяет официальную оценку и не даёт медицинских рекомендаций — это визуализация данных и вероятностных оценок. Подробнее: [citizen-service/README.md](citizen-service/README.md).
+Два слоя информации: **официальный статус** Terviseamet и **P(нарушение)** по 4 моделям. Сервис не прогнозирует будущее качество, не заменяет официальную оценку и не даёт медицинских рекомендаций — это визуализация данных и вероятностных оценок. Подробнее: [citizen-service/README.md](citizen-service/README.md).
 
-- **Веб (Streamlit Cloud):** после деплоя вставьте ссылку в [citizen-service/STREAMLIT_ACCESS.md](citizen-service/STREAMLIT_ACCESS.md) (формат `https://<subdomain>.streamlit.app`). Инструкция по публикации: [citizen-service/DEPLOY.md](citizen-service/DEPLOY.md).
-- Сбор снимка и план CI: [citizen-service/README.md](citizen-service/README.md), [citizen-service/PLAN.md](citizen-service/PLAN.md).
+### Web UI (Next.js + Cloudflare Pages)
 
-### Новый web UI (Next.js + Cloudflare Pages)
-
-Добавлен production-ориентированный фронтенд в [`frontend/`](frontend/README.md) для более быстрого и гибкого UX, чем Streamlit:
+Фронтенд в [`frontend/`](frontend/README.md):
 
 ```bash
 python3 citizen-service/scripts/export_frontend_snapshot.py

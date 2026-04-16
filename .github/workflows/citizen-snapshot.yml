@@ -1,8 +1,5 @@
 # Обновление данных и модели для citizen-service.
 #
-# После push этого workflow Streamlit Community Cloud подхватывает новые файлы из main
-# (snapshot.json + citizen_model.joblib + кэши геокода), если приложение привязано к репозиторию.
-#
 # Расписание (cron — full): снимок с 4 моделями + координаты.
 #   Понедельник  05:00 UTC
 #   1-е число    04:00 UTC
@@ -24,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "full — данные + 4 модели + координаты (для Streamlit). map-only — быстро, без прогнозов моделей."
+        description: "full — данные + 4 модели + координаты. map-only — быстро, без прогнозов моделей."
         type: choice
         required: true
         default: full
