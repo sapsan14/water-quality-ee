@@ -1,108 +1,115 @@
-# Cooperation letter to Terviseamet — water quality open data
+# Письмо о сотрудничестве в Terviseamet — открытые данные о качестве воды
 
-> **Status: DRAFT.** Rewritten as a cooperation proposal (Phase 13). Awaits:
-> author signature, supervisor sign-off, Estonian translation. See
-> `docs/phase_10_findings.md` for the full audit narrative and
-> `docs/learning_journey.md` for the project story.
+> **Статус: ЧЕРНОВИК.** Числа обновлены по результатам Phase 14 (полный корпус,
+> 16.04.2026). Перед отправкой: подпись автора, согласование с руководителем,
+> перевод на эстонский.
+>
+> Источники: `docs/phase_10_findings.md`, `docs/investigation_log.md`,
+> `data/audit/full_corpus_summary.json`.
 
-## Intended recipients
+## Кому
 
-- Terviseamet open-data team (vtiav.sm.ee maintainers)
-- CC: project supervisor
+- Команда открытых данных Terviseamet (поддержка vtiav.sm.ee)
+- Копия: руководитель проекта
 
-## Subject line
+## Тема письма
 
-Open-source water quality risk map + findings from 69,536 probes — cooperation offer
-
----
-
-## Body
-
-Lugupeetud Terviseameti meeskond, / Dear Terviseamet team,
-
-### Who we are
-
-We are a student team at TalTech ([Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course) that has spent the past several months building a complete data pipeline and public citizen service on top of your open-data water quality feeds at `vtiav.sm.ee/index.php/opendata/`.
-
-The result is **[h2oatlas.ee](https://h2oatlas.ee)** — an interactive public map showing the latest water quality status and probabilistic risk assessment for **2,196 locations** across Estonia: swimming sites, pools & SPA, drinking water networks, and drinking water sources. All code is open-source: [github.com/sapsan14/water-quality-ee](https://github.com/sapsan14/water-quality-ee).
-
-We write to share some findings that may be useful to you, to ask a few questions about the data structure, and to offer our tools and willingness to collaborate.
+Открытая карта качества воды + находки из анализа 69 536 проб — предложение о сотрудничестве
 
 ---
 
-### What we found — and what we fixed on our side
+## Текст письма
 
-While validating our pipeline, we built a deterministic norm checker that compares every probe's `hinnang` label against the published parameter values using EU and Estonian thresholds. Three discoveries:
+Lugupeetud Terviseameti meeskond, / Уважаемая команда Terviseamet,
 
-**1. We corrected our own pool norms (may be relevant to you).**
-Our initial free-chlorine range for pools was [0.2, 0.6] mg/l. Empirical validation against 339 compliant pool probes showed that 85% had free chlorine between 0.6 and 1.9 mg/l — all flagged as false alarms by our system. We re-verified against Sotsiaalministri 31.07.2019 määrus nr 49 (Lisa 4) and corrected to **[0.5, 1.5] mg/l**. Similarly, combined chlorine was corrected from ≤ 0.4 to **≤ 0.5 mg/l**.
+### Кто мы
 
-If any of your downstream systems, dashboards, or third-party consumers reference similar threshold tables, our empirical analysis and the 288 false-positive cases may be a useful cross-check.
+Мы — студенческая команда TalTech (курс [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele)). Последние несколько месяцев мы строим пайплайн обработки данных и публичный сервис для граждан на основе ваших открытых данных о качестве воды с `vtiav.sm.ee/index.php/opendata/`.
 
-**2. 86.2% of labels are reproducible from published data; 3.1% are not.**
-After our corrections, our checker agrees with the official `hinnang` on **59,958 of 69,536 probes** (86.2%). However, **2,164 probes (3.1%)** are labelled `ei vasta nõuetele` even though no published parameter exceeds any applicable norm. We call these "hidden violations" — the compliance decision cannot be reproduced from the open-data feed alone.
+Результат — **[h2oatlas.ee](https://h2oatlas.ee)**: интерактивная карта с актуальным статусом качества воды и вероятностной оценкой риска нарушений для **2 196 объектов** по всей Эстонии: пляжи, бассейны и СПА, водопроводные сети, источники питьевой воды. Весь код открыт: [github.com/sapsan14/water-quality-ee](https://github.com/sapsan14/water-quality-ee).
 
-Temporal cross-referencing shows this is partly a **measurement frequency effect**: for `veevark`, 97.9% of "missing" chemistry parameters are measured at the same site in other probes (quarterly chemistry vs per-probe microbiology). This is not a data error — it reflects the monitoring schedule.
-
-**3. Your XML is complete — our parser loses nothing.**
-We scanned every XML child tag under `<proovivott>` across 160 MB of production files (4 domains × 6 years). All 9 unparsed tags are metadata (inspector names, protocol IDs, sampling methodology). Zero measurement parameters are lost by our parser.
+Мы пишем, чтобы поделиться находками, которые могут быть полезны, задать несколько вопросов о структуре данных и предложить наши инструменты для сотрудничества.
 
 ---
 
-### What we'd like to understand
+### Что мы нашли — и что исправили у себя
 
-These questions would help us accurately describe the data in our project report and on h2oatlas.ee:
+При валидации пайплайна мы построили детерминированный чекер норм: он сравнивает метку `hinnang` каждой пробы с опубликованными значениями параметров по нормативам ЕС и Эстонии. Три основных результата:
 
-**Q1.** Is the open-data XML a complete mirror of each probe's lab record, or a published subset? If a subset — is the selection documented?
+**1. Мы нашли и исправили ошибку в своих нормативах для бассейнов.**
 
-**Q2.** Is `hinnang` derived solely from the published parameters, or can it incorporate additional data or contextual information not in the XML?
+Наш начальный диапазон свободного хлора для бассейнов был [0.2, 0.6] мг/л. Эмпирическая проверка на 339 пробах бассейнов с меткой «соответствует» показала, что у 85% из них свободный хлор был в диапазоне 0.6–1.9 мг/л — все они ложно считались нарушениями. Мы перепроверили по Sotsiaalministri 31.07.2019 määrus nr 49 (Lisa 4) и исправили диапазон на **[0.5, 1.5] мг/л**. Аналогично, связанный хлор скорректирован с ≤ 0.4 до **≤ 0.5 мг/л**.
 
-**Q3.** Do different site types have different mandatory parameter profiles by design? (We observe that supluskoha probes never include chemistry parameters, while basseinid probes often lack microbiology.)
+Если в ваших системах или у сторонних потребителей данных используются похожие пороговые таблицы — наш эмпирический анализ и 288 случаев ложных срабатываний могут пригодиться для перекрёстной проверки.
 
-**Q4.** Chemistry parameters (nitrates, chlorides, sulfates) in `veevargi_veeproovid` appear in only 5–7% of probes. Is this a quarterly measurement schedule, or are they measured but not always published?
+**2. 85.7% меток воспроизводимы из опубликованных данных; 3.2% — нет.**
 
-**Q5.** Is there a documented publication-frequency policy we could reference in our limitations section?
+После наших исправлений чекер совпадает с официальной меткой `hinnang` на **59 570 из 69 536 проб** (85.7%). Однако **2 207 проб (3.2%)** помечены `ei vasta nõuetele`, хотя ни один опубликованный параметр не превышает применимую норму.
 
-**Q6.** How frequently does Terviseamet update the opendata XML files on vtiav.sm.ee? Is it real-time (as new lab results arrive), daily, weekly, or at another cadence? Our citizen service ([h2oatlas.ee](https://h2oatlas.ee)) currently refreshes data and retrains models **weekly** (every Monday) and on the **1st of each month**, via automated GitHub Actions. If your data updates more frequently, we would be happy to increase our refresh cadence to match. What update frequency would you consider appropriate for a public-facing service like ours?
+Что это значит на простом языке: мы берём каждую пробу, проверяем все опубликованные измерения по нормативам (E. coli < 500 для пляжей, нитраты < 50 для питьевой воды и т.д.), и в 85.7% случаев наша проверка даёт тот же результат, что и официальная оценка. Но в 3.2% случаев ваша оценка говорит «нарушение», а все опубликованные параметры — в норме. Мы назвали это «скрытыми нарушениями» — из открытых данных нельзя понять, почему проба не соответствует нормам.
 
----
+Временной перекрёстный анализ показал, что это частично объясняется **периодичностью измерений**: для `veevark` 97.9% «отсутствующих» химических параметров измеряются на том же объекте в других пробах (квартальная химия vs микробиология при каждом заборе). Это не ошибка данных — это отражение графика мониторинга.
 
-### What we offer
+**3. Ваш XML полный — наш парсер ничего не теряет.**
 
-We would be happy to share any of the following:
-
-- **Open-source audit toolkit** (`src/audit/label_vs_norms.py`, 250 lines) — a deterministic checker that can be run on any new data dump to instantly verify norm compliance against official labels. It imports thresholds directly from the feature table, so it stays in sync automatically. Could be useful for your own QA or for third-party data consumers.
-
-- **[h2oatlas.ee](https://h2oatlas.ee)** — a public citizen map built entirely on your data. We're happy to adjust it based on your feedback — add disclaimers, correct domain labels, or link to your official pages.
-
-- **Audit artifacts** — the probe-level parquet file with 69,536 rows, bucket classifications, and unmeasured-parameter signatures. Available for your inspection.
-
-- **Collaboration** — if Terviseamet has data quality initiatives, documentation projects, intern or cooperation opportunities, or simply wants a student team's fresh perspective on the opendata pipeline, we are genuinely interested. This project started as a course assignment but has grown into something we care about.
+Мы просканировали каждый XML-тег внутри `<proovivott>` в 160 МБ реальных файлов (4 домена × 6 лет). Все 9 неразбираемых тегов — это метаданные (имена инспекторов, номера протоколов, методика отбора). Ни один параметр измерения не теряется нашим парсером. Это важно: перед тем как задавать вопросы о ваших данных, мы убедились, что проблема не на нашей стороне.
 
 ---
 
-### Context
+### Что мы хотим понять
 
-This project is part of the TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele) course. Our priority metric is **Recall on violations** — a false negative means predicting water is safe when it is not. The best model (LightGBM) achieves **AUC = 0.984** and catches **94.9% of violations** at 80% precision on a temporal test set (trained on ≤2024, tested on 2025+).
+Эти вопросы помогут нам точно описать данные в отчёте проекта и на h2oatlas.ee:
 
-We want to be clear: we are not criticizing the open-data feed — we think it is excellent, and our entire project depends on it. We are writing because we believe sharing these findings and tools is more useful than keeping them in a course report.
+**В1.** Открытый XML — это полная копия лабораторной записи каждой пробы, или это опубликованное подмножество? Если подмножество — описаны ли правила отбора?
 
-Suur tänu teile avatud andmete haldamise eest, / Thank you for maintaining the open-data feed,
+**В2.** Оценка `hinnang` выводится исключительно из опубликованных параметров, или может учитывать дополнительные данные или контекстную информацию, которой нет в XML?
 
-`<author name>`
-`<author email>`
+**В3.** Разные типы объектов имеют разные обязательные профили параметров «по дизайну»? (Мы наблюдаем, что пробы supluskoha никогда не включают химические параметры, а пробы basseinid часто не содержат микробиологию.)
+
+**В4.** Химические параметры (нитраты, хлориды, сульфаты) в `veevargi_veeproovid` присутствуют только в 5–7% проб. Это квартальный график измерений, или они измеряются, но не всегда публикуются?
+
+**В5.** Существует ли задокументированная политика частоты публикации, на которую мы могли бы сослаться в разделе ограничений?
+
+**В6.** Как часто Terviseamet обновляет файлы opendata XML на vtiav.sm.ee? В реальном времени (по мере поступления результатов из лаборатории), ежедневно, еженедельно, или с другой периодичностью? Наш гражданский сервис ([h2oatlas.ee](https://h2oatlas.ee)) сейчас обновляет данные и переобучает модели **еженедельно** (каждый понедельник) и **1-го числа каждого месяца** через автоматизированные GitHub Actions. Если ваши данные обновляются чаще — мы будем рады увеличить частоту обновления. Какую частоту вы бы считали уместной для публичного сервиса вроде нашего?
+
+---
+
+### Что мы предлагаем
+
+Мы готовы поделиться:
+
+- **Инструмент аудита** (`src/audit/label_vs_norms.py`, ~380 строк) — детерминированный чекер, который можно запустить на любом дампе данных для мгновенной проверки соответствия нормам против официальных меток. Импортирует пороговые значения напрямую из таблицы признаков, поэтому автоматически синхронизируется. Может быть полезен для вашего QA или для сторонних потребителей данных.
+
+- **[h2oatlas.ee](https://h2oatlas.ee)** — публичная карта для граждан, построенная целиком на ваших данных. Мы готовы скорректировать её по вашей обратной связи — добавить дисклеймеры, исправить названия доменов, добавить ссылки на ваши официальные страницы.
+
+- **Артефакты аудита** — CSV-файл с 9 966 строками расхождений (проба, домен, объект, дата, отсутствующие параметры). Доступен для вашей проверки.
+
+- **Сотрудничество** — если у Terviseamet есть инициативы по качеству данных, проекты документации, возможности для стажировок или сотрудничества, или просто нужен свежий взгляд студенческой команды на пайплайн opendata — мы искренне заинтересованы. Этот проект начался как курсовое задание, но вырос во что-то, что нам небезразлично.
+
+---
+
+### Контекст
+
+Проект выполняется в рамках курса TalTech [Masinõppe rakendamine tehniliste erialade spetsialistidele](https://taltech.ee/masinope_inseneridele). Наш приоритетный показатель — **Recall по нарушениям**: ложно-отрицательный результат означает, что модель предсказывает «вода безопасна», когда это не так. Лучшая модель (LightGBM) достигает **AUC = 0.984** и ловит **94.9% нарушений** при точности 80% на временной тестовой выборке (обучение на данных до 2024 г., тест на 2025+).
+
+Мы хотим подчеркнуть: мы не критикуем открытые данные — мы считаем, что они отличные, и весь наш проект зависит от них. Мы пишем, потому что считаем, что поделиться находками и инструментами полезнее, чем оставить их в курсовом отчёте.
+
+Suur tänu teile avatud andmete haldamise eest, / Большое спасибо за поддержку открытых данных,
+
+`<имя автора>`
+`<email автора>`
 [h2oatlas.ee](https://h2oatlas.ee) · [GitHub](https://github.com/sapsan14/water-quality-ee)
 
 ---
 
-## Attachments checklist (before sending)
+## Чеклист перед отправкой
 
-- [x] Numbers populated from full-corpus audit (69,536 probes, 2,164 hidden violations)
-- [x] Three concrete probe examples (veevark / basseinid / supluskoha)
-- [x] Pool norms correction documented with empirical evidence
-- [x] XML parity scan results (zero measurement params lost)
-- [x] Temporal analysis: veevark 97.9% frequency variance
-- [ ] Estonian translation of the letter body
-- [ ] Attach audit notebook + parquet artifact (or link to repo)
-- [ ] Project supervisor sign-off
-- [ ] Send to: Terviseamet open-data team (email TBD)
+- [x] Числа обновлены по полному аудиту Phase 14 (69 536 проб, 2 207 скрытых нарушений)
+- [x] Три конкретных примера проб (veevark / basseinid / supluskoha)
+- [x] Коррекция норм бассейнов задокументирована с эмпирическими данными
+- [x] Результаты XML parity scan (ноль потерянных параметров)
+- [x] Временной анализ: veevark 97.9% — периодичность измерений
+- [ ] Перевод тела письма на эстонский
+- [ ] Приложить аудит-ноутбук + CSV-артефакт (или ссылка на репо)
+- [ ] Согласование с руководителем проекта
+- [ ] Отправить: команда opendata Terviseamet (email уточнить)
