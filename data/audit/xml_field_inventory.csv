@@ -1,0 +1,323 @@
+domain,year,parent_tag,xml_tag,occurrences,parsed,sample_value
+basseinid,2021,proovivott,bassein,4045,1,Vihula mõisa lastebassein mullivanniga
+basseinid,2021,proovivott,bassein_id,4045,1,625
+basseinid,2021,proovivott,id,4045,1,261433
+basseinid,2021,proovivott,katseprotokollid,4045,0,
+basseinid,2021,proovivott,proovi_liik,4045,0,
+basseinid,2021,proovivott,proovivotja_amet,4045,0,vaneminspektor
+basseinid,2021,proovivott,proovivotja_atesteerimistunnistuse_number,1002,0,775
+basseinid,2021,proovivott,proovivotja_nimi,4045,0,Tiina Uustal
+basseinid,2021,proovivott,proovivotu_aeg,4045,1,30.12.2021 13:20
+basseinid,2021,proovivott,proovivotu_eesmark,4045,0,Enesekontroll
+basseinid,2021,proovivott,proovivotu_metoodika,4045,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5, ISO 5667-4"
+basseinid,2021,proovivott,proovivotukoht,4045,1,
+basseinid,2021,proovivott,proovivotuprotokolli_number,4045,0,VXX2021TU0982
+basseinid,2021,proovivott,veeliik,4045,0,Basseinivesi
+basseinid,2022,proovivott,bassein,5525,1,Saku Valla l/a Päikesekild
+basseinid,2022,proovivott,bassein_id,5525,1,321
+basseinid,2022,proovivott,id,5525,1,291740
+basseinid,2022,proovivott,katseprotokollid,5525,0,
+basseinid,2022,proovivott,proovi_liik,5525,0,
+basseinid,2022,proovivott,proovivotja_amet,5525,0,inspektor
+basseinid,2022,proovivott,proovivotja_atesteerimistunnistuse_number,1260,0,775
+basseinid,2022,proovivott,proovivotja_nimi,5525,0,Reine Lauri
+basseinid,2022,proovivott,proovivotu_aeg,5525,1,30.12.2022 00:00
+basseinid,2022,proovivott,proovivotu_eesmark,5525,0,Tellimustöö
+basseinid,2022,proovivott,proovivotu_metoodika,5525,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5, ISO 5667-4"
+basseinid,2022,proovivott,proovivotukoht,5525,1,
+basseinid,2022,proovivott,proovivotuprotokolli_number,5525,0,VXX2022TU1217
+basseinid,2022,proovivott,veeliik,5525,0,Basseinivesi
+basseinid,2023,proovivott,bassein,5932,1,My Fitness Rävala pst 4 ujula suur bassein
+basseinid,2023,proovivott,bassein_id,5932,1,565
+basseinid,2023,proovivott,id,5932,1,322665
+basseinid,2023,proovivott,katseprotokollid,5932,0,
+basseinid,2023,proovivott,proovi_liik,5932,0,
+basseinid,2023,proovivott,proovivotja_amet,5932,0,"Terviseameti proovivõtja, autojuht"
+basseinid,2023,proovivott,proovivotja_atesteerimistunnistuse_number,1384,0,2331/23
+basseinid,2023,proovivott,proovivotja_nimi,5932,0,Tarmo Kallaste
+basseinid,2023,proovivott,proovivotu_aeg,5932,1,29.12.2023 00:00
+basseinid,2023,proovivott,proovivotu_eesmark,5932,0,Tellimustöö
+basseinid,2023,proovivott,proovivotu_metoodika,5932,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5, ISO 5667-4"
+basseinid,2023,proovivott,proovivotukoht,5932,1,
+basseinid,2023,proovivott,proovivotuprotokolli_number,5932,0,VXX2023TU1275
+basseinid,2023,proovivott,veeliik,5932,0,Basseinivesi
+basseinid,2024,proovivott,bassein,6516,1,My Fitness Rävala pst 4 ujula suur bassein
+basseinid,2024,proovivott,bassein_id,6516,1,565
+basseinid,2024,proovivott,id,6516,1,349005
+basseinid,2024,proovivott,katseprotokollid,6516,0,
+basseinid,2024,proovivott,proovi_liik,6516,0,
+basseinid,2024,proovivott,proovivotja_amet,6516,0,"Terviseameti proovivõtja, autojuht"
+basseinid,2024,proovivott,proovivotja_atesteerimistunnistuse_number,1414,0,2327/23
+basseinid,2024,proovivott,proovivotja_nimi,6516,0,Tarmo Kallaste
+basseinid,2024,proovivott,proovivotu_aeg,6516,1,31.12.2024 00:00
+basseinid,2024,proovivott,proovivotu_eesmark,6516,0,Tellimustöö
+basseinid,2024,proovivott,proovivotu_metoodika,6516,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5"
+basseinid,2024,proovivott,proovivotukoht,6516,1,
+basseinid,2024,proovivott,proovivotuprotokolli_number,6516,0,EEVIV2024ANNAK0083
+basseinid,2024,proovivott,veeliik,6516,0,Basseinivesi
+basseinid,2025,proovivott,bassein,6875,1,Valtu suur bassein
+basseinid,2025,proovivott,bassein_id,6875,1,110
+basseinid,2025,proovivott,id,6875,1,377256
+basseinid,2025,proovivott,katseprotokollid,6875,0,
+basseinid,2025,proovivott,proovi_liik,6875,0,
+basseinid,2025,proovivott,proovivotja_amet,6875,0,vaneminspektor (keskkonnatervis)
+basseinid,2025,proovivott,proovivotja_atesteerimistunnistuse_number,817,0,2327/23
+basseinid,2025,proovivott,proovivotja_nimi,6875,0,Erik Tõntson
+basseinid,2025,proovivott,proovivotu_aeg,6875,1,30.12.2025 00:00
+basseinid,2025,proovivott,proovivotu_eesmark,6875,0,Tellimustöö
+basseinid,2025,proovivott,proovivotu_metoodika,6875,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5"
+basseinid,2025,proovivott,proovivotukoht,6875,1,
+basseinid,2025,proovivott,proovivotuprotokolli_number,6875,0,EEVHA2025KLA0064
+basseinid,2025,proovivott,veeliik,6875,0,Basseinivesi
+basseinid,2026,proovivott,bassein,1610,1,Aktiiv Spordiklubi bassein 10*25m
+basseinid,2026,proovivott,bassein_id,1610,1,94
+basseinid,2026,proovivott,id,1610,1,383185
+basseinid,2026,proovivott,katseprotokollid,1610,0,
+basseinid,2026,proovivott,proovi_liik,1610,0,
+basseinid,2026,proovivott,proovivotja_amet,1610,0,Lõuna regionaalosakonna inspektor
+basseinid,2026,proovivott,proovivotja_atesteerimistunnistuse_number,190,0,2452/24
+basseinid,2026,proovivott,proovivotja_nimi,1610,0,Kaspar Engelbrecht
+basseinid,2026,proovivott,proovivotu_aeg,1610,1,10.04.2026 00:00
+basseinid,2026,proovivott,proovivotu_eesmark,1610,0,Enesekontroll
+basseinid,2026,proovivott,proovivotu_metoodika,1610,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3, EVS-ISO 5667-5"
+basseinid,2026,proovivott,proovivotukoht,1610,1,
+basseinid,2026,proovivott,proovivotuprotokolli_number,1610,0,EEVVA2026GET0004
+basseinid,2026,proovivott,veeliik,1610,0,Basseinivesi
+joogivesi,2021,proovivott,id,32,1,261673
+joogivesi,2021,proovivott,katseprotokollid,32,0,
+joogivesi,2021,proovivott,proovi_liik,32,0,
+joogivesi,2021,proovivott,proovivotja_amet,32,0,
+joogivesi,2021,proovivott,proovivotja_atesteerimistunnistuse_number,23,0,662
+joogivesi,2021,proovivott,proovivotja_nimi,32,0,Andrus Maimjärv
+joogivesi,2021,proovivott,proovivotu_aeg,32,1,17.12.2021 00:00
+joogivesi,2021,proovivott,proovivotu_eesmark,32,0,Enesekontroll
+joogivesi,2021,proovivott,proovivotu_metoodika,32,0,EVS-ISO 5667-5
+joogivesi,2021,proovivott,proovivotukoht,32,1,
+joogivesi,2021,proovivott,proovivotuprotokolli_number,32,0,
+joogivesi,2021,proovivott,veeallikas,32,1,Unimäe puurkaev nr. 3
+joogivesi,2021,proovivott,veeallikas_id,32,1,1706
+joogivesi,2021,proovivott,veeliik,32,0,Joogivesi
+joogivesi,2022,proovivott,id,94,1,294133
+joogivesi,2022,proovivott,katseprotokollid,94,0,
+joogivesi,2022,proovivott,proovi_liik,94,0,
+joogivesi,2022,proovivott,proovivotja_amet,94,0,autojuht-proovivõtja
+joogivesi,2022,proovivott,proovivotja_atesteerimistunnistuse_number,23,0,1785/20
+joogivesi,2022,proovivott,proovivotja_nimi,94,0,Jaak Grosšmidt
+joogivesi,2022,proovivott,proovivotu_aeg,94,1,27.12.2022 00:00
+joogivesi,2022,proovivott,proovivotu_eesmark,94,0,Enesekontroll
+joogivesi,2022,proovivott,proovivotu_metoodika,94,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+joogivesi,2022,proovivott,proovivotukoht,94,1,
+joogivesi,2022,proovivott,proovivotuprotokolli_number,94,0,EEVRA2022LKI0021
+joogivesi,2022,proovivott,veeallikas,94,1,Ülemiste järv
+joogivesi,2022,proovivott,veeallikas_id,94,1,1594
+joogivesi,2022,proovivott,veeliik,94,0,Joogivesi
+joogivesi,2023,proovivott,id,117,1,325403
+joogivesi,2023,proovivott,katseprotokollid,117,0,
+joogivesi,2023,proovivott,proovi_liik,117,0,
+joogivesi,2023,proovivott,proovivotja_amet,117,0,inspektor
+joogivesi,2023,proovivott,proovivotja_atesteerimistunnistuse_number,27,0,1772/20
+joogivesi,2023,proovivott,proovivotja_nimi,117,0,Elen Uustal
+joogivesi,2023,proovivott,proovivotu_aeg,117,1,28.12.2023 00:00
+joogivesi,2023,proovivott,proovivotu_eesmark,117,0,Enesekontroll
+joogivesi,2023,proovivott,proovivotu_metoodika,117,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+joogivesi,2023,proovivott,proovivotukoht,117,1,
+joogivesi,2023,proovivott,proovivotuprotokolli_number,117,0,VXX2023LJ2210L
+joogivesi,2023,proovivott,veeallikas,117,1,Siimusti asula (kooli) puurkaev
+joogivesi,2023,proovivott,veeallikas_id,117,1,396
+joogivesi,2023,proovivott,veeliik,117,0,Joogivesi
+joogivesi,2024,proovivott,id,85,1,349557
+joogivesi,2024,proovivott,katseprotokollid,85,0,
+joogivesi,2024,proovivott,proovi_liik,85,0,
+joogivesi,2024,proovivott,proovivotja_amet,85,0,"Terviseameti proovivõtja, autojuht"
+joogivesi,2024,proovivott,proovivotja_atesteerimistunnistuse_number,16,0,2426/23
+joogivesi,2024,proovivott,proovivotja_nimi,85,0,Irina Gorlova
+joogivesi,2024,proovivott,proovivotu_aeg,85,1,30.12.2024 00:00
+joogivesi,2024,proovivott,proovivotu_eesmark,85,0,Enesekontroll
+joogivesi,2024,proovivott,proovivotu_metoodika,85,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+joogivesi,2024,proovivott,proovivotukoht,85,1,
+joogivesi,2024,proovivott,proovivotuprotokolli_number,85,0,VXX2024SS0720L
+joogivesi,2024,proovivott,veeallikas,85,1,Ülemiste järv
+joogivesi,2024,proovivott,veeallikas_id,85,1,1594
+joogivesi,2024,proovivott,veeliik,85,0,Joogivesi
+joogivesi,2025,proovivott,id,45,1,375750
+joogivesi,2025,proovivott,katseprotokollid,45,0,
+joogivesi,2025,proovivott,proovi_liik,45,0,
+joogivesi,2025,proovivott,proovivotja_amet,45,0,spetsialist (labor)
+joogivesi,2025,proovivott,proovivotja_atesteerimistunnistuse_number,40,0,2412/23
+joogivesi,2025,proovivott,proovivotja_nimi,45,0,Hannes Urb
+joogivesi,2025,proovivott,proovivotu_aeg,45,1,02.12.2025 00:00
+joogivesi,2025,proovivott,proovivotu_eesmark,45,0,Tellimustöö
+joogivesi,2025,proovivott,proovivotu_metoodika,45,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+joogivesi,2025,proovivott,proovivotukoht,45,1,
+joogivesi,2025,proovivott,proovivotuprotokolli_number,45,0,EEVHA2025KH0194
+joogivesi,2025,proovivott,veeallikas,45,1,Prangli pk. nr. 19433
+joogivesi,2025,proovivott,veeallikas_id,45,1,2039
+joogivesi,2025,proovivott,veeliik,45,0,Joogivesi
+joogivesi,2026,proovivott,id,3,1,382318
+joogivesi,2026,proovivott,katseprotokollid,3,0,
+joogivesi,2026,proovivott,proovi_liik,3,0,
+joogivesi,2026,proovivott,proovivotja_amet,3,0,
+joogivesi,2026,proovivott,proovivotja_atesteerimistunnistuse_number,1,0,2426/23
+joogivesi,2026,proovivott,proovivotja_nimi,3,0,Irina Gorlova
+joogivesi,2026,proovivott,proovivotu_aeg,3,1,10.03.2026 00:00
+joogivesi,2026,proovivott,proovivotu_eesmark,3,0,Enesekontroll
+joogivesi,2026,proovivott,proovivotu_metoodika,3,0,
+joogivesi,2026,proovivott,proovivotukoht,3,1,
+joogivesi,2026,proovivott,proovivotuprotokolli_number,3,0,
+joogivesi,2026,proovivott,veeallikas,3,1,Mustajõe veehaare
+joogivesi,2026,proovivott,veeallikas_id,3,1,542
+joogivesi,2026,proovivott,veeliik,3,0,Joogivesi
+supluskoha,2021,proovivott,id,804,1,253753
+supluskoha,2021,proovivott,katseprotokollid,804,0,
+supluskoha,2021,proovivott,proovi_liik,804,0,Seireproov
+supluskoha,2021,proovivott,proovivotja_amet,804,0,autojuht-proovivõtja
+supluskoha,2021,proovivott,proovivotja_atesteerimistunnistuse_number,393,0,1993/21
+supluskoha,2021,proovivott,proovivotja_nimi,804,0,Kristina Lebedeva
+supluskoha,2021,proovivott,proovivotu_aeg,804,1,22.09.2021 00:00
+supluskoha,2021,proovivott,proovivotu_eesmark,804,0,Tellimustöö
+supluskoha,2021,proovivott,proovivotu_metoodika,804,0,"EVS-EN ISO 5667-3, EVS-EN ISO 19458"
+supluskoha,2021,proovivott,proovivotukoht,804,1,
+supluskoha,2021,proovivott,proovivotuprotokolli_number,804,0,EEVPA2021KK0015
+supluskoha,2021,proovivott,supluskoht,804,1,Pelgurand / Stroomi supluskoht
+supluskoha,2021,proovivott,supluskoht_id,804,1,120
+supluskoha,2021,proovivott,veeliik,804,0,Suplusvesi
+supluskoha,2022,proovivott,id,834,1,284388
+supluskoha,2022,proovivott,katseprotokollid,834,0,
+supluskoha,2022,proovivott,proovi_liik,834,0,Lisaproov
+supluskoha,2022,proovivott,proovivotja_amet,834,0,vaneminspektor
+supluskoha,2022,proovivott,proovivotja_atesteerimistunnistuse_number,489,0,1993/21
+supluskoha,2022,proovivott,proovivotja_nimi,834,0,Aare Reinsalu
+supluskoha,2022,proovivott,proovivotu_aeg,834,1,19.09.2022 00:00
+supluskoha,2022,proovivott,proovivotu_eesmark,834,0,Tellimustöö
+supluskoha,2022,proovivott,proovivotu_metoodika,834,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2022,proovivott,proovivotukoht,834,1,
+supluskoha,2022,proovivott,proovivotuprotokolli_number,834,0,EEVIV2022JEM0004
+supluskoha,2022,proovivott,supluskoht,834,1,Pirita rand
+supluskoha,2022,proovivott,supluskoht_id,834,1,119
+supluskoha,2022,proovivott,veeliik,834,0,Suplusvesi
+supluskoha,2023,proovivott,id,817,1,313869
+supluskoha,2023,proovivott,katseprotokollid,817,0,
+supluskoha,2023,proovivott,proovi_liik,817,0,Lisaproov
+supluskoha,2023,proovivott,proovivotja_amet,817,0,inspektor
+supluskoha,2023,proovivott,proovivotja_atesteerimistunnistuse_number,406,0,767
+supluskoha,2023,proovivott,proovivotja_nimi,817,0,Aare Reinsalu
+supluskoha,2023,proovivott,proovivotu_aeg,817,1,18.09.2023 00:00
+supluskoha,2023,proovivott,proovivotu_eesmark,817,0,Tellimustöö
+supluskoha,2023,proovivott,proovivotu_metoodika,817,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2023,proovivott,proovivotukoht,817,1,
+supluskoha,2023,proovivott,proovivotuprotokolli_number,817,0,EEVRA2023VMOS0034
+supluskoha,2023,proovivott,supluskoht,817,1,Pirita rand
+supluskoha,2023,proovivott,supluskoht_id,817,1,119
+supluskoha,2023,proovivott,veeliik,817,0,Suplusvesi
+supluskoha,2024,proovivott,id,788,1,341951
+supluskoha,2024,proovivott,katseprotokollid,788,0,
+supluskoha,2024,proovivott,proovi_liik,788,0,Seireproov
+supluskoha,2024,proovivott,proovivotja_amet,788,0,inspektor
+supluskoha,2024,proovivott,proovivotja_atesteerimistunnistuse_number,405,0,2211/22
+supluskoha,2024,proovivott,proovivotja_nimi,788,0,Aare Reinsalu
+supluskoha,2024,proovivott,proovivotu_aeg,788,1,23.09.2024 00:00
+supluskoha,2024,proovivott,proovivotu_eesmark,788,0,Tellimustöö
+supluskoha,2024,proovivott,proovivotu_metoodika,788,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2024,proovivott,proovivotukoht,788,1,
+supluskoha,2024,proovivott,proovivotuprotokolli_number,788,0,EEVIV2024ANNAK0041
+supluskoha,2024,proovivott,supluskoht,788,1,Pirita rand
+supluskoha,2024,proovivott,supluskoht_id,788,1,119
+supluskoha,2024,proovivott,veeliik,788,0,Suplusvesi
+supluskoha,2025,proovivott,id,788,1,370465
+supluskoha,2025,proovivott,katseprotokollid,788,0,
+supluskoha,2025,proovivott,proovi_liik,788,0,Seireproov
+supluskoha,2025,proovivott,proovivotja_amet,788,0,spetsialist (labor)
+supluskoha,2025,proovivott,proovivotja_atesteerimistunnistuse_number,388,0,2510/24
+supluskoha,2025,proovivott,proovivotja_nimi,788,0,Aare Reinsalu
+supluskoha,2025,proovivott,proovivotu_aeg,788,1,02.10.2025 00:00
+supluskoha,2025,proovivott,proovivotu_eesmark,788,0,Tellimustöö
+supluskoha,2025,proovivott,proovivotu_metoodika,788,0,"EVS-EN ISO 19458, EVS-EN ISO 5667-3"
+supluskoha,2025,proovivott,proovivotukoht,788,1,
+supluskoha,2025,proovivott,proovivotuprotokolli_number,788,0,EEVSA2025KLB0514
+supluskoha,2025,proovivott,supluskoht,788,1,Pirita rand
+supluskoha,2025,proovivott,supluskoht_id,788,1,119
+supluskoha,2025,proovivott,veeliik,788,0,Suplusvesi
+veevark,2021,proovivott,id,7134,1,264493
+veevark,2021,proovivott,katseprotokollid,7134,0,
+veevark,2021,proovivott,proovi_liik,7134,0,
+veevark,2021,proovivott,proovivotja_amet,7134,0,Lõuna regionaalosakonna vaneminspektor (keskkonnatervis)
+veevark,2021,proovivott,proovivotja_atesteerimistunnistuse_number,2130,0,662
+veevark,2021,proovivott,proovivotja_nimi,7134,0,Miku Mehine
+veevark,2021,proovivott,proovivotu_aeg,7134,1,31.12.2021 00:00
+veevark,2021,proovivott,proovivotu_eesmark,7134,0,Enesekontroll
+veevark,2021,proovivott,proovivotu_metoodika,7134,0,EVS-ISO 5667-5
+veevark,2021,proovivott,proovivotukoht,7134,1,
+veevark,2021,proovivott,proovivotuprotokolli_number,7134,0,VXX2021TU0975
+veevark,2021,proovivott,veeliik,7134,0,Joogivesi
+veevark,2021,proovivott,veevark,7134,1,Tallinna pinnavee piirkond ja Harku
+veevark,2021,proovivott,veevark_id,7134,1,306
+veevark,2022,proovivott,id,6151,1,294054
+veevark,2022,proovivott,katseprotokollid,6151,0,
+veevark,2022,proovivott,proovi_liik,6151,0,
+veevark,2022,proovivott,proovivotja_amet,6151,0,proovivõtja
+veevark,2022,proovivott,proovivotja_atesteerimistunnistuse_number,1920,0,775
+veevark,2022,proovivott,proovivotja_nimi,6151,0,Meelis Bauman
+veevark,2022,proovivott,proovivotu_aeg,6151,1,31.12.2022 00:00
+veevark,2022,proovivott,proovivotu_eesmark,6151,0,Enesekontroll
+veevark,2022,proovivott,proovivotu_metoodika,6151,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+veevark,2022,proovivott,proovivotukoht,6151,1,
+veevark,2022,proovivott,proovivotuprotokolli_number,6151,0,VXX2022TU1210
+veevark,2022,proovivott,veeliik,6151,0,Joogivesi
+veevark,2022,proovivott,veevark,6151,1,Tallinna pinnavee piirkond ja Harku
+veevark,2022,proovivott,veevark_id,6151,1,306
+veevark,2023,proovivott,id,7943,1,323153
+veevark,2023,proovivott,katseprotokollid,7943,0,
+veevark,2023,proovivott,proovi_liik,7943,0,
+veevark,2023,proovivott,proovivotja_amet,7943,0,vaneminspektor
+veevark,2023,proovivott,proovivotja_atesteerimistunnistuse_number,2138,0,1732/20
+veevark,2023,proovivott,proovivotja_nimi,7943,0,Vello Misler
+veevark,2023,proovivott,proovivotu_aeg,7943,1,31.12.2023 00:00
+veevark,2023,proovivott,proovivotu_eesmark,7943,0,Enesekontroll
+veevark,2023,proovivott,proovivotu_metoodika,7943,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+veevark,2023,proovivott,proovivotukoht,7943,1,
+veevark,2023,proovivott,proovivotuprotokolli_number,7943,0,EEVLV2023LTA0129
+veevark,2023,proovivott,veeliik,7943,0,Joogivesi
+veevark,2023,proovivott,veevark,7943,1,Tallinna pinnavee piirkond ja Harku
+veevark,2023,proovivott,veevark_id,7943,1,306
+veevark,2024,proovivott,id,6373,1,349314
+veevark,2024,proovivott,katseprotokollid,6373,0,
+veevark,2024,proovivott,proovi_liik,6373,0,
+veevark,2024,proovivott,proovivotja_amet,6373,0,inspektor
+veevark,2024,proovivott,proovivotja_atesteerimistunnistuse_number,2145,0,2364/23
+veevark,2024,proovivott,proovivotja_nimi,6373,0,Jüri Kukk
+veevark,2024,proovivott,proovivotu_aeg,6373,1,31.12.2024 00:00
+veevark,2024,proovivott,proovivotu_eesmark,6373,0,Enesekontroll
+veevark,2024,proovivott,proovivotu_metoodika,6373,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+veevark,2024,proovivott,proovivotukoht,6373,1,
+veevark,2024,proovivott,proovivotuprotokolli_number,6373,0,VHA2025AA0090
+veevark,2024,proovivott,veeliik,6373,0,Joogivesi
+veevark,2024,proovivott,veevark,6373,1,Tallinna pinnavee piirkond ja Harku
+veevark,2024,proovivott,veevark_id,6373,1,306
+veevark,2025,proovivott,id,6456,1,377259
+veevark,2025,proovivott,katseprotokollid,6456,0,
+veevark,2025,proovivott,proovi_liik,6456,0,
+veevark,2025,proovivott,proovivotja_amet,6456,0,Lõuna regionaalosakonna vaneminspektor
+veevark,2025,proovivott,proovivotja_atesteerimistunnistuse_number,2838,0,2030/21
+veevark,2025,proovivott,proovivotja_nimi,6456,0,Rekmar Vaarma
+veevark,2025,proovivott,proovivotu_aeg,6456,1,30.12.2025 00:00
+veevark,2025,proovivott,proovivotu_eesmark,6456,0,Tellimustöö
+veevark,2025,proovivott,proovivotu_metoodika,6456,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+veevark,2025,proovivott,proovivotukoht,6456,1,
+veevark,2025,proovivott,proovivotuprotokolli_number,6456,0,EEVVA2025KAL0132
+veevark,2025,proovivott,veeliik,6456,0,Joogivesi
+veevark,2025,proovivott,veevark,6456,1,Kaerepere aleviku ühisveevärk
+veevark,2025,proovivott,veevark_id,6456,1,813
+veevark,2026,proovivott,id,569,1,383073
+veevark,2026,proovivott,katseprotokollid,569,0,
+veevark,2026,proovivott,proovi_liik,569,0,
+veevark,2026,proovivott,proovivotja_amet,569,0,vaneminspektor
+veevark,2026,proovivott,proovivotja_atesteerimistunnistuse_number,384,0,2117/22
+veevark,2026,proovivott,proovivotja_nimi,569,0,"Lehtemaa, Kalle"
+veevark,2026,proovivott,proovivotu_aeg,569,1,07.04.2026 13:50
+veevark,2026,proovivott,proovivotu_eesmark,569,0,Enesekontroll
+veevark,2026,proovivott,proovivotu_metoodika,569,0,"EVS-EN ISO 19458, EVS-ISO 5667-5"
+veevark,2026,proovivott,proovivotukoht,569,1,
+veevark,2026,proovivott,proovivotuprotokolli_number,569,0,EEVIV2026LTA0004
+veevark,2026,proovivott,veeliik,569,0,Joogivesi
+veevark,2026,proovivott,veevark,569,1,Vihtra küla veevärk
+veevark,2026,proovivott,veevark_id,569,1,1323

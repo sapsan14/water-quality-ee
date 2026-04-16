@@ -1,0 +1,16 @@
+
+=== XML field inventory ===
+
+[basseinid] 14 distinct child tags
+  unparsed: katseprotokollid, proovi_liik, proovivotja_amet, proovivotja_atesteerimistunnistuse_number, proovivotja_nimi, proovivotu_eesmark, proovivotu_metoodika, proovivotuprotokolli_number, veeliik
+
+[joogivesi] 14 distinct child tags
+  unparsed: katseprotokollid, proovi_liik, proovivotja_amet, proovivotja_atesteerimistunnistuse_number, proovivotja_nimi, proovivotu_eesmark, proovivotu_metoodika, proovivotuprotokolli_number, veeliik
+
+[supluskoha] 14 distinct child tags
+  unparsed: katseprotokollid, proovi_liik, proovivotja_amet, proovivotja_atesteerimistunnistuse_number, proovivotja_nimi, proovivotu_eesmark, proovivotu_metoodika, proovivotuprotokolli_number, veeliik
+
+[veevark] 14 distinct child tags
+  unparsed: katseprotokollid, proovi_liik, proovivotja_amet, proovivotja_atesteerimistunnistuse_number, proovivotja_nimi, proovivotu_eesmark, proovivotu_metoodika, proovivotuprotokolli_number, veeliik
+
+Wrote 322 rows to data/audit/xml_field_inventory.csv
