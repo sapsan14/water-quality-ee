@@ -92,11 +92,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "data: raw XML + full-corpus audit artifacts (Phase 14)
-
-Downloaded $(ls data/raw/*.xml 2>/dev/null | wc -l) XML files from vtiav.sm.ee.
-Full audit results in data/audit/full_corpus_summary.json.
-See workflow run for detailed console output."
+            N_XML=$(ls data/raw/*.xml 2>/dev/null | wc -l)
+            git commit -m "data: raw XML ($N_XML files) + full-corpus audit artifacts (Phase 14)"
             git pull --rebase origin "${{ github.ref_name }}"
             git push
           fi
