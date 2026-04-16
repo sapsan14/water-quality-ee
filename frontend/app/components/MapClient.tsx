@@ -294,26 +294,32 @@ function MarkerClusterLayer({
       }
     });
 
-    // Custom cluster click: if all children share (nearly) the same
-    // coordinates, show them as a list in the bottom sheet (via
-    // onSelectCluster) instead of zooming — which would just
-    // re-cluster them at a higher zoom level. For spread clusters,
-    // zoom to bounds as usual.
+    // Custom cluster click: on mobile, always show the cluster's children
+    // as a pick-list in the bottom sheet (there's no hover, so the sheet is
+    // the natural way to browse overlapping points). On desktop, co-located
+    // clusters also use the pick-list while spread clusters zoom to bounds.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
         const evt = e as { layer: ClusterLike };
         const cluster = evt.layer;
-        const bounds = cluster.getBounds();
 
-        // ~50 meters in lat/lon degrees — any cluster fitting in this
-        // box has all children at effectively the same physical location.
-        const THRESHOLD = 0.0005;
+        // Mobile: always show pick-list (disableHoverPopups === mobile)
+        if (disableHoverPopups && onSelectCluster) {
+          const ids = cluster.getAllChildMarkers()
+            .map((m) => m.options?.place?.id)
+            .filter((id): id is string => Boolean(id));
+          onSelectCluster(ids);
+          return;
+        }
+
+        // Desktop: co-located clusters → pick-list; spread → zoom to bounds
+        const bounds = cluster.getBounds();
+        const THRESHOLD = 0.0005; // ~50 meters
         const latSpan = bounds.getNorth() - bounds.getSouth();
         const lngSpan = bounds.getEast() - bounds.getWest();
 
         if (latSpan < THRESHOLD && lngSpan < THRESHOLD) {
-          // Co-located: show list in bottom sheet, cluster stays on map
           if (onSelectCluster) {
             const ids = cluster.getAllChildMarkers()
               .map((m) => m.options?.place?.id)
