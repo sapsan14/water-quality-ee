@@ -1578,12 +1578,15 @@ export default function Dashboard({ snapshot }: Props) {
         icon: "🧫",
         ruTitle: "E. coli",
         etTitle: "E. coli",
-        ruImpact: "Очень высокий при росте",
-        etImpact: "Tõustes väga kõrge",
+        ruImpact: "SHAP 0.312 — топ-5 предиктор",
+        etImpact: "SHAP 0.312 — top-5 ennustaja",
+        enImpact: "SHAP 0.312 — top-5 predictor",
         ruWhy:
-          "Прямой маркер фекального загрязнения. Рост связан с риском кишечных инфекций, особенно в местах купания и рекреации.",
+          "Прямой маркер фекального загрязнения (норма: ≤500 КОЕ для купания, 0 для питьевой воды). При превышении риск кишечных инфекций резко растёт. В нашем корпусе (69 536 проб) e_coli > 500 практически гарантирует нарушение.",
         etWhy:
-          "Otsene fekaalreostuse marker. Tõus seostub soolenakkuste riskiga, eriti suplus- ja puhkealadel."
+          "Otsene fekaalreostuse marker (norm: ≤500 PMÜ suplusvees, 0 joogivees). Ületamisel soolenakkuse risk kasvab järsult. 69 536 proovist e_coli > 500 tähendab peaaegu alati rikkumist.",
+        enWhy:
+          "Direct fecal contamination marker (norm: ≤500 CFU bathing, 0 drinking). Exceeding the threshold almost guarantees a violation in our 69,536-probe corpus."
       },
       {
         key: "enterococci",
@@ -1592,22 +1595,28 @@ export default function Dashboard({ snapshot }: Props) {
         etTitle: "Enterokokid",
         ruImpact: "Высокий для рекреации",
         etImpact: "Kõrge rekreatsioonivees",
+        enImpact: "High for recreational water",
         ruWhy:
-          "Ключевой микробиологический показатель для пляжей и открытой воды; помогает выявлять санитарные риски до массовых жалоб.",
+          "Ключевой микробиологический показатель EU Bathing Water Directive 2006/7/EC (норма: ≤200 КОЕ). Устойчивее E. coli к хлорированию — важный дополнительный индикатор в морской воде.",
         etWhy:
-          "Oluline mikrobioloogiline näitaja randades ja avavees; aitab sanitaarseid riske varakult märgata."
+          "EL suplusvee direktiivi 2006/7/EC põhinäitaja (norm: ≤200 PMÜ). Kloorimisele vastupidavam kui E. coli — oluline lisaindikaator merevees.",
+        enWhy:
+          "Key indicator per EU Bathing Water Directive 2006/7/EC (norm: ≤200 CFU). More resistant to chlorination than E. coli — important complementary marker."
       },
       {
         key: "ph",
         icon: "⚖️",
         ruTitle: "pH",
         etTitle: "pH",
-        ruImpact: "Средний, но системный",
-        etImpact: "Keskmine, kuid süsteemne",
+        ruImpact: "Системный параметр",
+        etImpact: "Süsteemne parameeter",
+        enImpact: "Systemic parameter",
         ruWhy:
-          "Влияет на коррозию труб, вкус воды и эффективность дезинфекции. Отклонения pH часто указывают на технологические проблемы.",
+          "Норма: 6.0–9.0 (купание), 6.5–8.5 (бассейн). Влияет на коррозию труб, эффективность хлора и комфорт. При pH < 6.5 хлор менее эффективен; при pH > 8.5 кожа и глаза раздражаются.",
         etWhy:
-          "Mõjutab torude korrosiooni, vee maitset ja desinfitseerimise efektiivsust. pH hälbed viitavad sageli tehnoloogilistele probleemidele."
+          "Norm: 6.0–9.0 (suplus), 6.5–8.5 (bassein). Mõjutab torude korrosiooni, kloori efektiivsust ja mugavust. pH < 6.5: kloor vähem efektiivne; pH > 8.5: naha ja silmade ärritus.",
+        enWhy:
+          "Norm: 6.0–9.0 (bathing), 6.5–8.5 (pools). Affects pipe corrosion, chlorine efficacy and comfort. Low pH reduces disinfection; high pH irritates skin and eyes."
       },
       {
         key: "nitrates",
@@ -1616,10 +1625,13 @@ export default function Dashboard({ snapshot }: Props) {
         etTitle: "Nitraadid",
         ruImpact: "Высокий для питьевой воды",
         etImpact: "Kõrge joogivees",
+        enImpact: "High for drinking water",
         ruWhy:
-          "Связаны с сельхоз-стоками и нагрузкой на водоисточник. Повышенные значения требуют приоритизации мониторинга и источникового контроля.",
+          "Норма: ≤50 мг/л (EU 2020/2184). Поступают из удобрений и сточных вод. Опасны для младенцев (метгемоглобинемия). В нашем аудите нитраты — один из «периодических» параметров: измеряются квартально, не в каждой пробе.",
         etWhy:
-          "Seotud põllumajandusliku äravoolu ja veeallika koormusega. Kõrgenenud väärtused vajavad prioriteetset seiret."
+          "Norm: ≤50 mg/l (EU 2020/2184). Pärinevad väetistest ja reoveest. Ohtlik imikutele (methemoglobineemia). Meie auditi järgi mõõdetakse nitraate kvartaalselt, mitte igas proovis.",
+        enWhy:
+          "Norm: ≤50 mg/l (EU 2020/2184). From fertilizers and wastewater. Dangerous for infants (methemoglobinemia). Our audit shows nitrates are measured quarterly, not in every probe."
       },
       {
         key: "free_chlorine",
@@ -1628,10 +1640,13 @@ export default function Dashboard({ snapshot }: Props) {
         etTitle: "Vaba kloor",
         ruImpact: "Критичный в бассейнах",
         etImpact: "Basseinides kriitiline",
+        enImpact: "Critical for pools",
         ruWhy:
-          "Недостаток снижает обеззараживание, избыток вызывает раздражение кожи и слизистых. Для бассейнов нужен рабочий диапазон 0.2–0.6 mg/L.",
+          "Диапазон: 0.5–1.5 мг/л (Sotsiaalministri 49/2019, Lisa 4). Мало хлора → микробы; много → раздражение кожи и глаз. Наш аудит обнаружил, что прежний диапазон [0.2–0.6] был ошибочным — 288 ложных срабатываний исправлены.",
         etWhy:
-          "Liiga madal tase halvendab desinfitseerimist, liiga kõrge põhjustab ärritust. Basseinides on oluline töövahemik 0.2–0.6 mg/L."
+          "Vahemik: 0.5–1.5 mg/l (Sotsiaalministri 49/2019, Lisa 4). Liiga vähe kloori → mikroobid; liiga palju → ärritus. Meie audit leidis, et varasem vahemik [0.2–0.6] oli vale — 288 valepositiivset parandatud.",
+        enWhy:
+          "Range: 0.5–1.5 mg/l (Estonian reg. 49/2019, Annex 4). Too low → pathogens; too high → irritation. Our audit found the previous [0.2–0.6] range was wrong — 288 false positives fixed."
       },
       {
         key: "turbidity",
@@ -1640,10 +1655,43 @@ export default function Dashboard({ snapshot }: Props) {
         etTitle: "Hägusus",
         ruImpact: "Средний, усиливает другие риски",
         etImpact: "Keskmine, võimendab teisi riske",
+        enImpact: "Medium, amplifies other risks",
         ruWhy:
-          "Повышенная мутность может скрывать микробные проблемы и снижать эффективность дезинфекции, ухудшая реальную санитарную картину.",
+          "Норма: ≤4 NTU (питьевая), ≤0.5 NTU (бассейн, в 8× строже). Мутная вода скрывает патогены и снижает эффективность UV/хлора. Чем выше мутность, тем менее надёжна дезинфекция.",
         etWhy:
-          "Kõrge hägusus võib varjata mikroobseid riske ja vähendada desinfitseerimise tõhusust."
+          "Norm: ≤4 NTU (joogivesi), ≤0.5 NTU (bassein, 8× rangem). Hägune vesi varjab patogeene ja vähendab UV/kloori efektiivsust.",
+        enWhy:
+          "Norm: ≤4 NTU (drinking), ≤0.5 NTU (pool — 8x stricter). Turbid water hides pathogens and reduces UV/chlorine efficacy."
+      },
+      {
+        key: "iron",
+        icon: "🔩",
+        ruTitle: "Iron",
+        etTitle: "Raud",
+        ruImpact: "SHAP 1.217 — #1 предиктор",
+        etImpact: "SHAP 1.217 — #1 ennustaja",
+        enImpact: "SHAP 1.217 — #1 predictor",
+        ruWhy:
+          "Норма: ≤0.2 мг/л. Самый сильный предиктор нарушений (SHAP 1.217). Частая причина несоответствий в сетях водоснабжения Эстонии — природное железо из подземных вод.",
+        etWhy:
+          "Norm: ≤0.2 mg/l. Tugevaim rikkumiste ennustaja (SHAP 1.217). Sage mittevastavuse põhjus Eesti veevärkides — looduslik raud põhjaveest.",
+        enWhy:
+          "Norm: ≤0.2 mg/l. Strongest violation predictor (SHAP 1.217). Frequent cause of non-compliance in Estonian water networks — natural iron from groundwater."
+      },
+      {
+        key: "coliforms",
+        icon: "🔬",
+        ruTitle: "Coliforms",
+        etTitle: "Kolibakterid",
+        ruImpact: "SHAP 0.591 — топ-3 предиктор",
+        etImpact: "SHAP 0.591 — top-3 ennustaja",
+        enImpact: "SHAP 0.591 — top-3 predictor",
+        ruWhy:
+          "Норма: 0 КОЕ/100 мл (питьевая вода, EU 2020/2184). Широкая группа бактерий, включающая E. coli. Измеряется чаще всех параметров (1 439 из 2 196 точек). Обнаружение при отсутствии E. coli указывает на недостаточную дезинфекцию.",
+        etWhy:
+          "Norm: 0 PMÜ/100 ml (joogivesi, EU 2020/2184). Lai bakterirühm, hõlmab E. coli. Mõõdetakse sagedamini kui ükski teine parameeter. Positiivne tulemus ilma E. coli'ta viitab ebapiisavale desinfitseerimisele.",
+        enWhy:
+          "Norm: 0 CFU/100ml (drinking, EU 2020/2184). Broad bacterial group including E. coli. Most frequently measured parameter. Detection without E. coli indicates insufficient disinfection."
       }
     ],
     []
@@ -3602,6 +3650,54 @@ export default function Dashboard({ snapshot }: Props) {
               <div>
                 <h4>{t.tabs.aboutModel}</h4>
                 <p className="hint">{t.aboutModel}</p>
+
+                {/* ── Model comparison: visual bar chart ────────────────── */}
+                <div style={{ margin: "1rem 0 0.5rem" }}>
+                  <h5 style={{ marginBottom: "0.5rem" }}>
+                    {lruet(lang, "Сравнение 4 моделей", "4 mudeli võrdlus", "4-model comparison")}
+                    <span className="hint" style={{ fontWeight: 400, marginLeft: "0.5rem" }}>
+                      {lruet(lang, "(темпоральный split, тест 2025+)", "(temporal split, test 2025+)", "(temporal split, test 2025+)")}
+                    </span>
+                  </h5>
+                  {[
+                    { name: "LR", auc: 0.947, recall: 0.890, precision: 0.560 },
+                    { name: "RF", auc: 0.981, recall: 0.929, precision: 0.791 },
+                    { name: "GB", auc: 0.982, recall: 0.887, precision: 0.887 },
+                    { name: "LGBM", auc: 0.984, recall: 0.949, precision: 0.800 },
+                  ].map((m) => (
+                    <div key={`mc-${m.name}`} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
+                      <span style={{ width: "3.2rem", fontWeight: 600, fontSize: "0.82rem", fontFamily: "var(--font-latin-ui)" }}>{m.name}</span>
+                      <div style={{ flex: 1, display: "flex", gap: "3px", height: "18px" }}>
+                        <div title={`AUC ${m.auc}`} style={{ width: `${m.auc * 100}%`, background: "var(--brand, #2563eb)", borderRadius: "3px 0 0 3px", minWidth: "2px", opacity: 0.85 }} />
+                        <div title={`Recall ${m.recall}`} style={{ width: `${m.recall * 100}%`, background: "var(--good, #139b55)", minWidth: "2px", opacity: 0.8 }} />
+                        <div title={`Precision ${m.precision}`} style={{ width: `${m.precision * 100}%`, background: "var(--warn, #e38f00)", borderRadius: "0 3px 3px 0", minWidth: "2px", opacity: 0.75 }} />
+                      </div>
+                      <span className="hint" style={{ fontSize: "0.72rem", whiteSpace: "nowrap" }}>AUC {m.auc.toFixed(3)}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", gap: "1rem", marginTop: "0.3rem", fontSize: "0.72rem" }}>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, background: "var(--brand, #2563eb)", borderRadius: 2, marginRight: 3, verticalAlign: "middle", opacity: 0.85 }} />AUC</span>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, background: "var(--good, #139b55)", borderRadius: 2, marginRight: 3, verticalAlign: "middle", opacity: 0.8 }} />Recall</span>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, background: "var(--warn, #e38f00)", borderRadius: 2, marginRight: 3, verticalAlign: "middle", opacity: 0.75 }} />Precision</span>
+                  </div>
+                </div>
+
+                {/* ── Key numbers strip ────────────────────────────────── */}
+                <div className="stats" style={{ marginTop: "0.75rem" }}>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Проб в корпусе", "Proove korpuses", "Corpus probes")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)" }}>69 536</div>
+                  </div>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Фичей модели", "Tunnuseid", "Features")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)" }}>72</div>
+                  </div>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Лучшая модель", "Parim mudel", "Best model")}</div>
+                    <div className="v">LightGBM <span className="badge good">AUC 0.984</span></div>
+                  </div>
+                </div>
+
                 <div className="stats" style={{ marginTop: "0.5rem" }}>
                   {quickInsights.map((i) => (
                     <div className="stat" key={`ip-qim-${i.key}`}>
@@ -3610,6 +3706,35 @@ export default function Dashboard({ snapshot }: Props) {
                     </div>
                   ))}
                 </div>
+
+                {/* ── Top SHAP features ────────────────────────────────── */}
+                <div style={{ margin: "0.75rem 0 0.5rem" }}>
+                  <h5 style={{ marginBottom: "0.4rem" }}>
+                    {lruet(lang, "Топ-5 предикторов (SHAP)", "Top-5 ennustajat (SHAP)", "Top-5 predictors (SHAP)")}
+                  </h5>
+                  {[
+                    { param: "iron", label: lruet(lang, "Железо", "Raud", "Iron"), shap: 1.217 },
+                    { param: "color", label: lruet(lang, "Цветность", "Värvus", "Color"), shap: 0.751 },
+                    { param: "coliforms", label: lruet(lang, "Колиформы", "Kolibakterid", "Coliforms"), shap: 0.591 },
+                    { param: "manganese", label: lruet(lang, "Марганец", "Mangaan", "Manganese"), shap: 0.478 },
+                    { param: "e_coli", label: "E. coli", shap: 0.312 },
+                  ].map((f) => (
+                    <div key={`shap-${f.param}`} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                      <span style={{ width: "5.5rem", fontSize: "0.78rem", color: "var(--muted)" }}>{f.label}</span>
+                      <div style={{ flex: 1, height: "12px", background: "var(--panel-soft, #eef1f5)", borderRadius: 6, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.min(f.shap / 1.3 * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, var(--bad, #dc3545), #ff6b6b)", borderRadius: 6, transition: "width 0.6s ease" }} />
+                      </div>
+                      <span style={{ width: "2.8rem", textAlign: "right", fontSize: "0.72rem", fontFamily: "var(--font-latin-ui)", fontWeight: 600 }}>{f.shap.toFixed(3)}</span>
+                    </div>
+                  ))}
+                  <p className="hint" style={{ fontSize: "0.7rem", marginTop: "0.2rem" }}>
+                    {lruet(lang,
+                      "SHAP: средний абсолютный вклад в предсказание. Чем длиннее полоска, тем сильнее параметр влияет на риск.",
+                      "SHAP: keskmine absoluutne panus ennustusse. Pikem riba = suurem mõju riskile.",
+                      "SHAP: mean absolute contribution to prediction. Longer bar = stronger impact on risk.")}
+                  </p>
+                </div>
+
                 <p className="hint" style={{ marginTop: "0.75rem" }}>
                   {lang === "ru"
                     ? "4 уровня оценки качества: ROC-AUC (разделение классов), Precision/Recall (баланс ошибок), калибровка (доверие к вероятности) и SHAP (пояснение причин прогноза)."
@@ -3682,7 +3807,28 @@ export default function Dashboard({ snapshot }: Props) {
               <div>
                 <h4>{t.tabs.aboutService}</h4>
                 <p className="hint">{t.aboutService}</p>
-                <p className="hint">
+
+                {/* ── Data corpus at a glance ──────────────────────────── */}
+                <div className="stats" style={{ marginTop: "0.75rem" }}>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Проб", "Proove", "Probes")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)", fontSize: "1.1rem" }}>69 536</div>
+                  </div>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Доменов", "Domeene", "Domains")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)", fontSize: "1.1rem" }}>4</div>
+                  </div>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Лет данных", "Aastat andmeid", "Years of data")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)", fontSize: "1.1rem" }}>2021–2026</div>
+                  </div>
+                  <div className="stat">
+                    <div className="k">{lruet(lang, "Точек на карте", "Punkte kaardil", "Map locations")}</div>
+                    <div className="v" style={{ fontFamily: "var(--font-latin-ui)", fontSize: "1.1rem" }}>{snapshot.places?.length || "2 196"}</div>
+                  </div>
+                </div>
+
+                <p className="hint" style={{ marginTop: "0.6rem" }}>
                   {lang === "ru"
                     ? "Этот сервис — публичный инструмент экологической прозрачности для жителей, муниципалитетов и госструктур. Он объединяет официальные открытые данные Terviseamet и аналитический ML-слой, чтобы вода оценивалась не только постфактум, но и через ранние риск-сигналы."
                     : lang === "et"
@@ -3703,6 +3849,30 @@ export default function Dashboard({ snapshot }: Props) {
                       ? "Oluline: mudelihinnangud ei asenda ametlikku sanitaarset otsust — need on mõeldud kontrollide prioritiseerimiseks."
                       : "Important: model assessments do not replace the official sanitary verdict. They support inspection prioritization and earlier detection of potential problem areas."}
                 </p>
+                {/* ── Key research findings ─────────────────────────── */}
+                <div style={{ margin: "0.75rem 0", padding: "0.6rem 0.8rem", background: "var(--panel-soft, #eef1f5)", borderRadius: 8, borderLeft: "3px solid var(--brand, #2563eb)" }}>
+                  <h5 style={{ marginBottom: "0.35rem", fontSize: "0.82rem" }}>
+                    {lruet(lang, "Ключевые находки проекта", "Projekti peamised avastused", "Key research findings")}
+                  </h5>
+                  <ul className="hint" style={{ margin: 0, paddingLeft: "1.1rem", lineHeight: 1.6 }}>
+                    <li>{lruet(lang,
+                      "Обнаружена и исправлена ошибка в нормах хлора бассейнов: free_chlorine [0.2, 0.6] → [0.5, 1.5] мг/л — устранены 288 ложных срабатываний.",
+                      "Avastatud ja parandatud basseini kloori normide viga: free_chlorine [0.2, 0.6] → [0.5, 1.5] mg/l — 288 valepositiivset kõrvaldatud.",
+                      "Pool chlorine norms bug found and fixed: free_chlorine [0.2, 0.6] → [0.5, 1.5] mg/l — 288 false positives eliminated."
+                    )}</li>
+                    <li>{lruet(lang,
+                      "3.1% проб (2 164 из 69 536) не воспроизводимы из опубликованных параметров — запрос в Terviseamet подготовлен.",
+                      "3.1% proovidest (2 164 / 69 536) pole avalikustatud parameetritest reprodutseeritavad — päring Terviseametile koostatud.",
+                      "3.1% of probes (2,164 / 69,536) cannot be reproduced from published parameters — inquiry to Terviseamet prepared."
+                    )}</li>
+                    <li>{lruet(lang,
+                      "XML-парсер проверен на 160 МБ данных: ноль потерянных параметров.",
+                      "XML parser kontrollitud 160 MB andmetel: null kaotatud parameetrit.",
+                      "XML parser verified on 160 MB of data: zero measurement parameters lost."
+                    )}</li>
+                  </ul>
+                </div>
+
                 {snapshot.data_catalog_url ? (
                   <p className="hint">
                     {lruet(lang, "Источник:", "Allikas:", "Source:")}{" "}
@@ -3744,10 +3914,10 @@ export default function Dashboard({ snapshot }: Props) {
                         <span className="infoCardIcon" aria-hidden>{card.icon}</span>
                         <div>
                           <h5>{lruet(lang, card.ruTitle, card.etTitle, card.ruTitle)}</h5>
-                          <span className="badge warn">{lruet(lang, card.ruImpact, card.etImpact, card.ruImpact)}</span>
+                          <span className="badge warn">{lruet(lang, card.ruImpact, card.etImpact, card.enImpact || card.ruImpact)}</span>
                         </div>
                       </div>
-                      <p className="hint">{lruet(lang, card.ruWhy, card.etWhy, card.ruWhy)}</p>
+                      <p className="hint">{lruet(lang, card.ruWhy, card.etWhy, card.enWhy || card.ruWhy)}</p>
                     </article>
                   ))}
                 </div>
