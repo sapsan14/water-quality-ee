@@ -2970,20 +2970,39 @@ html[data-theme="dark"] .infoPageTab.active {
 
 html[data-theme="dark"] .langDialogCard {
   background: #111b2d;
-  border: 1px solid #2b3f5f;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(43, 63, 95, 0.7);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme="dark"] .langDialogButtons .btn {
+html[data-theme="dark"] .langDialogAccent {
+  background: linear-gradient(135deg, #1f8a4f 0%, #1a6cb0 50%, #5a3cba 100%);
+}
+
+html[data-theme="dark"] .langDialogIcon {
   background: #1a2740;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .langDialogSubtitle {
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .langBtn {
+  background: linear-gradient(180deg, #1a2740 0%, #152030 100%);
   border-color: #2f4569;
   color: #e6eef9;
 }
 
-html[data-theme="dark"] .langDialogButtons .btn:hover,
-html[data-theme="dark"] .langDialogButtons .btn.btnActive {
-  background: #24406a;
-  border-color: #4d75ab;
+html[data-theme="dark"] .langBtn:hover {
+  background: linear-gradient(180deg, #243754 0%, #1c2d48 100%);
+  border-color: #4d8fd4;
+  box-shadow: 0 6px 20px rgba(56, 163, 241, 0.12);
+}
+
+html[data-theme="dark"] .langBtnLabel {
+  color: #e6eef9;
 }
 
 html[data-theme="dark"] .dateRangeField input[type="date"] {
@@ -3252,54 +3271,139 @@ html[data-theme="dark"] .dateRangeSep {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(15, 30, 50, 0.3);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  animation: langBackdropIn 400ms ease-out;
+}
+
+@keyframes langBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .langDialogCard {
-  max-width: 340px;
+  max-width: 380px;
   width: calc(100% - 2rem);
-  border-radius: 18px;
-  padding: 1.5rem;
+  border-radius: 24px;
+  padding: 0 0 1.75rem 0;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  animation: langDialogIn 280ms cubic-bezier(0.22, 0.9, 0.32, 1);
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border: 1px solid rgba(180, 210, 240, 0.5);
+  box-shadow:
+    0 4px 16px rgba(15, 110, 180, 0.08),
+    0 20px 60px rgba(15, 60, 130, 0.12);
+  overflow: hidden;
+  animation: langDialogIn 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes langDialogIn {
-  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  from { opacity: 0; transform: scale(0.88) translateY(20px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+.langDialogAccent {
+  width: 100%;
+  height: 72px;
+  background: linear-gradient(135deg, #43e97b 0%, #38a3f1 50%, #7c5cf8 100%);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.langDialogIcon {
+  position: absolute;
+  bottom: -22px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 80, 160, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
 .langDialogTitle {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 2.2rem 0 0 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.langDialogSubtitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0.15rem 0 0 0;
+  color: var(--text);
+  opacity: 0.7;
 }
 
 .langDialogHint {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--muted);
-  margin: 0;
+  margin: 0.25rem 0 0 0;
+  letter-spacing: 0.02em;
 }
 
 .langDialogButtons {
   display: flex;
-  gap: 0.55rem;
+  gap: 0.65rem;
   justify-content: center;
-  margin-top: 0.25rem;
+  margin-top: 1.25rem;
+  padding: 0 1.5rem;
+  width: 100%;
 }
 
-.langDialogButtons .btn {
+.langBtn {
   flex: 1;
-  padding: 0.65rem 0.5rem;
-  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 16px;
+  border: 1.5px solid #dce8f5;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms ease,
+              border-color 200ms ease,
+              background 200ms ease;
+  min-height: 72px;
+  position: relative;
+}
+
+.langBtn:hover {
+  transform: translateY(-3px);
+  border-color: #7cc4fa;
+  box-shadow: 0 6px 20px rgba(56, 163, 241, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #edf6ff 100%);
+}
+
+.langBtn:active {
+  transform: translateY(0px) scale(0.97);
+  box-shadow: 0 2px 8px rgba(56, 163, 241, 0.12);
+}
+
+.langBtnFlag {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.langBtnLabel {
+  font-size: 0.88rem;
   font-weight: 700;
-  border-radius: 12px;
-  min-height: 48px;
+  color: var(--text);
+  letter-spacing: 0.01em;
 }
 
 /* ---- Floating toolbar (mobile) ---- */
