@@ -5,7 +5,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
+import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
 import { countyNameNorm as geoCountyNameNorm, countyFeatureName as geoCountyFeatureName } from "../lib/geo";
@@ -756,6 +756,9 @@ function MapClient({
     onRecenterUser?.();
   };
 
+  const zoomIn = () => mapRef.current?.zoomIn();
+  const zoomOut = () => mapRef.current?.zoomOut();
+
   const countyStyle = (feature?: GeoJSON.Feature) => {
     const countyName = countyFeatureName(feature);
     const avg = countyRisk.get(countyName);
@@ -784,6 +787,20 @@ function MapClient({
 
   return (
     <div className={`mapShell ${isFullscreen ? "isFullscreen" : ""}`}>
+      {/* On mobile: custom zoom +/- at bottom-left (Leaflet's native control
+          is disabled because the fixed search bar covers the top-left area).
+          Mirrors Google Maps: zoom at bottom-left, utility controls at
+          bottom-right. */}
+      {isMobile ? (
+        <div className="mapFloatingControls mapZoomControls">
+          <button type="button" className="mapFloatingBtn mapZoomBtn" onClick={zoomIn} aria-label="Zoom in" title="Zoom in">
+            +
+          </button>
+          <button type="button" className="mapFloatingBtn mapZoomBtn" onClick={zoomOut} aria-label="Zoom out" title="Zoom out">
+            −
+          </button>
+        </div>
+      ) : null}
       {!(isMobile && isFullscreen) ? (
         <div className="mapFloatingControls">
           <button type="button" className="mapFloatingBtn mapResetBtn" onClick={resetView} aria-label={resetViewLabel} title={resetViewLabel}>
@@ -818,10 +835,12 @@ function MapClient({
         zoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
+        zoomControl={false}
         style={{ height: "100%", width: "100%", borderRadius: (isFullscreen || isMobile) ? "0" : "12px" }}
         scrollWheelZoom
         preferCanvas
       >
+        {!isMobile && <ZoomControl position="topleft" />}
         <TileLayer
           attribution='Tiles &copy; Esri, OpenStreetMap contributors'
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"

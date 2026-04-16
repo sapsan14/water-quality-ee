@@ -1553,6 +1553,18 @@ html[data-theme="dark"] .mapChipDivider {
   cursor: not-allowed;
 }
 
+/* Mobile zoom +/− at bottom-left (mirrors Google Maps placement) */
+.mapZoomControls {
+  right: auto;
+  left: calc(0.7rem + env(safe-area-inset-left, 0px));
+}
+
+.mapZoomBtn {
+  position: static;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .mapPanelFullscreen {
   position: fixed;
   inset: 0;
@@ -3574,6 +3586,11 @@ html[data-theme="dark"] .dateRangeSep {
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
     /* Keep above the collapsed bottom sheet (62px) */
     bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mapZoomControls {
+    right: auto;
+    left: calc(0.5rem + env(safe-area-inset-left, 0px));
   }
 
   .infoCardGrid {
