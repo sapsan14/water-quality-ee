@@ -390,6 +390,7 @@ export default function Dashboard({ snapshot }: Props) {
   const [infoPageOpen, setInfoPageOpen] = useState(false);
   const [infoPageTab, setInfoPageTab] = useState<TabKey>("analytics");
   const [toast, setToast] = useState<string | null>(null);
+  const [freshnessBubble, setFreshnessBubble] = useState<string | null>(null);
   // Transient count bubble shown when the user taps the Alerts / Near-me
   // chip icon on top of the map. `seq` keeps each invocation distinct so
   // repeated taps restart the fade-out animation.
@@ -751,6 +752,11 @@ export default function Dashboard({ snapshot }: Props) {
     const t = setTimeout(() => setToast(null), 3200);
     return () => clearTimeout(t);
   }, [toast]);
+  useEffect(() => {
+    if (!freshnessBubble) return;
+    const t = setTimeout(() => setFreshnessBubble(null), 5000);
+    return () => clearTimeout(t);
+  }, [freshnessBubble]);
   const expertModeText =
     lang === "ru"
       ? [
@@ -1358,12 +1364,15 @@ export default function Dashboard({ snapshot }: Props) {
   useEffect(() => {
     if (!isMobile || freshnessToastFiredRef.current || !dataFetchedLabel) return;
     freshnessToastFiredRef.current = true;
-    const updatedLabel = lruet(lang, "Обновлено", "Uuendatud", "Updated");
-    // If data and model timestamps match (same pipeline run), show once
-    const msg = (modelTrainedLabel && modelTrainedLabel !== dataFetchedLabel)
-      ? `${lruet(lang, "Данные", "Andmed", "Data")}: ${dataFetchedLabel} · ${lruet(lang, "Модель", "Mudel", "Model")}: ${modelTrainedLabel}`
-      : `${updatedLabel}: ${dataFetchedLabel}`;
-    const timer = setTimeout(() => setToast(msg), 4500);
+    const dataLabel = lruet(lang, "Данные", "Andmed", "Data");
+    const modelLabel = lruet(lang, "Модель", "Mudel", "Model");
+    const timer = setTimeout(() => {
+      setFreshnessBubble(
+        modelTrainedLabel
+          ? `${dataLabel}: ${dataFetchedLabel}\n${modelLabel}: ${modelTrainedLabel}`
+          : `${dataLabel}: ${dataFetchedLabel}`
+      );
+    }, 4500);
     return () => clearTimeout(timer);
   }, [isMobile, lang, dataFetchedLabel, modelTrainedLabel]);
 
@@ -2016,6 +2025,13 @@ export default function Dashboard({ snapshot }: Props) {
   return (
     <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
       {toast ? <div className="toastBanner">{toast}</div> : null}
+      {freshnessBubble ? (
+        <div className="freshnessBubble" aria-live="polite">
+          {freshnessBubble.split("\n").map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      ) : null}
       {countBubble ? (
         <div key={countBubble.seq} className="countBubble" aria-live="polite">
           {countBubble.text}
@@ -3817,6 +3833,23 @@ export default function Dashboard({ snapshot }: Props) {
             {infoPageTab === "analytics" ? (
               <div>
                 <h4>{t.tabs.analytics}</h4>
+                {/* Data / Model freshness */}
+                <div className="freshnessDiag">
+                  <div className="freshnessDiagRow">
+                    <span className="freshnessDiagLabel">{lruet(lang, "Данные обновлены", "Andmed uuendatud", "Data updated")}</span>
+                    <span className="freshnessDiagValue">{dataFetchedLabel ?? "—"}</span>
+                  </div>
+                  {modelTrainedLabel ? (
+                    <div className="freshnessDiagRow">
+                      <span className="freshnessDiagLabel">{lruet(lang, "Модель обучена", "Mudel treenitud", "Model trained")}</span>
+                      <span className="freshnessDiagValue">{modelTrainedLabel}</span>
+                    </div>
+                  ) : null}
+                  <div className="freshnessDiagRow">
+                    <span className="freshnessDiagLabel">{lruet(lang, "Расписание", "Ajakava", "Schedule")}</span>
+                    <span className="freshnessDiagValue">{lruet(lang, "еженедельно (пн) + 1-е число", "iganädalane (E) + kuu 1.", "weekly (Mon) + 1st of month")}</span>
+                  </div>
+                </div>
                 <div className="stats">
                   {quickInsights.map((i) => (
                     <div className="stat" key={`ip-qi-${i.key}`}>
