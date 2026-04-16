@@ -294,11 +294,11 @@ function MarkerClusterLayer({
       }
     });
 
-    // Custom cluster click: if all children share (nearly) the same
-    // coordinates, show them as a list in the bottom sheet (via
-    // onSelectCluster) instead of zooming — which would just
-    // re-cluster them at a higher zoom level. For spread clusters,
-    // zoom to bounds as usual.
+    // Custom cluster click: zoom to resolve sub-clusters first. Only
+    // show a pick-list in the bottom sheet when zooming can't separate
+    // the markers further (co-located points at the same physical
+    // location). This avoids dumping hundreds of items into the sheet
+    // for large geographic clusters that can still be broken down.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
@@ -306,24 +306,23 @@ function MarkerClusterLayer({
         const cluster = evt.layer;
         const bounds = cluster.getBounds();
 
-        // ~50 meters in lat/lon degrees — any cluster fitting in this
-        // box has all children at effectively the same physical location.
-        const THRESHOLD = 0.0005;
-        const latSpan = bounds.getNorth() - bounds.getSouth();
-        const lngSpan = bounds.getEast() - bounds.getWest();
+        // Check if zooming would actually help separate children.
+        // getBoundsZoom returns the zoom level needed to fit the
+        // cluster's bounds — if that's beyond maxZoom or not higher
+        // than the current zoom, zooming won't resolve sub-clusters.
+        const boundsZoom = map.getBoundsZoom(bounds);
+        const canZoomFurther = boundsZoom > map.getZoom() && boundsZoom <= (map.getMaxZoom() || 15);
 
-        if (latSpan < THRESHOLD && lngSpan < THRESHOLD) {
-          // Co-located: show list in bottom sheet, cluster stays on map
-          if (onSelectCluster) {
-            const ids = cluster.getAllChildMarkers()
-              .map((m) => m.options?.place?.id)
-              .filter((id): id is string => Boolean(id));
-            onSelectCluster(ids);
-          } else {
-            cluster.spiderfy();
-          }
-        } else {
+        if (canZoomFurther) {
           cluster.zoomToBounds({ padding: [20, 20] });
+        } else if (onSelectCluster) {
+          // Can't zoom further — show pick-list in bottom sheet
+          const ids = cluster.getAllChildMarkers()
+            .map((m) => m.options?.place?.id)
+            .filter((id): id is string => Boolean(id));
+          onSelectCluster(ids);
+        } else {
+          cluster.spiderfy();
         }
       }
     );

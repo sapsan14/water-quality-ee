@@ -3218,6 +3218,9 @@ export default function Dashboard({ snapshot }: Props) {
                     </div>
                     <p className="gmCopyright">
                       © {new Date().getFullYear()} H2O Atlas ·{" "}
+                      <a href="https://github.com/sapsan14/water-quality-ee" target="_blank" rel="noreferrer">GitHub</a>
+                      {" · "}TalTech Masin&otilde;pe 2026
+                      <br />
                       {lruet(lang, "Открытые данные Terviseamet + ML", "Terviseameti avaandmed + ML", "Terviseamet open data + ML")}
                     </p>
                   </div>
@@ -4060,6 +4063,24 @@ export default function Dashboard({ snapshot }: Props) {
                     </article>
                   ))}
                 </div>
+
+                {/* Academic context */}
+                <div style={{ margin: "0.75rem 0", padding: "0.6rem 0.8rem", background: "var(--panel-soft, #eef1f5)", borderRadius: 8, borderLeft: "3px solid var(--brand, #2563eb)" }}>
+                  <h5 style={{ marginBottom: "0.35rem", fontSize: "0.82rem" }}>
+                    {lruet(lang, "Об авторе и проекте", "Autor ja projekt", "Author & project")}
+                  </h5>
+                  <p className="hint" style={{ margin: 0, lineHeight: 1.6 }}>
+                    {lruet(lang,
+                      "Курсовой проект Anton Sokolov \u00b7 TalTech Masin\u00f5pe (Machine Learning), весна 2026. Код, данные и модели\u2009—\u2009открыты.",
+                      "Kursuset\u00f6\u00f6: Anton Sokolov \u00b7 TalTech Masin\u00f5pe (Machine Learning), kevad 2026. Kood, andmed ja mudelid\u2009—\u2009avatud.",
+                      "Course project by Anton Sokolov \u00b7 TalTech Masin\u00f5pe (Machine Learning), spring 2026. Code, data, and models are open."
+                    )}
+                    {" "}
+                    <a href="https://github.com/sapsan14/water-quality-ee" target="_blank" rel="noreferrer" className="linkBtn">
+                      {lruet(lang, "Репозиторий на GitHub", "GitHubi repositoorium", "GitHub repository")}
+                    </a>
+                  </p>
+                </div>
               </div>
             ) : null}
 
@@ -4067,6 +4088,9 @@ export default function Dashboard({ snapshot }: Props) {
                 always sees attribution and disclaimer. */}
             <p className="gmCopyright" style={{ marginTop: "1.2rem" }}>
               © {new Date().getFullYear()} H2O Atlas ·{" "}
+              <a href="https://github.com/sapsan14/water-quality-ee" target="_blank" rel="noreferrer">GitHub</a>
+              {" · "}TalTech Masin&otilde;pe 2026
+              <br />
               {lruet(
                 lang,
                 "Открытые данные Terviseamet · ML — поддержка решений, не медицинская рекомендация.",
