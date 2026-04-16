@@ -129,6 +129,19 @@ def add_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
             np.nan,
         )
 
+    # Колиформы: норма = 0 для питьевой воды и бассейнов (EU 2020/2184, EE pool reg).
+    # EU 2006/7/EC (bathing) не регулирует колиформы — только e_coli + enterococci.
+    # Бинарный признак coliforms_detected (аналогично pseudomonas_detected).
+    # Phase 11: добавлен после аудита Phase 10 (2 164 hidden_violation, из которых
+    # 777 в veevark были частично обусловлены отсутствием coliforms-фичи).
+    if "coliforms" in df.columns:
+        is_bathing = (df.get("domain") == "supluskoha") if "domain" in df.columns else pd.Series(False, index=df.index)
+        df["coliforms_detected"] = np.where(
+            ~is_bathing & df["coliforms"].notna(),
+            (df["coliforms"] > 0).astype(float),
+            np.nan,
+        )
+
     # Свободный хлор: нарушение если < min (мало) или > max (много)
     if "free_chlorine" in df.columns:
         fc = df["free_chlorine"]
@@ -261,11 +274,13 @@ _NORMS_RATIO_PARAMS = [
     "manganese", "iron", "turbidity", "color",            # veevark/joogivesi
     "chlorides", "sulfates",                              # veevark
 ]
-# Параметры без ratio в NORMS: transparency (нет нормы), coliforms (норма 0 для веды,
-# нет смысла делить), oxidizability, colonies_37c (бассейновые, без стандартной нормы)
+# Параметры без ratio в NORMS: transparency (нет нормы), coliforms (норма 0 → бинарный
+# coliforms_detected, не ratio), oxidizability, colonies_37c (без стандартной нормы)
 RATIO_COLS = [f"{p}_ratio" for p in _NORMS_RATIO_PARAMS]
 RATIO_COLS += [
     "ph_deviation",
+    # Phase 11: coliforms_detected для non-bathing доменов (veevark/joogivesi/basseinid)
+    "coliforms_detected",
     # Бассейновые ratio/deviation (только для domain=basseinid, иначе NaN)
     "staphylococci_ratio",
     "pseudomonas_detected",
