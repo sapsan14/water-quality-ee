@@ -294,42 +294,35 @@ function MarkerClusterLayer({
       }
     });
 
-    // Custom cluster click: on mobile, always show the cluster's children
-    // as a pick-list in the bottom sheet (there's no hover, so the sheet is
-    // the natural way to browse overlapping points). On desktop, co-located
-    // clusters also use the pick-list while spread clusters zoom to bounds.
+    // Custom cluster click: zoom to resolve sub-clusters first. Only
+    // show a pick-list in the bottom sheet when zooming can't separate
+    // the markers further (co-located points at the same physical
+    // location). This avoids dumping hundreds of items into the sheet
+    // for large geographic clusters that can still be broken down.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
         const evt = e as { layer: ClusterLike };
         const cluster = evt.layer;
+        const bounds = cluster.getBounds();
 
-        // Mobile: always show pick-list (disableHoverPopups === mobile)
-        if (disableHoverPopups && onSelectCluster) {
+        // Check if zooming would actually help separate children.
+        // getBoundsZoom returns the zoom level needed to fit the
+        // cluster's bounds — if that's beyond maxZoom or not higher
+        // than the current zoom, zooming won't resolve sub-clusters.
+        const boundsZoom = map.getBoundsZoom(bounds);
+        const canZoomFurther = boundsZoom > map.getZoom() && boundsZoom <= (map.getMaxZoom() || 15);
+
+        if (canZoomFurther) {
+          cluster.zoomToBounds({ padding: [20, 20] });
+        } else if (onSelectCluster) {
+          // Can't zoom further — show pick-list in bottom sheet
           const ids = cluster.getAllChildMarkers()
             .map((m) => m.options?.place?.id)
             .filter((id): id is string => Boolean(id));
           onSelectCluster(ids);
-          return;
-        }
-
-        // Desktop: co-located clusters → pick-list; spread → zoom to bounds
-        const bounds = cluster.getBounds();
-        const THRESHOLD = 0.0005; // ~50 meters
-        const latSpan = bounds.getNorth() - bounds.getSouth();
-        const lngSpan = bounds.getEast() - bounds.getWest();
-
-        if (latSpan < THRESHOLD && lngSpan < THRESHOLD) {
-          if (onSelectCluster) {
-            const ids = cluster.getAllChildMarkers()
-              .map((m) => m.options?.place?.id)
-              .filter((id): id is string => Boolean(id));
-            onSelectCluster(ids);
-          } else {
-            cluster.spiderfy();
-          }
         } else {
-          cluster.zoomToBounds({ padding: [20, 20] });
+          cluster.spiderfy();
         }
       }
     );
