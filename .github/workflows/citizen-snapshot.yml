@@ -9,7 +9,9 @@
 # Координаты (каскад):
 #   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha, без ключа)
 #   2. veevargid.xml — координаты объектов водопровода из vtiav.sm.ee (veevark, без ключа)
-#   3. OpenCage (OPENCAGE_API_KEY) — для всех доменов; без ключа — только кэш.
+#   3. Google Maps Geocoding → Geoapify → OpenCage — полный каскад для всех доменов.
+#   4. patch_geocode_approximate.py — дополнительный проход для approximate_ee точек.
+# Секреты: OPENCAGE_API_KEY, GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY.
 # Лимит HTTP: dispatch → из inputs; cron → 4000. Кэши и артефакты коммитятся в репо.
 
 name: Citizen snapshot
@@ -98,6 +100,8 @@ jobs:
         if: steps.wf.outputs.mode != 'full'
         env:
           OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
           python citizen-service/scripts/build_citizen_snapshot.py \
             --map-only \
@@ -110,6 +114,8 @@ jobs:
         if: steps.wf.outputs.mode == 'full'
         env:
           OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
           python citizen-service/scripts/build_citizen_snapshot.py \
             --infer-county \
@@ -118,14 +124,20 @@ jobs:
             --log-level INFO
 
       - name: Enrich coordinates (EEA bathing water → veevargid.xml → OpenCage cache)
-        # EEA и veevargid.xml не требуют API-ключа — работают для supluskoha и veevark.
-        # OpenCage подхватывает остальные домены из уже накопленного кэша.
         env:
           OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
         run: |
           python citizen-service/scripts/enrich_coordinates.py \
             --limit 0 \
             --quiet
+
+      - name: Geocode approximate_ee points (Google → Geoapify → OpenCage cascade)
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+        run: |
+          python citizen-service/scripts/patch_geocode_approximate.py
 
       - name: Export frontend snapshot JSON
         run: |
@@ -140,7 +152,9 @@ jobs:
             citizen-service/artifacts/citizen_model.joblib
             citizen-service/data/coordinate_resolve_cache.json
             citizen-service/data/geocode_cache.json
+            citizen-service/data/paged_address_cache.json
             frontend/public/data/snapshot.frontend.json
+            frontend/public/data/snapshot.history.json
 
       - name: Upload snapshot artifact
         uses: actions/upload-artifact@v4
@@ -149,3 +163,4 @@ jobs:
           path: |
             citizen-service/artifacts/snapshot.json
             frontend/public/data/snapshot.frontend.json
+            frontend/public/data/snapshot.history.json
