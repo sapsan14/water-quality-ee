@@ -2040,13 +2040,26 @@ export default function Dashboard({ snapshot }: Props) {
 
       {showLangDialog ? (
         <div className="langDialogBackdrop">
-          <div className="langDialogCard panel">
-            <p className="langDialogTitle">Choose language / Выберите язык</p>
+          <div className="langDialogCard">
+            <div className="langDialogAccent" aria-hidden="true">
+              <span className="langDialogIcon">💧</span>
+            </div>
+            <p className="langDialogTitle">Choose language</p>
+            <p className="langDialogSubtitle">Выберите язык</p>
             <p className="langDialogHint">Keel / Language / Язык</p>
             <div className="langDialogButtons">
-              <button className="btn" onClick={() => chooseLang("et")}>Eesti</button>
-              <button className="btn" onClick={() => chooseLang("ru")}>Русский</button>
-              <button className="btn" onClick={() => chooseLang("en")}>English</button>
+              <button className="langBtn" onClick={() => chooseLang("et")}>
+                <span className="langBtnFlag">🇪🇪</span>
+                <span className="langBtnLabel">Eesti</span>
+              </button>
+              <button className="langBtn" onClick={() => chooseLang("ru")}>
+                <span className="langBtnFlag">🇷🇺</span>
+                <span className="langBtnLabel">Русский</span>
+              </button>
+              <button className="langBtn" onClick={() => chooseLang("en")}>
+                <span className="langBtnFlag">🇬🇧</span>
+                <span className="langBtnLabel">English</span>
+              </button>
             </div>
           </div>
         </div>
