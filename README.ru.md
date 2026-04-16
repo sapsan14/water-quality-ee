@@ -10,6 +10,8 @@
 [![Data source](https://img.shields.io/badge/Data-Terviseamet-0063AF?style=for-the-badge)](https://vtiav.sm.ee/index.php/?active_tab_id=A)
 [![Estonia](https://img.shields.io/badge/Estonia-opendata-0072CE?style=for-the-badge)](https://en.wikipedia.org/wiki/Estonia)
 
+  [Eesti](README.md) | [English](README.en.md) | **[Русский]**
+
 </div>
 
 **Автор:** Anton Sokolov  
