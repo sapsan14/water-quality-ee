@@ -212,7 +212,7 @@ def main() -> None:
                 "search_text": search_text,
                 "measurements_count": len(measurements),
                 "measurements": measurements,
-                "sample_history": sample_history,
+                "sample_history": sample_history[:12],
             }
         )
 
