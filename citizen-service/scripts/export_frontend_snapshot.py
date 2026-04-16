@@ -168,8 +168,12 @@ def main() -> None:
         county = p.get("county")
         domain = str(p.get("domain") or "other")
         place_kind = str(p.get("place_kind") or "other")
-        history_key = (domain, location)
-        sample_history = history_index.get(history_key, [])
+        # History priority: 1) snapshot.json (built by build_citizen_snapshot),
+        # 2) raw_combined.csv exact match, 3) raw_combined.csv normalized match.
+        sample_history = p.get("sample_history") or []
+        if not sample_history:
+            history_key = (domain, location)
+            sample_history = history_index.get(history_key, [])
         if not sample_history:
             history_key_norm = (domain, _normalize_location_for_history(domain, location))
             sample_history = history_index_norm.get(history_key_norm, [])
