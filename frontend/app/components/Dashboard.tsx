@@ -756,7 +756,7 @@ export default function Dashboard({ snapshot }: Props) {
     if (!freshnessBubble) return;
     const t = setTimeout(() => setFreshnessBubble(null), 5000);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [freshnessBubble]);
   const expertModeText =
     lang === "ru"
       ? [
