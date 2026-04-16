@@ -63,6 +63,8 @@ These questions would help us accurately describe the data in our project report
 
 **Q5.** Is there a documented publication-frequency policy we could reference in our limitations section?
 
+**Q6.** How frequently does Terviseamet update the opendata XML files on vtiav.sm.ee? Is it real-time (as new lab results arrive), daily, weekly, or at another cadence? Our citizen service ([h2oatlas.ee](https://h2oatlas.ee)) currently refreshes data and retrains models **weekly** (every Monday) and on the **1st of each month**, via automated GitHub Actions. If your data updates more frequently, we would be happy to increase our refresh cadence to match. What update frequency would you consider appropriate for a public-facing service like ours?
+
 ---
 
 ### What we offer

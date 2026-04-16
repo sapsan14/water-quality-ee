@@ -280,6 +280,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_model": "О модели",
         "nav_about_service": "О сервисе",
         "last_measured": "Последнее измерение",
+        "data_updated": "Данные обновлены",
+        "update_schedule": "обновление: еженедельно (пн) + 1-е число месяца",
         "no_snap": "Нет файла снимка данных.",
     },
     "EN": {
@@ -294,6 +296,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_model": "About Model",
         "nav_about_service": "About Service",
         "last_measured": "Last measured",
+        "data_updated": "Data updated",
+        "update_schedule": "schedule: weekly (Mon) + 1st of month",
         "no_snap": "No snapshot file found.",
     },
     "ET": {
@@ -308,6 +312,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav_about_model": "Mudeli kohta",
         "nav_about_service": "Teenuse kohta",
         "last_measured": "Viimati mõõdetud",
+        "data_updated": "Andmed uuendatud",
+        "update_schedule": "ajakava: iganädalane (E) + kuu 1. kuupäev",
         "no_snap": "Hetktõmmise fail puudub.",
     },
 }
@@ -1506,6 +1512,17 @@ div[data-testid="stRadio"][data-key="lang_radio"] p { display: none; }
             "`python citizen-service/scripts/build_citizen_snapshot.py --map-only`\n\n"
             "`python citizen-service/scripts/build_citizen_snapshot.py`")
         return
+
+    # ── data freshness badge ─────────────────────────────────────────────
+    _gen_at = snap.get("generated_at", "")
+    try:
+        _gen_dt = datetime.fromisoformat(_gen_at)
+        if _gen_dt.tzinfo is None:
+            _gen_dt = _gen_dt.replace(tzinfo=timezone.utc)
+        _gen_str = _gen_dt.strftime("%Y-%m-%d %H:%M UTC")
+    except Exception:
+        _gen_str = _gen_at or "?"
+    st.caption(f"{T['data_updated']}: **{_gen_str}** · {T['update_schedule']}")
 
     _log_snapshot_coordinate_health(snap)
 
