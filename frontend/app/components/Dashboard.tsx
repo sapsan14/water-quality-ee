@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
+import { pointInFeature, findCountyFeature } from "../lib/geo";
 
 const MapClient = dynamic(() => import("./MapClient"), {
   ssr: false,
@@ -435,6 +436,10 @@ export default function Dashboard({ snapshot }: Props) {
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // When a co-located cluster is tapped on mobile, its child place IDs
+  // are stored here so the bottom sheet can show a pick-list instead of
+  // trying to spiderfy (which collapses right back on touch devices).
+  const [clusterPlaceIds, setClusterPlaceIds] = useState<string[] | null>(null);
   const [watchlist, setWatchlist] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -458,6 +463,10 @@ export default function Dashboard({ snapshot }: Props) {
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
   const [sheetMode, setSheetMode] = useState<MobileSheetMode>("place");
+  // County GeoJSON loaded at Dashboard level so both the `filtered` useMemo
+  // (polygon-based county filtering) and MapClient (overlay rendering) share
+  // a single fetch.
+  const [countyGeoJson, setCountyGeoJson] = useState<GeoJSON.GeoJsonObject | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const sheetDragStartY = useRef<number | null>(null);
   const sheetDragLastY = useRef<number | null>(null);
@@ -1232,12 +1241,25 @@ export default function Dashboard({ snapshot }: Props) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // When a county is selected, prefer geographic polygon containment so
+    // every point physically inside that county is counted — even if its
+    // `county` metadata field is empty or mismatched. Falls back to string
+    // matching when the GeoJSON hasn't loaded yet.
+    const countyFeature = county !== "all" ? findCountyFeature(county, countyGeoJson) : null;
     return snapshot.places.filter((p) => {
       if (segment !== "all") {
         if (p.place_kind !== segment) return false;
       }
       if (risk !== "all" && p.risk_level !== risk) return false;
-      if (county !== "all" && countyKey(p.county || "Unknown") !== county) return false;
+      if (county !== "all") {
+        if (countyFeature) {
+          // Polygon-based: include any point geographically inside the county
+          if (!pointInFeature(p.lon, p.lat, countyFeature)) return false;
+        } else {
+          // Fallback to string-based before GeoJSON loads
+          if (countyKey(p.county || "Unknown") !== county) return false;
+        }
+      }
       if (official === "compliant" && p.official_compliant !== 1) return false;
       if (official === "violation" && p.official_compliant !== 0) return false;
       if (official === "unknown" && p.official_compliant !== null) return false;
@@ -1255,7 +1277,7 @@ export default function Dashboard({ snapshot }: Props) {
       if (q && !p.search_text.includes(q)) return false;
       return true;
     });
-  }, [snapshot.places, query, segment, risk, county, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
+  }, [snapshot.places, query, segment, risk, county, countyGeoJson, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
 
   // Counts restricted to what's currently rendered on the map (after the
@@ -1382,6 +1404,32 @@ export default function Dashboard({ snapshot }: Props) {
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
+
+  // Load county GeoJSON once. Shared with MapClient (via prop) so both
+  // polygon-based county filtering in `filtered` and overlay rendering
+  // use the same data without duplicate fetches.
+  useEffect(() => {
+    if (countyGeoJson) return;
+    let alive = true;
+    const idle = (cb: () => void) => {
+      const ric = (window as unknown as { requestIdleCallback?: (fn: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+      if (typeof ric === "function") return ric(cb, { timeout: 2000 });
+      return window.setTimeout(cb, 300);
+    };
+    const cancelIdle = (id: number) => {
+      const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (typeof cic === "function") cic(id);
+      else window.clearTimeout(id);
+    };
+    const handle = idle(() => {
+      if (!alive) return;
+      fetch("/data/estonia_counties_simplified.geojson", { cache: "force-cache" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (alive) setCountyGeoJson(d); })
+        .catch(() => { if (alive) setCountyGeoJson(null); });
+    });
+    return () => { alive = false; cancelIdle(handle); };
+  }, [countyGeoJson]);
 
   // Track the on-screen keyboard via VisualViewport so map focus calls
   // can offset the marker above the IME / bottom sheet.
@@ -1526,6 +1574,13 @@ export default function Dashboard({ snapshot }: Props) {
     if (!selectedId) return null;
     return snapshot.places.find((p) => p.id === selectedId) || null;
   }, [selectedId, snapshot.places]);
+
+  // Resolved places for a tapped co-located cluster (bottom-sheet list).
+  const clusterPlaces = useMemo(() => {
+    if (!clusterPlaceIds || clusterPlaceIds.length === 0) return null;
+    const idSet = new Set(clusterPlaceIds);
+    return snapshot.places.filter((p) => idSet.has(p.id));
+  }, [clusterPlaceIds, snapshot.places]);
 
   const watchlistPlaces = useMemo(() => {
     const byId = new Set(watchlist);
@@ -1749,10 +1804,23 @@ export default function Dashboard({ snapshot }: Props) {
 
   const selectPoint = useCallback((id: string) => {
     setSelectedId(id);
+    setClusterPlaceIds(null); // clear cluster list when a specific place is picked
     if (isMobile) {
       setSheetMode("place");
       setMobilePanelState("half");
       // Map stays fullscreen — Google Maps style
+    }
+  }, [isMobile]);
+
+  // Called when a co-located cluster is tapped on mobile. Shows the
+  // cluster's children as a pick-list in the bottom sheet instead of
+  // spiderfying (which collapses on touch-driven map moves).
+  const handleClusterSelect = useCallback((ids: string[]) => {
+    setClusterPlaceIds(ids);
+    setSelectedId(null);
+    if (isMobile) {
+      setSheetMode("place");
+      setMobilePanelState("half");
     }
   }, [isMobile]);
 
@@ -1800,14 +1868,15 @@ export default function Dashboard({ snapshot }: Props) {
     });
   };
 
-  // Auto-collapse sheet when in place mode but nothing is selected.
+  // Auto-collapse sheet when in place mode but nothing is selected
+  // (and no cluster list is open either).
   // Deferred via setTimeout to avoid calling setState synchronously in an effect body.
   useEffect(() => {
-    if (mobilePanelState !== "collapsed" && sheetMode === "place" && !selectedPlace) {
+    if (mobilePanelState !== "collapsed" && sheetMode === "place" && !selectedPlace && !clusterPlaces) {
       const t = window.setTimeout(() => setMobilePanelState("collapsed"), 0);
       return () => window.clearTimeout(t);
     }
-  }, [mobilePanelState, sheetMode, selectedPlace]);
+  }, [mobilePanelState, sheetMode, selectedPlace, clusterPlaces]);
 
   const onSheetPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     sheetDragStartY.current = e.clientY;
@@ -2668,6 +2737,7 @@ export default function Dashboard({ snapshot }: Props) {
         <MapClient
           places={mapPlaces}
           onSelectPoint={selectPoint}
+          onSelectCluster={handleClusterSelect}
           onSelectCounty={handleCountySelect}
           selectedCounty={county !== "all" ? countyPretty(county) : undefined}
           locale={lang}
@@ -2682,6 +2752,7 @@ export default function Dashboard({ snapshot }: Props) {
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
           showCountyOverlay={!isMobile}
+          countyGeoJson={countyGeoJson}
           fitBoundsKey={fitBoundsKey}
           fitBoundsPlaces={fitBoundsPlaces}
           /* When the bottom sheet is half/full or the keyboard is open,
@@ -2955,12 +3026,16 @@ export default function Dashboard({ snapshot }: Props) {
             /* Place mode header */
             <div className="gmSheetModeHeader">
               <span className="gmSheetModeTitle">
-                {selectedPlace ? selectedPlace.location : lruet(lang, "Выберите точку", "Vali koht", "Select a place")}
+                {selectedPlace
+                  ? selectedPlace.location
+                  : clusterPlaces
+                    ? lruet(lang, `${clusterPlaces.length} мест в этой точке`, `${clusterPlaces.length} kohta selles punktis`, `${clusterPlaces.length} places at this location`)
+                    : lruet(lang, "Выберите точку", "Vali koht", "Select a place")}
               </span>
               <button
                 className="gmSheetCloseBtn"
                 type="button"
-                onClick={() => setMobilePanelState("collapsed")}
+                onClick={() => { setMobilePanelState("collapsed"); setClusterPlaceIds(null); }}
                 aria-label={t.close}
               >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
@@ -3122,7 +3197,43 @@ export default function Dashboard({ snapshot }: Props) {
               ) : (
                 /* ---- PLACE MODE ---- */
                 <div className="gmSheetPlaceContent">
-                  {!selectedPlace ? (
+                  {!selectedPlace && clusterPlaces ? (
+                    /* Cluster pick-list: tapping a co-located cluster on
+                       mobile shows its children here instead of spiderfying. */
+                    <div className="gmClusterList">
+                      {clusterPlaces.map((cp) => (
+                        <button
+                          key={cp.id}
+                          type="button"
+                          className="gmClusterItem"
+                          onClick={() => selectPoint(cp.id)}
+                        >
+                          <span className="gmClusterItemEmoji" aria-hidden="true">
+                            {cp.place_kind === "swimming" ? "🏖" : cp.place_kind === "pool_spa" ? "🏊" : cp.place_kind === "drinking_water" ? "🚰" : "💧"}
+                          </span>
+                          <span className="gmClusterItemBody">
+                            <span className="gmClusterItemName">{cp.location}</span>
+                            <span className="gmClusterItemMeta">
+                              {placeKindLabel(cp.place_kind)}
+                              {cp.county ? ` · ${countyPretty(cp.county)}` : ""}
+                            </span>
+                          </span>
+                          <span className="gmClusterItemBadges">
+                            {cp.official_compliant === 0 ? (
+                              <span className="badge bad" style={{ fontSize: "0.7rem" }}>✗</span>
+                            ) : cp.official_compliant === 1 ? (
+                              <span className="badge good" style={{ fontSize: "0.7rem" }}>✓</span>
+                            ) : null}
+                            {cp.risk_level === "high" ? (
+                              <span className="badge bad" style={{ fontSize: "0.7rem" }}>▲</span>
+                            ) : cp.risk_level === "medium" ? (
+                              <span className="badge warn" style={{ fontSize: "0.7rem" }}>▲</span>
+                            ) : null}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : !selectedPlace ? (
                     <p className="hint" style={{ textAlign: "center", paddingTop: "1.2rem" }}>
                       {lruet(lang, "Нажмите на метку на карте", "Vajuta kaardil märgile", "Tap a marker on the map")}
                     </p>

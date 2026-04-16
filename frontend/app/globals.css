@@ -1749,6 +1749,69 @@ body.mapFullscreenActive {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* Cluster pick-list: shown when a co-located cluster is tapped.
+   Each row is a tappable place with emoji + name + status badges. */
+.gmClusterList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gmClusterItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.5rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  transition: background 120ms ease;
+}
+
+.gmClusterItem:active {
+  background: rgba(100, 130, 180, 0.12);
+}
+
+.gmClusterItemEmoji {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.gmClusterItemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gmClusterItemName {
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  /* Allow wrap for long names — same 2-line clamp as header */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.gmClusterItemMeta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.gmClusterItemBadges {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+}
+
 /* Compact typography for controls inside the mobile bottom sheet —
    keeps the drawer quiet on small screens. */
 .gmSheetFilterContent .field label,

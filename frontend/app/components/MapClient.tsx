@@ -8,6 +8,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
+import { pointInFeature, countyNameNorm as geoCountyNameNorm, countyFeatureName as geoCountyFeatureName } from "../lib/geo";
 
 type DomainKey = "supluskoha" | "veevark" | "joogivesi" | "basseinid";
 type NormRule = { min?: number; max?: number; exact?: number; unit: string };
@@ -150,7 +151,7 @@ const placeKindLabel = (kind: string, locale: "ru" | "et" | "en") => {
   return (locale === "ru" ? ru : locale === "et" ? et : en)[kind] || kind;
 };
 
-const countyNameNorm = (s: string) => s.trim().toLowerCase();
+const countyNameNorm = geoCountyNameNorm;
 const countyDisplay = (s: string) =>
   s
     .trim()
@@ -158,46 +159,7 @@ const countyDisplay = (s: string) =>
     .map((x) => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase())
     .join(" ");
 
-const countyFeatureName = (feature?: GeoJSON.Feature) => countyDisplay(String(feature?.properties?.MNIMI || "").trim());
-
-const isFiniteNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
-
-function pointInRing(lon: number, lat: number, ring: number[][]) {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const xi = ring[i]?.[0];
-    const yi = ring[i]?.[1];
-    const xj = ring[j]?.[0];
-    const yj = ring[j]?.[1];
-    if (!isFiniteNumber(xi) || !isFiniteNumber(yi) || !isFiniteNumber(xj) || !isFiniteNumber(yj)) continue;
-    const intersects = yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi + Number.EPSILON) + xi;
-    if (intersects) inside = !inside;
-  }
-  return inside;
-}
-
-function pointInPolygon(lon: number, lat: number, polygonCoords: number[][][]) {
-  if (!polygonCoords.length) return false;
-  const [outerRing, ...holes] = polygonCoords;
-  if (!outerRing || !pointInRing(lon, lat, outerRing)) return false;
-  for (const hole of holes) {
-    if (pointInRing(lon, lat, hole)) return false;
-  }
-  return true;
-}
-
-function pointInFeature(lon: number, lat: number, feature: GeoJSON.Feature) {
-  const geom = feature.geometry;
-  if (!geom) return false;
-  if (geom.type === "Polygon") {
-    return pointInPolygon(lon, lat, geom.coordinates as number[][][]);
-  }
-  if (geom.type === "MultiPolygon") {
-    const polys = geom.coordinates as number[][][][];
-    return polys.some((poly) => pointInPolygon(lon, lat, poly));
-  }
-  return false;
-}
+const countyFeatureName = geoCountyFeatureName;
 
 function popupHtml(place: FrontendPlace, locale: "ru" | "et" | "en") {
   const status =
@@ -278,11 +240,13 @@ function MarkerClusterLayer({
   places,
   locale,
   onSelectPoint,
+  onSelectCluster,
   disableHoverPopups = false
 }: {
   places: FrontendPlace[];
   locale: "ru" | "et" | "en";
   onSelectPoint?: (id: string) => void;
+  onSelectCluster?: (ids: string[]) => void;
   disableHoverPopups?: boolean;
 }) {
   const map = useMap();
@@ -331,9 +295,10 @@ function MarkerClusterLayer({
     });
 
     // Custom cluster click: if all children share (nearly) the same
-    // coordinates, spiderfy immediately instead of zooming in — which
-    // would just re-cluster them at a higher zoom level. For spread
-    // clusters, zoom to bounds as usual.
+    // coordinates, show them as a list in the bottom sheet (via
+    // onSelectCluster) instead of zooming — which would just
+    // re-cluster them at a higher zoom level. For spread clusters,
+    // zoom to bounds as usual.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
@@ -348,7 +313,15 @@ function MarkerClusterLayer({
         const lngSpan = bounds.getEast() - bounds.getWest();
 
         if (latSpan < THRESHOLD && lngSpan < THRESHOLD) {
-          cluster.spiderfy();
+          // Co-located: show list in bottom sheet, cluster stays on map
+          if (onSelectCluster) {
+            const ids = cluster.getAllChildMarkers()
+              .map((m) => m.options?.place?.id)
+              .filter((id): id is string => Boolean(id));
+            onSelectCluster(ids);
+          } else {
+            cluster.spiderfy();
+          }
         } else {
           cluster.zoomToBounds({ padding: [20, 20] });
         }
@@ -413,7 +386,7 @@ function MarkerClusterLayer({
     return () => {
       map.removeLayer(group as L.Layer);
     };
-  }, [map, places, locale, onSelectPoint, clusterReady, disableHoverPopups]);
+  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups]);
   return null;
 }
 
@@ -426,6 +399,7 @@ const ESTONIA_BOUNDS: [[number, number], [number, number]] = [
 type Props = {
   places: FrontendPlace[];
   onSelectPoint?: (id: string) => void;
+  onSelectCluster?: (ids: string[]) => void;
   locale?: "ru" | "et" | "en";
   onSelectCounty?: (county: string) => void;
   selectedCounty?: string;
@@ -442,6 +416,9 @@ type Props = {
   canRecenter?: boolean;
   isMobile?: boolean;
   showCountyOverlay?: boolean;
+  /** Pre-loaded county GeoJSON from Dashboard. When provided, MapClient
+   *  skips its own fetch and uses this for the overlay + polygon filter. */
+  countyGeoJson?: GeoJSON.GeoJsonObject | null;
   fitBoundsKey?: string;
   fitBoundsPlaces?: [number, number][];
   /** Pixels obscured by the bottom sheet (peek/half) + on-screen keyboard. */
@@ -628,6 +605,7 @@ function FocusOnUserLocation({ userLocation }: { userLocation?: { lat: number; l
 function MapClient({
   places,
   onSelectPoint,
+  onSelectCluster,
   locale = "ru",
   onSelectCounty,
   selectedCounty,
@@ -644,6 +622,7 @@ function MapClient({
   canRecenter = true,
   isMobile = false,
   showCountyOverlay = true,
+  countyGeoJson: countyGeoJsonProp,
   fitBoundsKey,
   fitBoundsPlaces,
   bottomOverlayPx = 0,
@@ -667,7 +646,10 @@ function MapClient({
 
   const center: [number, number] = [58.75, 25.0];
   const mapRef = useRef<L.Map | null>(null);
-  const [countyGeoJson, setCountyGeoJson] = useState<GeoJSON.GeoJsonObject | null>(null);
+  // Use the prop if Dashboard provides it; otherwise fall back to local state.
+  const [countyGeoJsonLocal, setCountyGeoJsonLocal] = useState<GeoJSON.GeoJsonObject | null>(null);
+  const countyGeoJson = countyGeoJsonProp ?? countyGeoJsonLocal;
+  const setCountyGeoJson = setCountyGeoJsonLocal;
 
   const visiblePlaces = useMemo(() => {
     if (!selectedCountyNorm || !countyGeoJson || countyGeoJson.type !== "FeatureCollection") return places;
@@ -717,8 +699,9 @@ function MapClient({
 
   useEffect(() => {
     if (!showCountyOverlay) return;
-    // Skip refetch if we already have the data cached in state.
+    // Skip refetch if we already have the data (from prop or prior fetch).
     if (countyGeoJson) return;
+    if (countyGeoJsonProp !== undefined) return;
     let alive = true;
     // Defer the 12 MB GeoJSON fetch until the browser is idle so it does not
     // compete with Leaflet tile downloads on the critical path. Mobile users
@@ -753,7 +736,7 @@ function MapClient({
       alive = false;
       cancelIdle(handle);
     };
-  }, [showCountyOverlay, countyGeoJson]);
+  }, [showCountyOverlay, countyGeoJson, countyGeoJsonProp, setCountyGeoJson]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -868,7 +851,7 @@ function MapClient({
           bottomOverlayPx={bottomOverlayPx}
         />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
-      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} disableHoverPopups={disableHoverPopups} />
+      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
     </div>
   );
