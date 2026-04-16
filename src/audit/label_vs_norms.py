@@ -49,9 +49,15 @@ Caveats
   Drinking-water probes with `e_coli` in (0, 500] will register as compliant
   by the checker even if they are technically non-compliant under 2020/2184.
 - `transparency` has no norm and is not checked.
-- `coliforms` has no norm in `NORMS` and is not checked (only the pool
-  `NORMS_POOL["coliforms"] = 0` entry exists, and — per note 2 above — is
-  intentionally not applied to stay in sync with `add_ratio_features`).
+- `coliforms`: phase 10 added a `coliforms > 0 → violation` rule to the audit
+  checker. This rule is **NOT** mirrored in `features.add_ratio_features`,
+  which is the first known divergence between audit and model features.
+  Rationale: `coliforms` is published in 1439/2194 snapshot probes (the
+  most-measured chemistry parameter); 13 veevark probes labelled non-compliant
+  carry `coliforms > 0` and zero other violations under the published params.
+  Without this rule those would be hidden_violation forever. Adding the same
+  rule to `add_ratio_features` requires a `coliforms_detected` feature and a
+  model retrain — that is Phase 11 work. See `docs/phase_10_findings.md` § R2.
 """
 
 from __future__ import annotations
@@ -77,6 +83,13 @@ _POOL_ONLY_PARAMS: List[str] = [
     "free_chlorine",
     "combined_chlorine",
 ]
+
+# Parameters that have a "any positive count → violation" rule across all
+# non-bathing domains. EU 2006/7/EC bathing-water directive does NOT regulate
+# coliform bacteria — only e_coli and enterococci — so supluskoha probes are
+# excluded from this rule. Drinking water (veevark, joogivesi) and pool
+# (basseinid) regulations both require coliforms = 0.
+_DETECTION_PARAMS_NON_BATHING: List[str] = ["coliforms"]
 
 
 def _is_pool(domain: Optional[str]) -> bool:
@@ -121,11 +134,15 @@ def check_probe(row: pd.Series) -> Dict[str, object]:
     """
     domain = row.get("domain")
     is_pool = _is_pool(domain)
+    is_bathing = (domain == "supluskoha")
 
     # Build the set of parameters we will check for this domain.
     norm_params: List[str] = list(_THRESHOLD_PARAMS)
     if is_pool:
         norm_params = norm_params + _POOL_ONLY_PARAMS
+    # Phase 10 R2: coliforms = 0 rule applies to non-bathing domains.
+    if not is_bathing:
+        norm_params = norm_params + _DETECTION_PARAMS_NON_BATHING
     # pH is checked separately (range, not scalar). Include in the "norm set"
     # bookkeeping under the name "ph".
     norm_params.append("ph")
@@ -161,6 +178,13 @@ def check_probe(row: pd.Series) -> Dict[str, object]:
 
         if param == "pseudomonas":
             # norm = 0 CFU; any positive count is a violation.
+            if val > 0:
+                violated.append(param)
+            continue
+
+        if param == "coliforms":
+            # Phase 10 R2: detection rule for non-bathing domains.
+            # Audit-only (not yet mirrored in features.add_ratio_features).
             if val > 0:
                 violated.append(param)
             continue
@@ -244,3 +268,109 @@ def audit_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         out["bucket"] = "unknown"
 
     return out
+
+
+# ── Phase 10 R3: EU 2006/7/EC bathing-water 95-percentile aggregation ─────────
+
+# Bathing-water class thresholds for inland waters, per EU 2006/7/EC Annex I
+# Table 1. For binary compliance the project labels everything below "Poor"
+# as compliant, so we apply the 95th-percentile rule against the "Sufficient"
+# threshold (E. coli ≤ 900 / enterococci ≤ 330, the boundary where a site
+# stops being officially acceptable).
+_BATHING_E_COLI_P95_MAX_INLAND = 900.0       # CFU/100 mL
+_BATHING_ENTEROCOCCI_P95_MAX_INLAND = 330.0  # CFU/100 mL
+
+
+def _bathing_season_year(date) -> Optional[int]:
+    """Calendar-year bucket. EU directive evaluates over multi-year windows;
+    for an interim audit we use single calendar-year buckets per location.
+
+    Returns None for NaT.
+    """
+    if date is None or (hasattr(date, "year") is False) or pd.isna(date):
+        return None
+    return int(date.year)
+
+
+def audit_dataframe_with_bathing_aggregation(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Same as `audit_dataframe`, but for `domain == 'supluskoha'` rows the
+    `e_coli` and `enterococci` per-probe checks are replaced with a
+    per-(location_key × calendar year) 95-percentile check per EU 2006/7/EC.
+
+    The per-probe verdict for non-bathing rows is unchanged.
+
+    Why
+    ---
+    EU 2006/7/EC classifies bathing waters by percentile evaluation over a
+    multi-season window, not by single-probe pass/fail. Our default checker
+    flags any single sample with `e_coli > 500` (the "Excellent" threshold),
+    which over-counts violations on bathing waters: a site with one spike
+    inside an otherwise clean season is officially compliant under the
+    directive but `hidden_pass` under the per-probe rule.
+
+    This aggregator implements the per-(location × season) 95-percentile rule
+    so that the per-probe "spike" no longer turns into a hidden_pass.
+
+    Requirements
+    ------------
+    The input DataFrame must include `location_key` (use `data_loader.normalize_location`)
+    and `sample_date`. Rows missing either are kept under per-probe verdicts
+    (no aggregation possible).
+
+    Practical scope
+    ---------------
+    On the citizen-service snapshot (one latest probe per location) the
+    aggregator is a no-op: 95-percentile of a single value equals the value
+    itself. The function is wired up so that running the audit notebook
+    against the *full* multi-year corpus from `load_all()` produces the
+    correct `supluskoha` numbers without further code changes. See
+    `docs/phase_10_findings.md` § R3.
+    """
+    audited = audit_dataframe(df)
+
+    if "location_key" not in audited.columns or "sample_date" not in audited.columns:
+        return audited
+
+    bathing_mask = audited["domain"] == "supluskoha"
+    bathing = audited.loc[bathing_mask].copy()
+    if bathing.empty:
+        return audited
+
+    bathing["bathing_season"] = bathing["sample_date"].apply(_bathing_season_year)
+    can_aggregate = bathing["location_key"].notna() & bathing["bathing_season"].notna()
+    aggregable = bathing.loc[can_aggregate]
+    if aggregable.empty:
+        return audited
+
+    # For each (location_key, season) bucket compute 95p of the indicators.
+    by_group = aggregable.groupby(["location_key", "bathing_season"])
+    e_coli_p95 = by_group["e_coli"].quantile(0.95) if "e_coli" in aggregable.columns else None
+    entero_p95 = (
+        by_group["enterococci"].quantile(0.95) if "enterococci" in aggregable.columns else None
+    )
+
+    def _aggregated_violation(row: pd.Series) -> Optional[bool]:
+        key = (row["location_key"], row["bathing_season"])
+        ec = e_coli_p95.get(key) if e_coli_p95 is not None else None
+        en = entero_p95.get(key) if entero_p95 is not None else None
+        ec_violates = (ec is not None) and (not pd.isna(ec)) and (ec > _BATHING_E_COLI_P95_MAX_INLAND)
+        en_violates = (en is not None) and (not pd.isna(en)) and (en > _BATHING_ENTEROCOCCI_P95_MAX_INLAND)
+        return bool(ec_violates or en_violates)
+
+    aggregable_index = aggregable.index
+    aggregated_verdict = aggregable.apply(_aggregated_violation, axis=1)
+
+    # Override the supluskoha rows: replace per-probe verdict with aggregated
+    # one and recompute the bucket. Other domains are untouched.
+    audited.loc[aggregable_index, "norms_violation"] = aggregated_verdict
+    if "compliant" in audited.columns:
+        audited.loc[aggregable_index, "bucket"] = [
+            bucket_name(c, v)
+            for c, v in zip(
+                audited.loc[aggregable_index, "compliant"],
+                aggregated_verdict,
+            )
+        ]
+
+    return audited
