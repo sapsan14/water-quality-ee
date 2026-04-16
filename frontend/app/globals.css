@@ -3466,6 +3466,41 @@ html[data-theme="dark"] .dateRangeSep {
   overscroll-behavior: contain;
 }
 
+/* ---- Freshness section in Diagnostics info page ---- */
+.freshnessDiag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: #f0f7ff;
+  border: 1px solid #d6e6f9;
+}
+.freshnessDiagRow {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  width: 100%;
+}
+.freshnessDiagLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.freshnessDiagValue {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+html[data-theme="dark"] .freshnessDiag {
+  background: #17263e;
+  border-color: #2a4060;
+}
+
 /* ---- Toast notification (info string) ---- */
 .toastBanner {
   position: fixed;
@@ -3493,6 +3528,41 @@ html[data-theme="dark"] .dateRangeSep {
 @keyframes toastOut {
   from { opacity: 1; }
   to { opacity: 0; }
+}
+
+/* ---- Freshness bubble (data/model update times, mobile only) ----
+   Positioned below the search bar so it doesn't cover UI controls.
+   Two-line layout: "Data: <date>" + "Model: <date>". */
+.freshnessBubble {
+  position: fixed;
+  top: calc(62px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3100;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  animation: freshnessBubbleIn 400ms ease, freshnessBubbleOut 600ms ease 4s forwards;
+  pointer-events: none;
+}
+
+@keyframes freshnessBubbleIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.95); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes freshnessBubbleOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  to { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.97); }
 }
 
 /* ---- Transient count bubble (Alerts / Near-me chip feedback) ----
