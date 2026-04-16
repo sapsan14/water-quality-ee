@@ -1239,7 +1239,12 @@ export default function Dashboard({ snapshot }: Props) {
   }, []);
 
   const dataFetchedLabel = useMemo(() => formatTimestamp(snapshot.data_fetched_at ?? snapshot.generated_at), [snapshot.data_fetched_at, snapshot.generated_at, formatTimestamp]);
-  const modelTrainedLabel = useMemo(() => formatTimestamp(snapshot.model_trained_at), [snapshot.model_trained_at, formatTimestamp]);
+  const modelTrainedLabel = useMemo(() => {
+    if (snapshot.model_trained_at) return formatTimestamp(snapshot.model_trained_at);
+    // Fallback: if models exist but timestamp not recorded yet, use generated_at
+    if (snapshot.has_model_predictions) return formatTimestamp(snapshot.generated_at);
+    return null;
+  }, [snapshot.model_trained_at, snapshot.has_model_predictions, snapshot.generated_at, formatTimestamp]);
 
   const counties = useMemo(() => {
     const map = new Map<string, string>();
@@ -1338,8 +1343,6 @@ export default function Dashboard({ snapshot }: Props) {
     toastFiredRef.current = true;
     const totalPlaces = snapshot.places.length;
     const totalViolations = snapshot.places.filter((p) => p.official_compliant === 0).length;
-    const dataLabel = lruet(lang, "Данные", "Andmed", "Data");
-    const modelLabel = lruet(lang, "Модель", "Mudel", "Model");
     const summaryMsg = lruet(
       lang,
       `${totalPlaces} точек · ${totalViolations} нарушений`,
@@ -1347,13 +1350,22 @@ export default function Dashboard({ snapshot }: Props) {
       `${totalPlaces} points · ${totalViolations} violations`
     );
     const timer = setTimeout(() => setToast(summaryMsg), 300);
-    // Show a second toast with data/model freshness after the first fades
-    const freshnessMsg = dataFetchedLabel
-      ? `${dataLabel}: ${dataFetchedLabel}` + (modelTrainedLabel ? ` · ${modelLabel}: ${modelTrainedLabel}` : "")
-      : null;
-    const timer2 = freshnessMsg ? setTimeout(() => setToast(freshnessMsg), 4000) : undefined;
-    return () => { clearTimeout(timer); if (timer2) clearTimeout(timer2); };
-  }, [isMobile, lang, snapshot.places, dataFetchedLabel, modelTrainedLabel]);
+    return () => clearTimeout(timer);
+  }, [isMobile, lang, snapshot.places]);
+
+  // Second toast on mobile: data/model freshness (appears after summary fades)
+  const freshnessToastFiredRef = useRef(false);
+  useEffect(() => {
+    if (!isMobile || freshnessToastFiredRef.current || !dataFetchedLabel) return;
+    freshnessToastFiredRef.current = true;
+    const updatedLabel = lruet(lang, "Обновлено", "Uuendatud", "Updated");
+    // If data and model timestamps match (same pipeline run), show once
+    const msg = (modelTrainedLabel && modelTrainedLabel !== dataFetchedLabel)
+      ? `${lruet(lang, "Данные", "Andmed", "Data")}: ${dataFetchedLabel} · ${lruet(lang, "Модель", "Mudel", "Model")}: ${modelTrainedLabel}`
+      : `${updatedLabel}: ${dataFetchedLabel}`;
+    const timer = setTimeout(() => setToast(msg), 4500);
+    return () => clearTimeout(timer);
+  }, [isMobile, lang, dataFetchedLabel, modelTrainedLabel]);
 
   useEffect(() => {
     pushHeaderLang(lang);
