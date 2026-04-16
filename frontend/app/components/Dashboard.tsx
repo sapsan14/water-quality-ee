@@ -1468,17 +1468,23 @@ export default function Dashboard({ snapshot }: Props) {
   }, [countyGeoJson, isMobile]);
 
   // Pre-compute place→county mapping in the background once GeoJSON
-  // arrives. This runs ~600 × 15 pointInFeature checks ONCE, then
-  // every subsequent county filter change is a fast Map.get() lookup.
+  // arrives. Chunked to avoid freezing the main thread (2000+ places ×
+  // 15 county polygons is heavy). Each chunk processes up to 80 places
+  // and yields via setTimeout(0) so the browser stays responsive.
   useEffect(() => {
     if (!countyGeoJson || countyGeoJson.type !== "FeatureCollection") return;
     if (placeCountyGeo) return; // already computed
     let alive = true;
     const fc = countyGeoJson as GeoJSON.FeatureCollection;
-    const compute = () => {
+    const places = snapshot.places;
+    const m = new Map<string, string>();
+    const CHUNK = 80;
+    let offset = 0;
+    const processChunk = () => {
       if (!alive) return;
-      const m = new Map<string, string>();
-      for (const p of snapshot.places) {
+      const end = Math.min(offset + CHUNK, places.length);
+      for (let i = offset; i < end; i++) {
+        const p = places[i];
         for (const f of fc.features) {
           if (pointInFeature(p.lon, p.lat, f)) {
             const name = (String(f.properties?.MNIMI || "").trim())
@@ -1490,17 +1496,17 @@ export default function Dashboard({ snapshot }: Props) {
           }
         }
       }
-      if (alive) setPlaceCountyGeo(m);
+      offset = end;
+      if (offset < places.length) {
+        timerId = window.setTimeout(processChunk, 0);
+      } else if (alive) {
+        setPlaceCountyGeo(m);
+      }
     };
-    const ric = (window as unknown as { requestIdleCallback?: (fn: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
-    const id = typeof ric === "function"
-      ? ric(compute, { timeout: 5000 })
-      : window.setTimeout(compute, 200);
+    let timerId = window.setTimeout(processChunk, 200);
     return () => {
       alive = false;
-      const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
-      if (typeof cic === "function") cic(id);
-      else window.clearTimeout(id);
+      window.clearTimeout(timerId);
     };
   }, [countyGeoJson, snapshot.places, placeCountyGeo]);
 
