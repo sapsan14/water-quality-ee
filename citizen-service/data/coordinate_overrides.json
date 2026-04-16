@@ -1,0 +1,2573 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "domain": "basseinid",
+      "location": "Astangu Kutserehabilitatsioonikeskuse väikebassein",
+      "action": "set_manual",
+      "lat": 59.40182279999999,
+      "lon": 24.6244565,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Aura Terviseklubi välimullivann",
+      "action": "set_manual",
+      "lat": 58.3753592,
+      "lon": 26.7350064,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Bassein",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Hestia Hotel Haapsalu SPA lastebassein",
+      "action": "set_manual",
+      "lat": 58.95250959999999,
+      "lon": 23.531082,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Jõgeva haigla taastusravi vesivõimlemise bassein",
+      "action": "set_manual",
+      "lat": 58.74260619999999,
+      "lon": 26.3878792,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Kernu Keller Spa bassein",
+      "action": "set_manual",
+      "lat": 59.15679799999999,
+      "lon": 24.492136,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Kernu Keller Spa mullivann",
+      "action": "set_manual",
+      "lat": 59.15679799999999,
+      "lon": 24.492136,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lasteaed Naba",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lasteaia  Naba bassein",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA jaapani vann",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA külmaveeauk",
+      "action": "set_manual",
+      "lat": 59.506664,
+      "lon": 24.826899,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA kümblusbassein",
+      "action": "set_manual",
+      "lat": 59.506664,
+      "lon": 24.826899,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA mullivann",
+      "action": "set_manual",
+      "lat": 59.506664,
+      "lon": 24.826899,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Loksa Lasteaed Õnnetriinu",
+      "action": "set_manual",
+      "lat": 59.5845359,
+      "lon": 25.7292197,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Maidla lasteaia valgus- ja veeteraapia bassein",
+      "action": "set_manual",
+      "lat": 59.0517762,
+      "lon": 24.9127058,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Mullivann",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Narva hotelli mullivann",
+      "action": "set_manual",
+      "lat": 59.3796931,
+      "lon": 28.179075,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Padise Mõisa Butiikspaa 18+ bassein",
+      "action": "set_manual",
+      "lat": 59.227862,
+      "lon": 24.142309,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Padise Mõisa Butiikspaa 18+ mullivann",
+      "action": "set_manual",
+      "lat": 59.227862,
+      "lon": 24.142309,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Pirita Spordikeskuse suur bassein",
+      "action": "set_manual",
+      "lat": 59.4629175,
+      "lon": 24.8322428,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Pirita Spordikeskuse väike bassein",
+      "action": "set_manual",
+      "lat": 59.4629175,
+      "lon": 24.8322428,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Realida saunakeskuse bassein",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Rocca al mare hotelli mullivann",
+      "action": "set_manual",
+      "lat": 59.4343368,
+      "lon": 24.6384621,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Sillamäe Lasteaed Rukkilill",
+      "action": "set_manual",
+      "lat": 59.39589299999999,
+      "lon": 27.7579462,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Spordiklubi Impuls bassein",
+      "action": "set_manual",
+      "lat": 58.3786022,
+      "lon": 26.7533673,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Suure-Jaani Tervisekoda tünnisaun (õues)",
+      "action": "set_manual",
+      "lat": 58.5355143,
+      "lon": 25.4654934,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Suure-Jaani Tervisekoda väike nn beebibassein (ühtses süsteemis mullivanniga)",
+      "action": "set_manual",
+      "lat": 58.5355143,
+      "lon": 25.4654934,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Tallinna Loitsu Lasteaia bassein",
+      "action": "set_manual",
+      "lat": 59.44258559999999,
+      "lon": 24.8417251,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Tartu lasteaed Pääsupesa, hüdroteraapia bassein",
+      "action": "set_manual",
+      "lat": 58.3756636,
+      "lon": 26.7531736,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "TÜ Kliinikumi spordimeditsiini ja taastusravi ujula väike hüdroteraapia bassein",
+      "action": "set_manual",
+      "lat": 58.3696745,
+      "lon": 26.7010162,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Tõrva Veemõnula 28 kraadine bassein",
+      "action": "set_manual",
+      "lat": 58.00734019999999,
+      "lon": 25.9261444,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Tõrva Veemõnula 36 kraadine bassein",
+      "action": "set_manual",
+      "lat": 58.00734019999999,
+      "lon": 25.9261444,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Tõrva veemõnula 32 kraadine bassein",
+      "action": "set_manual",
+      "lat": 58.00734019999999,
+      "lon": 25.9261444,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Viljandi haigla  bassein",
+      "action": "set_manual",
+      "lat": 58.363476,
+      "lon": 25.5859691,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Väike hüdroteraapia bassein",
+      "action": "set_manual",
+      "lat": 58.60433339999999,
+      "lon": 23.040297,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Võru Lasteaed Punamütsike bassein",
+      "action": "set_manual",
+      "lat": 57.84308840000001,
+      "lon": 27.0035755,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "lastebassein",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "vSpa külma vee veesilm",
+      "action": "set_manual",
+      "lat": 58.4935698,
+      "lon": 22.7456345,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "vSpa külma vee veesilm, läbivooluga bassein, ei ole järelevalve all",
+      "action": "set_manual",
+      "lat": 58.4935698,
+      "lon": 22.7456345,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "joogivesi",
+      "location": "Unimäe puurkaev nr. 3 — Proovivõtukraan",
+      "action": "set_manual",
+      "lat": 58.28639739999999,
+      "lon": 22.4665348,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "A.Le Coq Reola tootmisüksuse veevärk",
+      "action": "set_manual",
+      "lat": 58.2983364,
+      "lon": 26.7115798,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "ALREY OÜ  tootmishoone veevärk",
+      "action": "set_manual",
+      "lat": 58.449395,
+      "lon": 26.8091444,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS E-Piim tootmine Põltsamaa E-Piim veevärk",
+      "action": "set_manual",
+      "lat": 58.6541713,
+      "lon": 25.9828818,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS HKScan Estonia tapamaja veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS Maag Eesti Rakvere Lihakombinaadi veevärk",
+      "action": "set_manual",
+      "lat": 59.37073969999999,
+      "lon": 26.3938465,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "AS Maag Eesti tapamaja veevärk",
+      "action": "set_manual",
+      "lat": 58.3434637,
+      "lon": 26.7324325,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Aasa Haldus veevärk",
+      "action": "set_manual",
+      "lat": 58.685434,
+      "lon": 24.5036554,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Adami talu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Adila heaolu- ja puhkekeskus",
+      "action": "set_manual",
+      "lat": 59.108889,
+      "lon": 24.6319521,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Adu-Jaani Kodumajutus",
+      "action": "set_manual",
+      "lat": 58.52639149999999,
+      "lon": 22.7487749,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Allika Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.46279949999999,
+      "lon": 25.418287,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Altja Kõrtsi veevärk",
+      "action": "set_manual",
+      "lat": 59.5818311,
+      "lon": 26.1081623,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Alujoa Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Andre küla veevärk",
+      "action": "set_manual",
+      "lat": 57.99625090000001,
+      "lon": 27.0983779,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Aravete Kardi- ja Vabaajakeskuse veevärk",
+      "action": "set_manual",
+      "lat": 59.1443936,
+      "lon": 25.7514467,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Arbavere Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 59.4417163,
+      "lon": 25.9630692,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Arma Ratsatalu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Atria Eesti AS Valga Tootmisüksuse veevärk",
+      "action": "set_manual",
+      "lat": 57.78477700000001,
+      "lon": 26.0532132,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "BAUROC Andja tehase veevärk",
+      "action": "set_manual",
+      "lat": 59.44828620000001,
+      "lon": 26.4820923,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Barto Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.2030058,
+      "lon": 26.5656471,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Cantervilla Lossi ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.070057,
+      "lon": 26.592482,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Cautes veevärk",
+      "action": "set_manual",
+      "lat": 58.2705066,
+      "lon": 26.5242362,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "DEMO FARM",
+      "action": "set_manual",
+      "lat": 59.4369684,
+      "lon": 24.7493516,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "DGM SHIPPING AS kalatööstus",
+      "action": "set_manual",
+      "lat": 59.45502879999999,
+      "lon": 24.9386457,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "E-Betoonelement OÜ Tamsalu tehase veevärk",
+      "action": "set_manual",
+      "lat": 59.1705415,
+      "lon": 26.1340676,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eametsa küla Puti elamurajooni veevärk",
+      "action": "set_manual",
+      "lat": 58.423545,
+      "lon": 24.4538548,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eametsa küla Veepargi pumpla piirkond",
+      "action": "set_manual",
+      "lat": 58.6141628,
+      "lon": 24.6591937,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eesti Leivatööstuse ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eisma Külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.54747339999999,
+      "lon": 26.3112671,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Eistvere jahimaja veevärk",
+      "action": "set_manual",
+      "lat": 58.6909412,
+      "lon": 25.7559056,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Elektra Tootmise veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Emmaste kooli veevärk",
+      "action": "set_manual",
+      "lat": 58.69906799999999,
+      "lon": 22.581856,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Endla Turismitalu",
+      "action": "set_manual",
+      "lat": 59.2636931,
+      "lon": 24.5509131,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ermistu puhkeküla",
+      "action": "set_manual",
+      "lat": 58.35545939999999,
+      "lon": 24.0022284,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Est-Agari veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Estonia kaevanduse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Farmi Piimatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Flexa Eesti AS Viru-Nigula tehase veevärk",
+      "action": "set_manual",
+      "lat": 59.4507173,
+      "lon": 26.8687488,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Green Motell",
+      "action": "set_manual",
+      "lat": 58.40322639999999,
+      "lon": 24.6311751,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Greete Motelli veevärk",
+      "action": "set_manual",
+      "lat": 57.98623269999999,
+      "lon": 26.0499076,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "HKScan Estonia Rakvere Lihakombinaadi veevärk",
+      "action": "set_manual",
+      "lat": 59.37073969999999,
+      "lon": 26.3938465,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Haage Joogid veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Haljala Maheda veevärk",
+      "action": "set_manual",
+      "lat": 59.4334809,
+      "lon": 26.266223,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Häädemeeste keskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.0792088,
+      "lon": 24.4931663,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ilmatsalu aleviku ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.38847139999999,
+      "lon": 26.555647,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jeld-Wen Eesti AS tehase veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jokri talu veevärk",
+      "action": "set_manual",
+      "lat": 58.7805256,
+      "lon": 26.9053865,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jurna Turismitalu",
+      "action": "set_manual",
+      "lat": 58.29201189999999,
+      "lon": 22.5452324,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Juulamõisa veevärk",
+      "action": "set_manual",
+      "lat": 58.5497363,
+      "lon": 26.7090027,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Järva-Jaani meierei veevärk",
+      "action": "set_manual",
+      "lat": 59.0405045,
+      "lon": 25.8915081,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Jõgisoo elamute ühisveevärk",
+      "action": "set_manual",
+      "lat": 59.28517859999999,
+      "lon": 24.5215349,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kaatri Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.14581719999999,
+      "lon": 26.2350012,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kadrina küla kalatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 59.339128,
+      "lon": 26.1414751,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kalamaja Hostel",
+      "action": "set_manual",
+      "lat": 58.2544317,
+      "lon": 22.4378034,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kaldavere Turismitalu",
+      "action": "set_manual",
+      "lat": 57.642101,
+      "lon": 26.327064,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kallaste Turismitalu",
+      "action": "set_manual",
+      "lat": 59.2169272,
+      "lon": 24.1512374,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kalma külalistemaja veevärk, Kalma kohvik Õige koht",
+      "action": "set_manual",
+      "lat": 58.53168340000001,
+      "lon": 23.0007934,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kalvi Mõisa veevärk",
+      "action": "set_manual",
+      "lat": 59.4785765,
+      "lon": 26.7832309,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Karaski Pansionaadi ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.0431235,
+      "lon": 26.8665622,
+      "note": "auto_google_top50"
+    },
+    {
+      "domain": "veevark",
+      "location": "Karineeme Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Katri Külalistemaja",
+      "action": "set_manual",
+      "lat": 58.9533622,
+      "lon": 22.774117,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kauksi Puhkeküla veevärk",
+      "action": "set_manual",
+      "lat": 58.9898772,
+      "lon": 27.2288228,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kauksi Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.0076078,
+      "lon": 27.2441678,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kauksi rannahoone veevärk",
+      "action": "set_manual",
+      "lat": 58.9892366,
+      "lon": 27.2282027,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kildu ratsakeskuse-külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.45723460000001,
+      "lon": 25.4138077,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kiviõli Keemiatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 59.3529278,
+      "lon": 26.9669038,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kloogaranna noortelaager",
+      "action": "set_manual",
+      "lat": 59.35243980000001,
+      "lon": 24.2586788,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Koidula raudteejaama ja maanteepiiripunkti ühisveevärk",
+      "action": "set_manual",
+      "lat": 57.8369775,
+      "lon": 27.57527,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Koke Külalistemaja",
+      "action": "set_manual",
+      "lat": 57.73425349999999,
+      "lon": 26.9807486,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kosmonautika Puhkekeskus",
+      "action": "set_manual",
+      "lat": 58.0308544,
+      "lon": 24.4572166,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kruusaaugu talu veevärk",
+      "action": "set_manual",
+      "lat": 59.5185,
+      "lon": 24.8194,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kudina küla veevärk",
+      "action": "set_manual",
+      "lat": 58.66637970000001,
+      "lon": 26.6988544,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuivastu Jaani talu",
+      "action": "set_manual",
+      "lat": 58.56508249999999,
+      "lon": 23.3730655,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuke Turismitalu",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kukka Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.98570849999999,
+      "lon": 22.8638731,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuldkaru mõisa veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuninga talu veevärk",
+      "action": "set_manual",
+      "lat": 57.8452422,
+      "lon": 26.9762686,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kure Turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kurtna küla",
+      "action": "set_manual",
+      "lat": 59.22787959999999,
+      "lon": 24.7106928,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kurtna küla osa veevärk",
+      "action": "set_manual",
+      "lat": 59.22787959999999,
+      "lon": 24.7106928,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kurtna/Kiisa veevärk",
+      "action": "set_manual",
+      "lat": 59.23880579999999,
+      "lon": 24.6794055,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuru Puhkemajade veevärk",
+      "action": "set_manual",
+      "lat": 59.0202708,
+      "lon": 27.2871298,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuru Villa veevärk",
+      "action": "set_manual",
+      "lat": 58.9957421,
+      "lon": 27.2674746,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuru rannamaja veevärk",
+      "action": "set_manual",
+      "lat": 59.0202708,
+      "lon": 27.2871298,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuuli talu puhkemajad",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kuusiku loodustalu veevärk",
+      "action": "set_manual",
+      "lat": 58.9706355,
+      "lon": 24.7171894,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Käbala kämpingu veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Käbi Külalistemaja",
+      "action": "set_manual",
+      "lat": 58.94759309999999,
+      "lon": 23.6544992,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kõrvelaane Turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 58.9532878,
+      "lon": 26.4995389,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Kõrvemaa Matka- ja Suusakeskus",
+      "action": "set_manual",
+      "lat": 59.31758430000001,
+      "lon": 25.6526681,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Külalistemaja \"Kadrina Mõis\" ja Lühikeste Meeste Kõrts",
+      "action": "set_manual",
+      "lat": 58.7051212,
+      "lon": 27.0928147,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Külalistemaja Katariina veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Küti Gurmee veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Laeva Meierei veevärk",
+      "action": "set_manual",
+      "lat": 58.46959500000001,
+      "lon": 26.3573198,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Laheotsa OÜ veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lainela puhkeküla veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lammasmäe Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 57.99553049999999,
+      "lon": 27.3304026,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Laugu Turismitalu",
+      "action": "set_manual",
+      "lat": 58.580581,
+      "lon": 22.618317,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Laululinnu külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.1927603,
+      "lon": 26.1484242,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lavi Vesi OÜ allika veevärk",
+      "action": "set_manual",
+      "lat": 59.3027409,
+      "lon": 26.64465,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lepanina hotell",
+      "action": "set_manual",
+      "lat": 57.99223319999999,
+      "lon": 24.4179191,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lepispea Caravan & Camping veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Linaküla rannakämping",
+      "action": "set_manual",
+      "lat": 58.1316983,
+      "lon": 23.9656021,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Linda Nektari veevärk",
+      "action": "set_manual",
+      "lat": 57.84216600000001,
+      "lon": 26.4816986,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Lipa Koolimaja",
+      "action": "set_manual",
+      "lat": 58.9114325,
+      "lon": 24.7148148,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Loodusravikeskus Loodus BioSpa ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.4076222,
+      "lon": 26.82498,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Luhtre Turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Madi talu veevärk",
+      "action": "set_manual",
+      "lat": 57.8662362,
+      "lon": 27.4663151,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Maria talu külalistemaja",
+      "action": "set_manual",
+      "lat": 58.297453,
+      "lon": 24.159826,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Markna talu",
+      "action": "set_manual",
+      "lat": 58.3734495,
+      "lon": 24.595115,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Matsu talu külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.0464098,
+      "lon": 27.0348072,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Metsaluige Turismitalu",
+      "action": "set_manual",
+      "lat": 57.9925274,
+      "lon": 24.4214106,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Metsanurme",
+      "action": "set_manual",
+      "lat": 59.2633443,
+      "lon": 24.6566345,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Metsaveere Turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 59.2045,
+      "lon": 24.3371,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Metsavenna Meierei veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Metsavenna talu veevärk",
+      "action": "set_manual",
+      "lat": 57.5703272,
+      "lon": 26.6605945,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Moe Peenviinavabriku veevärk",
+      "action": "set_manual",
+      "lat": 59.2503353,
+      "lon": 26.0074922,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Mokko turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 58.7034401,
+      "lon": 26.5427953,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Motovilla Külalistemaja",
+      "action": "set_manual",
+      "lat": 59.4051449,
+      "lon": 27.5407029,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Muhu Liha Tulundusühistu",
+      "action": "set_manual",
+      "lat": 58.6729068,
+      "lon": 23.1951981,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Muratsi Puhkemaja",
+      "action": "set_manual",
+      "lat": 58.24223629999999,
+      "lon": 22.591065,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Männiku lasketiiru veevõrk",
+      "action": "set_manual",
+      "lat": 59.3391736,
+      "lon": 24.7009458,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Männisalu Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.0190436,
+      "lon": 27.3991677,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Mäo Invest AS-i ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.9139847,
+      "lon": 25.6325215,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Mõedaku Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 59.33157249999999,
+      "lon": 26.5614509,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Narva Elektrijaamade veevärk",
+      "action": "set_manual",
+      "lat": 59.3796931,
+      "lon": 28.179075,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Narva karjääri veevärk",
+      "action": "set_manual",
+      "lat": 59.3796931,
+      "lon": 28.179075,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nasva kalatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.2561806,
+      "lon": 22.4814705,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Niinsaare Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nina Kordoni Külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.6091863,
+      "lon": 27.2028031,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nina Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.60719,
+      "lon": 27.207907,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nopri talu ühisveevärk",
+      "action": "set_manual",
+      "lat": 57.6472552,
+      "lon": 27.2021105,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nurmeveski külalistemaja",
+      "action": "set_manual",
+      "lat": 58.4466465,
+      "lon": 24.5004027,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Nõmme Köögivilja OÜ tootmishoone veevärk",
+      "action": "set_manual",
+      "lat": 59.3879285,
+      "lon": 24.6839645,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Oitme Matkamaja",
+      "action": "set_manual",
+      "lat": 58.5671848,
+      "lon": 22.7231119,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Oja Kämping",
+      "action": "set_manual",
+      "lat": 58.5695622,
+      "lon": 22.6724371,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ojako Puhke- ja Koolituskeskus",
+      "action": "set_manual",
+      "lat": 58.28679340000001,
+      "lon": 24.2653298,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ojamaa kaevanduse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Okka Puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.0092082,
+      "lon": 27.4400052,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Orgita keskasula veevärk",
+      "action": "set_manual",
+      "lat": 58.92123520000001,
+      "lon": 24.4547276,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Orica Eesti lõhkeainete tehase veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Otepää Lihatööstuse Edgar ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.06025210000001,
+      "lon": 26.4969264,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Otsa tänav puurkaev",
+      "action": "set_manual",
+      "lat": 59.4226833,
+      "lon": 24.4276334,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "OÜ Amber Production Remedia veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "OÜ Elujõud (Energia Talu) veevärk",
+      "action": "set_manual",
+      "lat": 58.5839763,
+      "lon": 25.3798817,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "OÜ Krantsi Kõrts",
+      "action": "set_manual",
+      "lat": 58.99380199999999,
+      "lon": 24.7672431,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "OÜ Suure-Jaani Vorstitööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.5357908,
+      "lon": 25.5013665,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pajumäe talu OÜ veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Palmse mõisa Viinaköögi külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 59.51441899999999,
+      "lon": 25.9446553,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Palmse mõisa veevärk",
+      "action": "set_manual",
+      "lat": 59.51441899999999,
+      "lon": 25.9446553,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pariisi puhkeküla-laager veevärk",
+      "action": "set_manual",
+      "lat": 59.26707949999999,
+      "lon": 26.1310598,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Paunküla küla spordiklubi veevärk",
+      "action": "set_manual",
+      "lat": 59.147364,
+      "lon": 25.3199244,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Peipsi Puhkemajad",
+      "action": "set_manual",
+      "lat": 58.99423399999999,
+      "lon": 27.254139,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Perjatsi majutusettevõte veevärk",
+      "action": "set_manual",
+      "lat": 59.38562049999999,
+      "lon": 27.8159283,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Piibe tare (söögitare kinnistu) veevärk",
+      "action": "set_manual",
+      "lat": 58.75142149999999,
+      "lon": 26.3458009,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pilguse Mõisa külalistemaja",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Piusa Ürgoru puhkekompleksi veevärk",
+      "action": "set_manual",
+      "lat": 57.8401475,
+      "lon": 27.4790859,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Porkuni Jahimaja veevärk",
+      "action": "set_manual",
+      "lat": 59.19659550000001,
+      "lon": 26.167683,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Premia Peterburi tee 42 territooriumi veevõrk",
+      "action": "set_manual",
+      "lat": 59.4262003,
+      "lon": 24.8141248,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Prillimäe küla veevärk",
+      "action": "set_manual",
+      "lat": 59.1805019,
+      "lon": 24.8005717,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Puhja aleviku Kellani ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.33714320000001,
+      "lon": 26.3159237,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Puhkekeskus Suvi veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Puhu-Risti söögimaja veevärk",
+      "action": "set_manual",
+      "lat": 58.6636111,
+      "lon": 25.9905556,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pyynikin Brewing Oy Eesti filiaali veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pyynikin käsityöläispanimo Oy Eesti filiaali veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Pädaste Mõis",
+      "action": "set_manual",
+      "lat": 58.5504127,
+      "lon": 23.2807255,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Päkaste küla  veevärk",
+      "action": "set_manual",
+      "lat": 58.69821549999999,
+      "lon": 26.3883743,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Põhja piirkond (Järveküla, Peetri, Assaku, Rae küla, Lehmja küla ja Pildiküla ))",
+      "action": "set_manual",
+      "lat": 59.3584405,
+      "lon": 24.8809366,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Põnka puhketalu",
+      "action": "set_manual",
+      "lat": 58.47918,
+      "lon": 24.922227,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "RMK Ojaäärse loodusmaja veevärk",
+      "action": "set_manual",
+      "lat": 58.7435766,
+      "lon": 24.6082534,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "RMK Sagadi mõisa veevärk",
+      "action": "set_manual",
+      "lat": 59.5423437,
+      "lon": 26.0462628,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Raasiku õlletsehhi veevärk",
+      "action": "set_manual",
+      "lat": 59.3703598,
+      "lon": 25.1797009,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rae küla veevärk",
+      "action": "set_manual",
+      "lat": 59.3873026,
+      "lon": 24.8498111,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rae puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rahinge küla ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.3922979,
+      "lon": 26.6143202,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ranna puhkemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ranna-Villa",
+      "action": "set_manual",
+      "lat": 58.3839003,
+      "lon": 24.4884883,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rannakodu",
+      "action": "set_manual",
+      "lat": 58.0144125,
+      "lon": 24.4545553,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rannarootsi Lihatööstuse Rakvere Tootmise veevärk",
+      "action": "set_manual",
+      "lat": 59.34708469999999,
+      "lon": 26.3593036,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rannarootsi lihatööstus",
+      "action": "set_manual",
+      "lat": 58.9178025,
+      "lon": 23.7613628,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Raudsepa Gemuse OÜ tootmishoone veevärk",
+      "action": "set_manual",
+      "lat": 57.9957041,
+      "lon": 26.4508248,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Reola- ja Uhti küla ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.2716094,
+      "lon": 26.7713053,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Roobuka-Metsanurga",
+      "action": "set_manual",
+      "lat": 59.22693169999999,
+      "lon": 24.6698419,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Roosu talu vabaajakeskuse veevärk",
+      "action": "set_manual",
+      "lat": 57.9063905,
+      "lon": 26.7503532,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ruunawere Hotell OÜ veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ruusmäe küla ühisveevärk",
+      "action": "set_manual",
+      "lat": 57.6433366,
+      "lon": 27.0838017,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Rõngu Mahl ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.141358,
+      "lon": 26.241391,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Saarek Productions  AS veevärk",
+      "action": "set_manual",
+      "lat": 58.2984604,
+      "lon": 26.707313,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Saaremaa Piimatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.2561806,
+      "lon": 22.4814705,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Saaremaa Sadama veevärk",
+      "action": "set_manual",
+      "lat": 58.5364171,
+      "lon": 22.2356901,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sadama talu",
+      "action": "set_manual",
+      "lat": 58.5911075,
+      "lon": 22.6140009,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sae hosteli veevärk",
+      "action": "set_manual",
+      "lat": 59.27023610000001,
+      "lon": 26.6357325,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Saku aleviku Kannikese veevõrk",
+      "action": "set_manual",
+      "lat": 59.303344,
+      "lon": 24.6673896,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Salvest AS veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Samblamäe hosteli veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sammuli puhkeküla veevärk",
+      "action": "set_manual",
+      "lat": 58.3379604,
+      "lon": 25.5901159,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sigwari Maidla vorstitsehhi veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sillamäe SEJ veevärk",
+      "action": "set_manual",
+      "lat": 59.3995308,
+      "lon": 27.748088,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Silpower AS veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Soodevahe",
+      "action": "set_manual",
+      "lat": 59.4133641,
+      "lon": 24.9036194,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Sootalu tee ühisveevärk",
+      "action": "set_manual",
+      "lat": 59.4781375,
+      "lon": 25.1192863,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Suislepa küla veevärk",
+      "action": "set_manual",
+      "lat": 58.1588325,
+      "lon": 25.9478934,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tammemäe külalistemaja veevärgivesi",
+      "action": "set_manual",
+      "lat": 59.3162496,
+      "lon": 24.6834609,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tammistu küla, Öökulli kinnistu veevärk",
+      "action": "set_manual",
+      "lat": 58.4452281,
+      "lon": 26.9270492,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tammistu lihatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.4452281,
+      "lon": 26.9270492,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tartu Foods OÜ lihakäitlemisettevõte veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tartumaa Tervisespordikeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tee motelli veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tehumardi Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.1951043,
+      "lon": 22.2443393,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tere AS Põlva Tootmisosakonna veevärk",
+      "action": "set_manual",
+      "lat": 58.06876680000001,
+      "lon": 27.0814743,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tere AS Viljandi Tootmisosakond",
+      "action": "set_manual",
+      "lat": 58.3631302,
+      "lon": 25.5716892,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tiheda küla veevärk",
+      "action": "set_manual",
+      "lat": 58.8017437,
+      "lon": 26.9227321,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tihuse Hobuturismi talu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tiiupesa puhkemaja",
+      "action": "set_manual",
+      "lat": 58.93109889999999,
+      "lon": 22.9506645,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Toila sadama veevärk",
+      "action": "set_manual",
+      "lat": 59.42037190000001,
+      "lon": 27.5148545,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Toila valla Altküla Pae veevärk",
+      "action": "set_manual",
+      "lat": 59.4113086,
+      "lon": 27.4860908,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tolli turismitalu",
+      "action": "set_manual",
+      "lat": 58.15406709999999,
+      "lon": 24.0037455,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Toosikannu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tuhamäe hosteli veevärk",
+      "action": "set_manual",
+      "lat": 59.3574999,
+      "lon": 27.1544999,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tui kodurestoran",
+      "action": "set_manual",
+      "lat": 58.36331589999999,
+      "lon": 26.7265815,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Turgi talu veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tänassilma tehnopark",
+      "action": "set_manual",
+      "lat": 59.34464029999999,
+      "lon": 24.6302864,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tõhela Järve Puhkeküla",
+      "action": "set_manual",
+      "lat": 58.41915119999999,
+      "lon": 24.0083862,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tõnise Majatalo",
+      "action": "set_manual",
+      "lat": 58.6264845,
+      "lon": 23.1696279,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Tõnise talu puhkemajad",
+      "action": "set_manual",
+      "lat": 58.6264845,
+      "lon": 23.1696279,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Uhtjärve Ürgoru Nõiariigi veevärk",
+      "action": "set_manual",
+      "lat": 57.8899328,
+      "lon": 26.5535463,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ulge talu veevärk",
+      "action": "set_manual",
+      "lat": 58.7091824,
+      "lon": 26.8115599,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Urvaste Kooli ühisveevärk",
+      "action": "set_manual",
+      "lat": 57.91934670000001,
+      "lon": 26.5862263,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Uueda puhkekeskus",
+      "action": "set_manual",
+      "lat": 58.45968149999999,
+      "lon": 24.5346463,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Uuemõisa Mesi",
+      "action": "set_manual",
+      "lat": 58.5037426,
+      "lon": 23.1102604,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Uugi talu veevärk",
+      "action": "set_manual",
+      "lat": 58.7244851,
+      "lon": 26.9380604,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "VKG Energia OÜ veevärk",
+      "action": "set_manual",
+      "lat": 59.3959207,
+      "lon": 27.2427578,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vaibla puhkekeskus",
+      "action": "set_manual",
+      "lat": 58.40859749999999,
+      "lon": 26.0518127,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vaikla Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 59.06938590000001,
+      "lon": 27.3446384,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vaikla Puhkemaja veevärk (tall)",
+      "action": "set_manual",
+      "lat": 59.43696079999999,
+      "lon": 24.7535746,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Valaste puhkeküla veevärk",
+      "action": "set_manual",
+      "lat": 59.4370588,
+      "lon": 27.3728022,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Valge Hobu Trahter OÜ veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Valgehobusemäe Suusa- ja Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Valkla Ranna veevärk",
+      "action": "set_manual",
+      "lat": 59.46921769999999,
+      "lon": 25.33533,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vana Olgina Mõisa veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vanatoa Turismitalu veevärk",
+      "action": "set_manual",
+      "lat": 58.2561806,
+      "lon": 22.4814705,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Varbla puhkeküla",
+      "action": "set_manual",
+      "lat": 58.4209557,
+      "lon": 23.7119027,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Varese Külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 57.8738116,
+      "lon": 26.8009377,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vastse-Kuuste tootmisüksuse veevärk",
+      "action": "set_manual",
+      "lat": 58.1701259,
+      "lon": 26.9303106,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Veevärk AS Balbiino territoorium",
+      "action": "set_manual",
+      "lat": 58.94268899999999,
+      "lon": 23.5576128,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vehendi Motell",
+      "action": "set_manual",
+      "lat": 58.2241346,
+      "lon": 26.1314248,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Veldemani Puhkemaja",
+      "action": "set_manual",
+      "lat": 58.4092563,
+      "lon": 26.0393925,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Venevere puhkeküla",
+      "action": "set_manual",
+      "lat": 58.60031730000001,
+      "lon": 25.7314519,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vergi sadama veevärk",
+      "action": "set_manual",
+      "lat": 59.58048489999999,
+      "lon": 26.0418818,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Verska Mineraalvee OÜ joogivee ühisveevärk",
+      "action": "set_manual",
+      "lat": 57.98282139999999,
+      "lon": 27.6250615,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Verska Mineraalvee tsehhi kraan peale veetöötlust (pk 10)",
+      "action": "set_manual",
+      "lat": 57.95705359999999,
+      "lon": 27.6375433,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Veski külalistemaja kohvik",
+      "action": "set_manual",
+      "lat": 58.82491470000001,
+      "lon": 26.5921611,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Veskisilla Hotelli (kinnistu) veevärk",
+      "action": "set_manual",
+      "lat": 58.8218383,
+      "lon": 25.4457302,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vettel-i kalatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.3408173,
+      "lon": 26.7346013,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vigala Piimatööstuse veevärk",
+      "action": "set_manual",
+      "lat": 58.7197412,
+      "lon": 24.2878051,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vihterpalu tsehhi veevärk",
+      "action": "set_manual",
+      "lat": 59.2491989,
+      "lon": 23.8779266,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Viitna puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 59.4601453,
+      "lon": 26.0248786,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Villa Andropoff",
+      "action": "set_manual",
+      "lat": 58.38708699999999,
+      "lon": 24.390383,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Villa Marika hosteli veevärk",
+      "action": "set_manual",
+      "lat": 59.009533,
+      "lon": 27.4455552,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Villa Meretare veevärk",
+      "action": "set_manual",
+      "lat": 59.4156937,
+      "lon": 27.516661,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Vinkli tn, Tartu linn, Tartu linn, Tartu maakond ladude ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.3871319,
+      "lon": 26.6815199,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Viru Rand OÜ veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Voore Puhkekeskuse veevärk",
+      "action": "set_manual",
+      "lat": 58.72243940000001,
+      "lon": 26.7557213,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värava talu",
+      "action": "set_manual",
+      "lat": 59.2605761,
+      "lon": 25.4045593,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värska Sanatooriumi puurkaevu nr 4 veevärk (mineraalvesi)",
+      "action": "set_manual",
+      "lat": 57.9861297,
+      "lon": 27.6222008,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värska Sanatooriumi puurkaevu nr 5 veevärk (mineraalvesi)",
+      "action": "set_manual",
+      "lat": 57.9861297,
+      "lon": 27.6222008,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värska Sanatooriumi puurkaevu nr 6 veevärk (mineraalvesi)",
+      "action": "set_manual",
+      "lat": 57.9861297,
+      "lon": 27.6222008,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värska Vesi AS mineraalvee tsehhi veevärk (mineraalvesi)",
+      "action": "set_manual",
+      "lat": 57.9570536,
+      "lon": 27.6375433,
+      "note": "manual_fix_varska_location"
+    },
+    {
+      "domain": "veevark",
+      "location": "Värska Vesi AS puurkaevu kat nr 54654 mineraalvee veevärk (uus)",
+      "action": "set_manual",
+      "lat": 57.95705359999999,
+      "lon": 27.6375433,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Võhma teeristi toidutare veevärk",
+      "action": "set_manual",
+      "lat": 58.72278329999999,
+      "lon": 26.060559,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Võhu veinitehase veevärk",
+      "action": "set_manual",
+      "lat": 59.2302412,
+      "lon": 26.5989388,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Võru Juustutööstuse veevärk",
+      "action": "set_manual",
+      "lat": 57.84250170000001,
+      "lon": 27.0059657,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Waide motelli veevärk",
+      "action": "set_manual",
+      "lat": 58.22021239999999,
+      "lon": 26.3687528,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "mineraalvee puurkaev nr 7 katastri number 13456",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Ämari lennubaas",
+      "action": "set_manual",
+      "lat": 59.2619349,
+      "lon": 24.2234727,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Õnnela külalistemaja veevärk",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "Õssu küla , Märja aleviku, Haage- ja Räni küla ühisveevärk",
+      "action": "set_manual",
+      "lat": 58.3620629,
+      "lon": 26.6462196,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "veevark",
+      "location": "„Puurkaev nr 1. \"Peter Mikheim puurkaev nr. 1\"“",
+      "action": "set_manual",
+      "lat": 58.595272,
+      "lon": 25.013607,
+      "note": "auto_google_all"
+    },
+    {
+      "domain": "basseinid",
+      "location": "Noorus Spa Inn põhibassein",
+      "action": "set_manual",
+      "lat": 59.4403359,
+      "lon": 28.0093733,
+      "note": "manual_fix_from_snapshot_geocode_matched_address"
+    },
+    {
+      "domain": "joogivesi",
+      "location": "Puurkaev 66616 Jõulumäe Tervisespordikeskus — Jõulumäe uus puurkaev (66616)",
+      "action": "set_manual",
+      "lat": 58.2234795,
+      "lon": 24.5159126,
+      "note": "manual_fix_from_snapshot_geocode_matched_address"
+    },
+    {
+      "domain": "joogivesi",
+      "location": "Puurkaev nr 1 — Nr 1 .Puurkaevu kraan",
+      "action": "set_manual",
+      "lat": 57.9570536,
+      "lon": 27.6375433,
+      "note": "manual_fix_from_known_puurkaev_reference"
+    }
+  ]
+}

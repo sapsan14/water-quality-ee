@@ -1,0 +1,36 @@
+# Данные — не коммитим (могут быть большими, регенерируем)
+data/raw/
+data/processed/
+data/audit/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/*_executed.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Локальные секреты (токены не коммитить)
+.env
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+*.tsbuildinfo
+data/models/
+
+# Citizen-service промежуточные артефакты (регенерируемые)
+citizen-service/artifacts/coordinate_review_*
+citizen-service/artifacts/approximate_*
+
+# PDF-отчёт (генерируется из report.md)
+docs/report.pdf

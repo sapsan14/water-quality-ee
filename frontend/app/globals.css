@@ -1,0 +1,5060 @@
+:root {
+  --bg: #f3f7fb;
+  --panel: #ffffff;
+  --panel-soft: #eef4fb;
+  --text: #162236;
+  --muted: #5b6b80;
+  --brand: #0f6efd;
+  --good: #139b55;
+  --bad: #dc3545;
+  --warn: #e38f00;
+  --font-cyrillic-ui: var(--font-cyrillic-ibm);
+  --topbar-h: 86px; /* approximate sticky header height — used to offset drawer */
+}
+
+* {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+html {
+  overflow-x: hidden; /* prevent horizontal scroll from fixed-overlay bleed on mobile */
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family:
+    var(--font-cyrillic-ui),
+    "Source Sans 3",
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+body.cyr-ibm {
+  --font-cyrillic-ui: var(--font-cyrillic-ibm);
+}
+
+body.cyr-manrope {
+  --font-cyrillic-ui: var(--font-cyrillic-manrope);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2rem;
+  background: #ffffff;
+}
+
+/* When sidebar layout is active, constrain width and center */
+.page:has(.dashboardSidebar),
+.page:has(.dashboardSidebarCollapsed) {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0;
+  border-left: 1px solid #d9e5f4;
+  border-right: 1px solid #d9e5f4;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.brandBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.brandLogo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(14, 76, 160, 0.22);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: clamp(1.7rem, 2.8vw, 2.4rem);
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+.footerNote {
+  margin-top: 0.4rem;
+  border-top: 1px solid #d9e5f4;
+  padding-top: 0.7rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.footerNote p {
+  margin: 0;
+}
+
+.footerNote .footerSub {
+  font-size: 0.76rem;
+  margin-top: 0.2rem;
+  opacity: 0.75;
+}
+
+.footerNote a {
+  color: var(--brand, #0f6efd);
+  text-decoration: none;
+}
+
+.footerNote a:hover {
+  text-decoration: underline;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dashboardPinned {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  align-items: start;
+  gap: 1rem;
+}
+
+.dashboardSidebar,
+.dashboardSidebarCollapsed {
+  display: grid;
+  align-items: start;
+  gap: 0;
+}
+
+.dashboardSidebar {
+  grid-template-columns: 300px 1fr;
+}
+
+.dashboardSidebarCollapsed {
+  grid-template-columns: 44px 1fr;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.dashboardSidebar > .mainContent,
+.dashboardSidebarCollapsed > .mainContent {
+  grid-column: 2;
+  padding: 0;
+}
+
+.dashboardSidebar > .topBar,
+.dashboardSidebarCollapsed > .topBar {
+  grid-column: 2;
+  margin-right: 0;
+}
+
+.dashboardSidebar .unifiedTopBar,
+.dashboardSidebarCollapsed .unifiedTopBar {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #e4ecf5;
+  box-shadow: none;
+  padding: 0.4rem 1rem;
+  top: 0;
+  background: #ffffff;
+}
+
+.dashboardSidebar > .mapStatsRow,
+.dashboardSidebarCollapsed > .mapStatsRow {
+  grid-column: 2;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.68rem;
+  gap: 0.25rem;
+  border-bottom: 1px solid #e4ecf5;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dashboardSidebar > .mapStatsRow::-webkit-scrollbar,
+.dashboardSidebarCollapsed > .mapStatsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboardSidebar > .mapStatsRow .mapStat,
+.dashboardSidebarCollapsed > .mapStatsRow .mapStat {
+  min-height: 24px;
+  padding: 0.15rem 0.45rem;
+}
+
+/* Toasts/bubbles/dialogs should span full width above sidebar */
+.dashboardSidebar > .toastBanner,
+.dashboardSidebar > .freshnessBubble,
+.dashboardSidebar > .countBubble,
+.dashboardSidebar > .langDialogBackdrop,
+.dashboardSidebarCollapsed > .toastBanner,
+.dashboardSidebarCollapsed > .freshnessBubble,
+.dashboardSidebarCollapsed > .countBubble,
+.dashboardSidebarCollapsed > .langDialogBackdrop {
+  grid-column: 1 / -1;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid #d9e5f4;
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(22, 34, 54, 0.08);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.controls,
+.drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: 86vh;
+  overflow: auto;
+}
+
+.drawer {
+  position: fixed;
+  left: 1rem;
+  top: calc(var(--topbar-h) + 1.1rem);
+  height: calc(100vh - var(--topbar-h) - 2rem);
+  width: min(360px, 92vw);
+  /* Sit BELOW the sticky topBar (.topBar z-index: 1300) so the solid
+     heading always stays on top and the drawer never visually crosses
+     into the header area. The drawer opens beneath the heading. */
+  z-index: 1200;
+  border-radius: 18px;
+  transform: translateX(calc(-100% - 1.5rem));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.22, 0.9, 0.32, 1),
+              opacity 0.22s ease;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(246,250,255,0.94) 100%);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  box-shadow: 0 22px 60px rgba(14, 40, 80, 0.22),
+              0 4px 14px rgba(14, 40, 80, 0.08);
+}
+
+.drawer.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer.pinned {
+  position: sticky;
+  top: calc(var(--topbar-h) + 0.5rem);
+  left: auto;
+  height: auto;
+  max-height: calc(100vh - var(--topbar-h) - 1rem);
+  z-index: 20;
+  border-radius: 14px;
+  width: 100%;
+  grid-column: 1;
+  /* Reset floating-drawer transform so the pinned column lays out
+     normally inside the dashboard grid. */
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Desktop sidebar (always-visible, embedded in grid) ──── */
+.sidebar {
+  grid-column: 1;
+  grid-row: 1 / 99;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem 1rem;
+  background: #ffffff;
+  border-right: 1px solid #e4ecf5;
+  z-index: 1400;
+  scrollbar-width: thin;
+  scrollbar-color: #d0daea transparent;
+  transition: width 0.22s ease, padding 0.22s ease;
+}
+
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb { background: #d0daea; border-radius: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+
+.sidebarCollapsed {
+  padding: 0.6rem 0;
+  align-items: center;
+  width: 44px;
+  min-width: 44px;
+  overflow: hidden;
+}
+
+.sidebarCollapsed .sidebarToggleBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f0f5fc;
+  color: var(--brand);
+}
+
+.sidebarCollapsed .sidebarToggleBtn:hover {
+  background: #dce7f7;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.3rem;
+  min-height: 28px;
+}
+
+.sidebarCollapsed .sidebarHeader {
+  justify-content: center;
+  padding-bottom: 0;
+}
+
+.sidebarTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.sidebarToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  flex-shrink: 0;
+}
+
+.sidebarToggleBtn:hover {
+  background: #edf2fa;
+  color: var(--text);
+}
+
+html[data-theme="dark"] .page {
+  background: var(--bg);
+  border-left-color: #1e2d42;
+  border-right-color: #1e2d42;
+}
+
+html[data-theme="dark"] .sidebar {
+  background: #0d1520;
+  border-right-color: #1e2d42;
+}
+
+html[data-theme="dark"] .sidebar::-webkit-scrollbar-thumb { background: #2a3d58; }
+
+html[data-theme="dark"] .sidebarToggleBtn:hover {
+  background: #1a2840;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .sidebarTitle {
+  color: #e6eef9;
+}
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 22, 40, 0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: 1100;
+  animation: drawerBackdropFade 220ms ease-out;
+}
+
+@keyframes drawerBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed #d5e4f6;
+}
+
+.drawerHeaderActions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0.35rem;
+  z-index: 1300;
+}
+
+.unifiedTopBar {
+  gap: 0.85rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  border-radius: 14px;
+  /* Solid panel background so the header is never translucent and stays
+     fully legible regardless of what sits beneath it. */
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(13, 40, 80, 0.12);
+  /* Force a single-row layout so the info-nav buttons can't wrap under
+     the brand block on narrow desktop widths. */
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Keep the brand block on the left and let it shrink if the subtitle is
+   long, so the header info-nav buttons always stay pinned to the right. */
+.unifiedTopBar .unifiedBrandBlock {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.unifiedTopBar .topBarControls {
+  flex: 0 0 auto;
+  margin-left: auto;
+  flex-wrap: nowrap;
+  /* Explicit right alignment — belt-and-suspenders with `margin-left:auto`
+     so the nav buttons + language dropdown always land at the far right
+     corner of the heading, never stacked under the brand. */
+  justify-content: flex-end;
+}
+
+/* The auto-fade "compact" behaviour was dropping the header opacity to
+   0.25 on scroll, which read as "disappearing/transparent". Per the
+   design request the header stays solid and fully visible at all times. */
+.unifiedTopBar.compact {
+  opacity: 1;
+  transform: none;
+}
+
+.unifiedTopBar:hover,
+.unifiedTopBar:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.unifiedBrandBlock {
+  gap: 0.55rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.unifiedBrandLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.unifiedBrandText {
+  min-width: 0;
+}
+
+.unifiedBrandTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.unifiedBrandSubtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topBarControls {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.fontToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem;
+  border: 1px solid #cfddf0;
+  border-radius: 999px;
+  background: #f4f8ff;
+}
+
+/* ── Header info-nav buttons (About Model / About Service) ─── */
+.headerInfoNav {
+  font-size: 0.74rem;
+  padding: 0.22rem 0.55rem;
+  min-height: 28px;
+  border-radius: 999px;
+  border: 1px solid #cfddf0;
+  background: #f4f8ff;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.headerInfoNav:hover {
+  background: #e4eefd;
+  border-color: #9ec3f5;
+  color: var(--brand);
+}
+
+.headerInfoNav.btnActive {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+/* Primary info entry — replaces the trio of header info buttons.
+   Slightly larger and uses the brand colour so it reads as the
+   single canonical "About / Info" affordance in the top bar. */
+.headerInfoNavPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.78rem;
+  min-height: 32px;
+  background: linear-gradient(180deg, #eaf2ff 0%, #d8e8ff 100%);
+  border-color: #9ec3f5;
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(15, 110, 253, 0.12);
+}
+
+.headerInfoNavPrimary:hover {
+  background: linear-gradient(180deg, #d8e8ff 0%, #c4daff 100%);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.headerInfoNavIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerInfoNavIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+html[data-theme="dark"] .headerInfoNavPrimary {
+  background: linear-gradient(180deg, #1d2f4e 0%, #16243d 100%);
+  border-color: #3d6ab0;
+  color: #9cc4ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .headerInfoNavPrimary:hover {
+  background: linear-gradient(180deg, #243a5e 0%, #1a2b48 100%);
+  border-color: #5b8bd6;
+  color: #b9d3ff;
+}
+
+.headerDivider {
+  width: 1px;
+  height: 20px;
+  background: #d3e4f5;
+  margin: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+/* ── Language dropdown (replaces flat ET/EN/RU pills) ───────── */
+.langDropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.langDropdownBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.55rem 0.22rem 0.48rem;
+  min-height: 28px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid #cfddf0;
+  background: #f4f8ff;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.langDropdownBtn:hover {
+  background: #e4eefd;
+  border-color: #9ec3f5;
+  color: var(--brand);
+}
+
+.langDropdownBtn.langDropdownBtnOpen {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.28);
+}
+
+.langDropdownGlobe {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.langDropdownGlobe svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.langDropdownCurrent {
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.langDropdownChevron {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.18s ease;
+}
+
+.langDropdownChevron.open {
+  transform: rotate(180deg);
+}
+
+.langDropdownChevron svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.langDropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 172px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
+  background: var(--panel);
+  border: 1px solid #cfddf0;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(13, 40, 80, 0.18);
+  z-index: 1400;
+}
+
+.langDropdownItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.langDropdownItem:hover {
+  background: #eaf2ff;
+  color: var(--brand);
+}
+
+.langDropdownItem.active {
+  background: rgba(15, 110, 253, 0.12);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.langDropdownItemShort {
+  display: inline-flex;
+  width: 28px;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.langDropdownItem.active .langDropdownItemShort {
+  color: var(--brand);
+}
+
+.langDropdownItemLabel {
+  flex: 1;
+  line-height: 1.1;
+}
+
+.langDropdownItemTick {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  color: var(--brand);
+}
+
+.langDropdownItemTick svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+html[data-theme="dark"] .langDropdownBtn {
+  background: rgba(30, 42, 62, 0.7);
+  border-color: rgba(99, 164, 255, 0.3);
+  color: #c7d6ee;
+}
+
+html[data-theme="dark"] .langDropdownBtn:hover {
+  background: rgba(56, 84, 130, 0.75);
+  color: #eaf2ff;
+}
+
+html[data-theme="dark"] .langDropdownMenu {
+  background: #141d2e;
+  border-color: rgba(99, 164, 255, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .langDropdownItem {
+  color: #e5edf9;
+}
+
+html[data-theme="dark"] .langDropdownItem:hover {
+  background: rgba(56, 84, 130, 0.55);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+}
+
+.field label {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.field select,
+.field input {
+  width: 100%;
+  border: 1px solid #c8d7eb;
+  background: #f8fbff;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.62rem 0.72rem;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field select:focus,
+.field input:focus {
+  outline: none;
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 2.5px rgba(15, 110, 253, 0.12);
+}
+
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%237a8ea8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 12px;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.drawer .field label {
+  font-size: 0.84rem;
+}
+
+.drawer .field select,
+.drawer .field input {
+  font-size: 0.9rem;
+  padding: 0.52rem 0.64rem;
+}
+
+.drawer .field select {
+  padding-right: 1.8rem;
+}
+
+.stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: #f6faff;
+  border: 1px solid #dce9f8;
+  border-radius: 10px;
+  padding: 0.65rem;
+  min-width: 110px;
+}
+
+.stat .k {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.stat .v {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+
+/* ── Map stats row ──────────────────────────────────────────
+   Compact label strip below the map. Sized so the full stat
+   set fits a single line on standard desktop widths and only
+   wraps when the viewport is genuinely narrow. */
+.mapStatsRow {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.4rem 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid rgba(191, 211, 234, 0.7);
+  border-radius: 12px;
+  margin-top: -0.3rem;
+  box-shadow: 0 4px 14px rgba(13, 40, 80, 0.08);
+}
+
+.mapStat {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.32rem 0.6rem;
+  border-radius: 8px;
+  background: #f6faff;
+  border: 1px solid #dce9f8;
+  white-space: nowrap;
+  min-height: 32px;
+}
+
+.mapStat.mapStatGood {
+  background: #edfaf3;
+  border-color: #b6e9cf;
+}
+
+.mapStat.mapStatBad {
+  background: #fff1f2;
+  border-color: #fbc4c8;
+}
+
+.mapStat.mapStatWarn {
+  background: #fffbe6;
+  border-color: #ffe08a;
+}
+
+.mapStatK {
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.mapStatV {
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.mapStatBadText {
+  color: var(--bad);
+}
+
+/* ── Data / model freshness overlay on map ───────────────── */
+.mapFreshnessOverlay {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 800;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: #475569;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.mapFreshnessLine {
+  white-space: nowrap;
+}
+.mapFreshnessLabel {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-right: 0.3em;
+  color: #64748b;
+  font-size: 0.62rem;
+}
+.mapFreshnessValue {
+  font-weight: 500;
+}
+
+.tableWrap {
+  margin-top: 1rem;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.tableWrap.compact {
+  max-height: 220px;
+  margin-top: 0.4rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid #d8e5f6;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+/* ── Sticky header — stays visible when table body scrolls ───
+   Both `thead` and `th` are made sticky for broad browser support
+   (mobile Safari needs this when a transformed ancestor — e.g. the
+   bottom sheet — is present). `background-clip: padding-box` keeps
+   the fill flush with the cell edges, and the separator line is
+   drawn as an inset box-shadow so that scrolled-behind tbody rows
+   never bleed through the 1px border-bottom strip. */
+.table thead,
+.table thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--panel);
+  background-clip: padding-box;
+  border-bottom: 0;
+  box-shadow: inset 0 -1px 0 #d8e5f6;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover {
+  background: rgba(15, 110, 253, 0.08);
+}
+
+.rowSelected {
+  background: rgba(15, 110, 253, 0.14) !important;
+}
+
+/* ── Icon-cell tooltips ─────────────────────────────────────── */
+.iconTooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.iconTooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
+  padding: 0.28rem 0.55rem;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 300;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+.iconTooltip:hover::after {
+  opacity: 1;
+}
+/* keep tooltip inside viewport near left/right edges */
+.table td:first-child .iconTooltip::after,
+.table th:first-child .iconTooltip::after { left: 0; transform: none; }
+.table td:last-child .iconTooltip::after,
+.table th:last-child .iconTooltip::after { left: auto; right: 0; transform: none; }
+
+/* Header tooltips open downward so they aren't clipped by the overflow container */
+.table thead th .iconTooltip::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+
+.cellIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+}
+.cellIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* narrow icon-only columns */
+.table th.iconCol,
+.table td.iconCol {
+  text-align: center;
+  width: 2.6rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.table th.pvColHead {
+  width: auto;
+  min-width: 3.75rem;
+  max-width: 5rem;
+}
+
+/* date column — must not be constrained to iconCol width */
+.table th.dateCol,
+.table td.dateCol {
+  white-space: nowrap;
+  min-width: 5.5rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.table th.dateCol {
+  white-space: normal;
+  min-width: 7rem;
+  vertical-align: bottom;
+}
+
+/* star watchlist button in table */
+.starBtn {
+  background: none;
+  border: none;
+  padding: 0.1rem;
+  cursor: pointer;
+  line-height: 0;
+  border-radius: 4px;
+  transition: transform 0.12s;
+}
+.starBtn:hover {
+  transform: scale(1.15);
+}
+.starBtn:focus-visible {
+  outline: 2px solid rgba(15, 110, 253, 0.5);
+  outline-offset: 2px;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge.good {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--good);
+}
+
+.badge.bad {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--bad);
+}
+
+.badge.warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warn);
+}
+
+.watchlistProbBadge {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: 2.75rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 0.15rem 0.5rem;
+}
+
+.placesTableIntro {
+  margin: 0 0 0.5rem;
+  max-width: 72ch;
+}
+
+.tableSortBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  line-height: 1.25;
+}
+
+.tableSortBtn:hover {
+  color: var(--brand);
+}
+
+.tableSortBtn:focus-visible {
+  outline: 2px solid rgba(15, 110, 253, 0.45);
+  outline-offset: 2px;
+}
+
+.tableSortBtnPv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.tableSortBtnDate {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
+  justify-content: flex-start;
+  white-space: normal;
+}
+
+.tableSortDateLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.selectedPointHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.selectedPointHeader .sectionTitle {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.selectedPointWatchBtn {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.modelProbLine {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.measurementsHint {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.modelAbbr {
+  cursor: help;
+  border-bottom: 1px dotted var(--muted);
+  position: relative;
+  display: inline-block;
+}
+
+.modelAbbr::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+}
+
+.modelAbbr:hover::after {
+  opacity: 1;
+}
+
+.reportsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.reportPanel {
+  background: #f8fbff;
+}
+
+.reportPanel h4 {
+  margin: 0;
+  margin-bottom: 0.25rem;
+}
+
+/* ---- Compact point card (selected point first panel) ---- */
+.pointCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+}
+
+.pointMetaTag {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: rgba(100, 116, 139, 0.07);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+}
+
+.pointCardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.08);
+}
+
+.pointCardRow:last-of-type {
+  border-bottom: none;
+}
+
+.pointCardLabel {
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.pointCardModels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.modelChip {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: rgba(100, 116, 139, 0.06);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  cursor: help;
+  position: relative;
+}
+
+.modelChip b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.modelChip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+}
+
+.modelChip:hover::after {
+  opacity: 1;
+}
+
+.pointCardId {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.alertList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.alertList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+  border: 1px solid #d7e6f8;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.84rem;
+}
+
+.watchlistList li {
+  padding: 0.32rem 0.4rem;
+  border-radius: 8px;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.watchlistLocationBtn {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.35;
+}
+
+.gmWatchlistRow {
+  margin: 0.5rem 0 0.65rem;
+}
+
+.gmWatchlistBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  justify-content: center;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid #cfdcf0;
+  background: #f8fbff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gmWatchlistBtn:hover {
+  background: #eef4fd;
+  border-color: #b8cdf0;
+}
+
+.gmWatchlistBtnOn {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.gmMeasurementsHint {
+  margin: 0.15rem 0 0.45rem;
+  font-size: 0.78rem;
+}
+
+.healthIndex {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0.15rem 0 0.2rem;
+}
+
+.healthIndex.good {
+  color: var(--good);
+}
+
+.healthIndex.warn {
+  color: var(--warn);
+}
+
+.healthIndex.bad {
+  color: var(--bad);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.btn {
+  border: 1px solid #bfd3ea;
+  background: #ffffff;
+  color: var(--text);
+  padding: 0.42rem 0.65rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: transform 120ms ease, box-shadow 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.btn:hover {
+  border-color: #0f6efd;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 110, 253, 0.12);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(15, 110, 253, 0.22);
+}
+
+.btnSmall {
+  font-size: 0.74rem;
+  padding: 0.24rem 0.45rem;
+}
+
+.iconBtn {
+  min-width: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.4rem;
+}
+
+.btnIcon {
+  width: 1.05rem;
+  height: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btnIcon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform 180ms ease;
+}
+
+.iconBtn:hover .btnIcon svg {
+  transform: scale(1.08);
+}
+
+.linkBtn {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.linkBtn:hover {
+  color: var(--brand);
+}
+
+.clickableBadge {
+  border: 2px solid rgba(220, 53, 69, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+  transition: transform 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  padding: 0.2rem 0.55rem;
+  line-height: normal;
+}
+
+.clickableBadge:hover,
+.clickableBadge:focus-visible {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.22);
+  transform: translateY(-1px);
+}
+
+.btnActive {
+  background: #e8f1ff;
+  border-color: #6ea8fe;
+  color: #0a58ca;
+}
+
+.filterActionRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.filterActionRow .btn.iconBtn {
+  flex: 0 0 auto;
+}
+
+.alertFocusBtn {
+  border: 2px solid #f5b7be;
+  background: linear-gradient(180deg, #fff2f4 0%, #ffe7eb 100%);
+  color: #a51e2d;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.alertFocusBtn:hover {
+  border-color: #dc3545;
+}
+
+.alertFocusBtn:hover .btnIcon svg {
+  transform: scale(1.12);
+}
+
+.alertFocusBtnActive {
+  background: linear-gradient(180deg, #ffdadf 0%, #ffc7cf 100%);
+  border-color: #dc3545;
+  color: #7f1320;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.16);
+}
+
+.alertFocusBtnActive .btnIcon svg {
+  transform: scale(1.05);
+}
+
+.clearFiltersBtn {
+  background: #f4f8ff;
+  border-style: dashed;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.clearFiltersBtn:hover .btnIcon svg {
+  transform: rotate(-25deg);
+}
+
+.openFiltersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-width: 2px;
+  border-color: #6ea8fe;
+  background: linear-gradient(180deg, #e9f2ff 0%, #dcecff 100%);
+  color: #0a58ca;
+  font-weight: 700;
+  font-size: 0.97rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.10);
+}
+
+.openFiltersBtn:hover {
+  border-color: #3d8bfd;
+  box-shadow: 0 5px 14px rgba(13, 110, 253, 0.2);
+}
+
+/* ---- Compact date range picker ---- */
+.dateRangeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dateRangeField {
+  flex: 1;
+  min-width: 0;
+}
+
+.dateRangeIcon {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dateRangeIcon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.dateRangeLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.dateRangeField input[type="date"] {
+  width: 100%;
+  padding: 0.42rem 0.5rem 0.42rem 1.85rem;
+  border: 1px solid #c8d7eb;
+  background: #f8fbff;
+  color: var(--text);
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dateRangeField input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  filter: grayscale(1);
+  transition: opacity 0.15s;
+}
+
+.dateRangeField input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 0.8;
+}
+
+.dateRangeField input[type="date"]:focus {
+  outline: none;
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 2.5px rgba(15, 110, 253, 0.12);
+}
+
+.dateRangeSep {
+  color: var(--muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  padding: 0 0.1rem;
+  align-self: flex-end;
+  margin-bottom: 0.45rem;
+}
+
+.dateRangeClearBtn {
+  flex-shrink: 0;
+  width: 1.7rem;
+  height: 1.7rem;
+  min-width: unset;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--muted);
+  border-color: #d0dff0;
+}
+
+.dateRangeClearBtn:hover {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.nearMeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.nearbyPanel {
+  border: 1px solid #d7e6f8;
+  background: #f8fbff;
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nearbyPanel label {
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btnIcon svg {
+    transition: none !important;
+  }
+
+  .btn:hover,
+  .btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .iconBtn:hover .btnIcon svg,
+  .alertFocusBtn:hover .btnIcon svg,
+  .alertFocusBtnActive .btnIcon svg,
+  .clearFiltersBtn:hover .btnIcon svg {
+    transform: none !important;
+  }
+}
+
+.mapTopPanel {
+  padding: 0.85rem 0.85rem 0.75rem;
+  position: relative;
+}
+
+/* Desktop sidebar layout: edge-to-edge map, no card chrome */
+.dashboardSidebar .mapTopPanel,
+.dashboardSidebarCollapsed .mapTopPanel {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.dashboardSidebar .mapTopPanel .mapHeaderRow,
+.dashboardSidebarCollapsed .mapTopPanel .mapHeaderRow {
+  display: none;
+}
+
+.dashboardSidebar .mapTopPanel .mapShell,
+.dashboardSidebarCollapsed .mapTopPanel .mapShell {
+  border-radius: 0;
+}
+
+.dashboardSidebar .mapTopPanel .leaflet-container,
+.dashboardSidebarCollapsed .mapTopPanel .leaflet-container {
+  border-radius: 0 !important;
+}
+
+/* ── Desktop on-map chip bar (filter icons overlaying the map) ──
+   A frosted-glass pill that floats below the map title. The pill
+   gives every icon a legible backdrop against arbitrary map tiles
+   and lifts the row away from the title bar so it never collides
+   with the pinned filters drawer or the section heading. */
+.mapChipBar {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  top: auto;
+  z-index: 650;
+  display: inline-flex;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.32rem 0.55rem;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(191, 211, 234, 0.7);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(13, 40, 80, 0.16),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+  backdrop-filter: saturate(160%) blur(10px);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  overflow: visible;
+}
+
+.mapChipBar:active {
+  cursor: grabbing;
+}
+
+.mapChip {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #1f2a44;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  padding: 0;
+}
+
+.mapChip:hover {
+  background: rgba(15, 110, 253, 0.12);
+  color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.mapChip svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.mapChip.mapChipActive {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.45);
+}
+
+.mapChip.mapChipAlert.mapChipActive {
+  background: #ea4335;
+  border-color: #ea4335;
+  box-shadow: 0 2px 8px rgba(234, 67, 53, 0.45);
+}
+
+.mapChip.mapChipClear:hover svg {
+  transform: rotate(-18deg);
+  transition: transform 160ms ease;
+}
+
+/* Hover bubble tooltip — mirrors the mobile `countBubble` look
+   so desktop filter icons surface their label on hover and focus. */
+.mapChip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.38rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 760;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+}
+
+.mapChip[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 0.15rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.92);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 760;
+}
+
+.mapChip[data-tooltip]:hover::after,
+.mapChip[data-tooltip]:focus-visible::after,
+.mapChip[data-tooltip]:hover::before,
+.mapChip[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mapChipDivider {
+  width: 1px;
+  height: 22px;
+  background: rgba(13, 40, 80, 0.22);
+  flex-shrink: 0;
+  margin: 0 0.2rem;
+}
+
+html[data-theme="dark"] .mapChipBar {
+  background: rgba(14, 24, 39, 0.74);
+  border-color: rgba(92, 121, 165, 0.5);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .mapChip {
+  color: #eaf2ff;
+}
+
+html[data-theme="dark"] .mapChip:hover {
+  background: rgba(99, 164, 255, 0.18);
+  color: #9cc4ff;
+}
+
+html[data-theme="dark"] .mapChipDivider {
+  background: rgba(200, 220, 255, 0.3);
+}
+
+.mapHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+
+.mapShell {
+  position: relative;
+  height: 620px;
+  width: 100%;
+}
+
+.mapShell.isFullscreen {
+  height: 100%;
+}
+
+.mapFloatingBtn {
+  position: absolute;
+  top: calc(0.7rem + env(safe-area-inset-top, 0px));
+  right: calc(0.7rem + env(safe-area-inset-right, 0px));
+  z-index: 1200;
+  min-width: 46px;
+  min-height: 46px;
+  border: 1px solid #bfd3ea;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(10, 20, 35, 0.22);
+}
+
+.mapFloatingControls {
+  position: absolute;
+  right: calc(0.7rem + env(safe-area-inset-right, 0px));
+  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  z-index: 920;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.mapResetBtn,
+.mapRecenterBtn {
+  position: static;
+}
+
+.mapFullscreenBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.38rem 0.65rem;
+  min-width: auto;
+  background: rgba(59, 130, 246, 0.92);
+  border-color: rgba(37, 99, 235, 0.95);
+  color: #ffffff;
+}
+
+.mapFullscreenLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mapRecenterBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Mobile zoom +/− at bottom-left (mirrors Google Maps placement) */
+.mapZoomControls {
+  right: auto;
+  left: calc(0.7rem + env(safe-area-inset-left, 0px));
+}
+
+.mapZoomBtn {
+  position: static;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.mapPanelFullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  margin: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.mapPanelFullscreen .sectionTitle {
+  position: absolute;
+  left: calc(0.8rem + env(safe-area-inset-left, 0px));
+  top: calc(0.8rem + env(safe-area-inset-top, 0px));
+  z-index: 900;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+body.mapFullscreenActive {
+  overflow: hidden;
+}
+
+.mobileHidden {
+  display: none;
+}
+
+/* CSS-driven responsive visibility helpers — used so initial render
+   doesn't depend on JS state (no desktop-to-mobile flicker).
+   Intentionally does NOT set `display` on the desktop side: each
+   component keeps its own display mode (e.g. `.mapChipBar` needs
+   `inline-flex`), and we only override it on mobile to hide the node. */
+@media (max-width: 900px) {
+  .desktopOnly { display: none !important; }
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobileOnly { display: revert; }
+}
+
+.mobileBottomSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2700; /* Always above fullscreen map (2500) */
+  background: var(--panel);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 -4px 24px rgba(15, 31, 55, 0.15), 0 -1px 4px rgba(0,0,0,0.06);
+  padding: 0;
+  --sheet-drag-offset: 0px;
+  transition: transform 300ms cubic-bezier(0.22, 0.9, 0.32, 1);
+  will-change: transform;
+  /* Hidden by default so SSR/hydration doesn't flash on desktop. */
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  /* Explicit height so translateY percentages are always relative to the
+     viewport, not to the auto content size. Order matters: put the static
+     `vh` units first as a fallback for browsers that don't understand
+     `dvh`, and the dynamic `dvh` units last so modern browsers use the
+     *visible* viewport (which tracks window.innerHeight as URL bars
+     collapse). With the previous order, `vh` won on every browser and the
+     sheet — together with the fullscreen map below — was sized against the
+     large viewport, breaking the pin-centring math which uses innerHeight. */
+  height: 92vh;
+  height: 92dvh;
+  max-height: 92vh;
+  max-height: 92dvh;
+}
+
+@media (max-width: 900px) {
+  .mobileBottomSheet { display: flex; }
+}
+
+.mobileBottomSheet.collapsed {
+  /* Show enough vertical space for the drag handle + the peek count text
+     without clipping descenders on the last line. 64px was too tight on
+     devices with no safe-area inset (Android Chrome). */
+  transform: translateY(calc(100% - 84px - env(safe-area-inset-bottom, 0px) + var(--sheet-drag-offset)));
+}
+
+/* Half: sheet occupies ~50% of screen, leaving map fully usable above */
+.mobileBottomSheet.half {
+  transform: translateY(calc(46% + var(--sheet-drag-offset)));
+}
+
+/* Full: stops below search bar + chips so they stay reachable. */
+.mobileBottomSheet.full {
+  transform: translateY(calc(env(safe-area-inset-top, 0px) + 6.0rem + var(--sheet-drag-offset)));
+}
+
+.mobileMapQuickActions {
+  position: absolute;
+  left: calc(0.7rem + env(safe-area-inset-left, 0px));
+  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  z-index: 920;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.mobileMapQuickActions .btn {
+  min-height: 46px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.nearMeFabBtn {
+  border-color: #6ea8fe !important;
+  background: linear-gradient(180deg, #eef5ff 0%, #e2efff 100%) !important;
+  color: #0a58ca !important;
+  font-weight: 700;
+}
+
+/* ---- Google Maps-style sheet handle ---- */
+.gmSheetHandle {
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0 0.2rem;
+  cursor: pointer;
+  touch-action: none;
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.gmSheetHandlePill {
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: #c8d9ee;
+  margin: 0 auto;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.mobileBottomSheet.dragging .gmSheetHandlePill {
+  transform: scaleX(1.15) scaleY(1.3);
+  background: #7fafd6;
+}
+
+/* Collapsed peek row */
+.gmSheetPeek {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.22rem;
+  padding: 0.1rem 1rem 0.55rem;
+  flex-shrink: 0;
+}
+
+.gmSheetPeekCount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.gmSheetPeekLabel {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* Mode header (place/filter) */
+.gmSheetModeHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0 1rem 0.6rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.gmSheetModeTitle {
+  flex: 1;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  /* Allow up to 2 lines before truncating — matches Google Maps /
+     Apple Maps place-name headers. Keeps the header compact while
+     showing enough text to distinguish long Estonian place names. */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.gmSheetCloseBtn,
+.gmSheetClearBtn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(100, 120, 160, 0.1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  padding: 0;
+}
+
+.gmSheetClearBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gmSheetClearBtn:active,
+.gmSheetCloseBtn:active {
+  background: rgba(100, 120, 160, 0.2);
+}
+
+/* Sheet scrollable body */
+.gmSheetBody {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0.6rem 0.85rem 0;
+}
+
+.gmSheetFilterContent,
+.gmSheetPlaceContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  /* Generous bottom padding so the last row (last history entry, last
+     button) is never clipped by the OS home indicator, the browser
+     bottom chrome bar, or the rounded sheet corners. */
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Cluster pick-list: shown when a co-located cluster is tapped.
+   Each row is a tappable place with emoji + name + status badges. */
+.gmClusterList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gmClusterItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.5rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  transition: background 120ms ease;
+}
+
+.gmClusterItem:active {
+  background: rgba(100, 130, 180, 0.12);
+}
+
+.gmClusterItemEmoji {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.gmClusterItemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gmClusterItemName {
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  /* Allow wrap for long names — same 2-line clamp as header */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.gmClusterItemMeta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.gmClusterItemBadges {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+}
+
+/* Compact typography for controls inside the mobile bottom sheet —
+   keeps the drawer quiet on small screens. */
+.gmSheetFilterContent .field label,
+.gmSheetPlaceContent .field label {
+  font-size: 0.78rem;
+}
+
+.gmSheetFilterContent .field select,
+.gmSheetFilterContent .field input[type="date"],
+.gmSheetFilterContent .field input[type="text"] {
+  font-size: 0.85rem;
+  min-height: 38px;
+}
+
+.gmSheetFilterContent .stat .k,
+.gmSheetFilterContent .stat .v {
+  font-size: 0.78rem;
+}
+.gmSheetFilterContent .stat .v {
+  font-size: 0.95rem;
+}
+
+.gmSheetFilterContent .hint,
+.gmSheetPlaceContent .hint {
+  font-size: 0.76rem;
+}
+
+/* Primary toggle chips at the very top of the mobile filter sheet:
+   "Alerts only" and "Near me", each with a live count badge. */
+.gmQuickToggleRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.1rem;
+}
+
+.gmQuickToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1.5px solid #c7d5ea;
+  background: var(--panel-soft, #f4f8ff);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 0.48rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 42px;
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggle {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+.gmQuickToggle .gmQuickToggleIcon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggle .gmQuickToggleIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.gmQuickToggle .gmQuickToggleIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggle .gmQuickToggleIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.gmQuickToggleLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Hidden on mobile — buttons show icon + count only */
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .gmQuickToggleLabel {
+    display: inline;
+  }
+}
+
+.gmQuickToggleCount {
+  flex-shrink: 0;
+  min-width: 1.6rem;
+  padding: 0.08rem 0.4rem;
+  background: rgba(100, 120, 160, 0.14);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--muted);
+}
+
+.gmQuickAlert {
+  border-color: #f5b7be;
+  background: linear-gradient(180deg, #fff5f6 0%, #ffedf0 100%);
+  color: #8a1323;
+}
+.gmQuickAlert .gmQuickToggleCount {
+  background: rgba(220, 53, 69, 0.14);
+  color: #8a1323;
+}
+.gmQuickAlert.active {
+  background: linear-gradient(180deg, #ffdadf 0%, #ffc7cf 100%);
+  border-color: #dc3545;
+  color: #7f1320;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.16);
+}
+
+.gmQuickNear {
+  border-color: #bcd3f3;
+  background: linear-gradient(180deg, #eef5ff 0%, #e3efff 100%);
+  color: #0a58ca;
+}
+.gmQuickNear .gmQuickToggleCount {
+  background: rgba(13, 110, 253, 0.14);
+  color: #0a58ca;
+}
+.gmQuickNear.active {
+  background: linear-gradient(180deg, #d9e8ff 0%, #c8dcff 100%);
+  border-color: #3d8bfd;
+  color: #053a85;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.18);
+}
+
+html[data-theme="dark"] .gmQuickToggle {
+  background: #18233a;
+  border-color: #2c4068;
+  color: #e4ecf9;
+}
+html[data-theme="dark"] .gmQuickAlert {
+  background: linear-gradient(180deg, #321821 0%, #2b1219 100%);
+  border-color: #6e2533;
+  color: #ffb8c1;
+}
+html[data-theme="dark"] .gmQuickAlert.active {
+  background: linear-gradient(180deg, #4a1a25 0%, #3a121d 100%);
+  border-color: #dc3545;
+}
+html[data-theme="dark"] .gmQuickNear {
+  background: linear-gradient(180deg, #142037 0%, #0f1a2f 100%);
+  border-color: #24406e;
+  color: #9bc2ff;
+}
+html[data-theme="dark"] .gmQuickNear.active {
+  background: linear-gradient(180deg, #1b2f55 0%, #142443 100%);
+  border-color: #3d8bfd;
+}
+
+/* Sticky settings strip at the top of the burger panel */
+.gmBurgerPanel {
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: var(--panel-soft);
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.2rem;
+}
+
+.gmBurgerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.gmBurgerRow b {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.gmThemeToggle {
+  display: inline-flex;
+  border: 1px solid #cfddf0;
+  background: #f4f8ff;
+  border-radius: 999px;
+  padding: 0.18rem;
+  gap: 0.18rem;
+}
+
+html[data-theme="dark"] .gmThemeToggle {
+  background: #182236;
+  border-color: #2c4068;
+}
+
+.gmThemeBtn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.32rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-height: 32px;
+}
+
+.gmThemeBtn.active {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(15, 110, 253, 0.3);
+}
+
+.gmCopyright {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.gmCopyright a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+/* Compact From/To date pickers with calendar icons. Native input still
+   shows the OS date wheel on tap. */
+.gmDateRange {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.gmDateField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid #c8d7eb;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 0.42rem 0.55rem 0.42rem 2rem;
+  min-height: 42px;
+}
+
+html[data-theme="dark"] .gmDateField {
+  background: #0f1a2b;
+  border-color: #2b3f5f;
+}
+
+.gmDateField svg {
+  position: absolute;
+  left: 0.55rem;
+  width: 18px;
+  height: 18px;
+  color: var(--brand);
+  pointer-events: none;
+}
+
+.gmDateField input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--text);
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  /* Hide the native calendar picker icon — we render our own. */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.gmDateField input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
+  color: #e6eef9;
+}
+
+.gmDateLabel {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.18rem;
+  font-weight: 700;
+}
+
+.gmDateClear {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px dashed rgba(150, 170, 200, 0.5);
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.gmDateClear:active {
+  background: rgba(100, 120, 160, 0.12);
+}
+
+.gmDateRangeWrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem;
+  align-items: end;
+}
+
+/* ---- Mobile place sheet content elements ---- */
+.gmPlaceKindRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+
+.gmPlaceKindEmoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.gmPlaceKindLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gmPlaceCounty {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.gmPlaceMeta {
+  margin: 0.1rem 0 0.4rem;
+  font-size: 0.78rem;
+}
+
+.gmStatusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Section title separator inside the place sheet */
+.gmSectionTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-top: 0.7rem;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Compact table fonts inside the mobile place sheet — the measurements
+   and history tables get a single tight readable size. */
+.gmSheetPlaceContent .tableWrap.compact .table {
+  font-size: 0.8rem;
+}
+
+.gmSheetPlaceContent .tableWrap.compact .table th,
+.gmSheetPlaceContent .tableWrap.compact .table td {
+  padding: 0.35rem 0.45rem;
+  line-height: 1.35;
+}
+
+/* Inside the bottom sheet the parent already scrolls — remove the inner
+   max-height so the last history row is never clipped. */
+.gmSheetPlaceContent .tableWrap,
+.gmSheetPlaceContent .tableWrap.compact {
+  max-height: none;
+  overflow: visible;
+}
+
+/* Measurement row with norm violation highlight */
+.rowViolated td {
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.valueViolated {
+  color: var(--bad) !important;
+  font-weight: 600;
+}
+
+/* "Done" close button — icon-only on desktop, shows label on mobile */
+.drawerDoneLabel {
+  display: none;
+}
+
+.mobilePointContent {
+  max-height: 48dvh;
+  max-height: 48vh;
+  overflow: auto;
+}
+
+.mobileBottomSheet.full .mobilePointContent {
+  max-height: 86dvh;
+  max-height: 86vh;
+}
+
+.mobileBadges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.clusterPickList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.clusterPickBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e4ecf5;
+  border-radius: 8px;
+  background: #f8fafd;
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.clusterPickBtn:hover {
+  background: #e8f0fe;
+  border-color: var(--brand);
+}
+
+.pointGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Keep selected-point cards visually lighter (normal text weight). */
+.pointGrid .panel,
+.pointGrid .panel p,
+.pointGrid .panel td {
+  font-weight: 400;
+}
+
+.pointGrid .panel h4 {
+  font-weight: 600;
+}
+
+.pointGrid .table th {
+  font-weight: 600;
+}
+
+.tabRow {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.tabRow.isPending {
+  opacity: 0.86;
+}
+
+.tabPanel {
+  display: none;
+  content-visibility: auto;
+  contain-intrinsic-size: 700px;
+}
+
+.tabPanel.isActive {
+  display: block;
+}
+
+.tabBtn {
+  border: 1px solid #c4d6ec;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.72rem;
+  cursor: pointer;
+}
+
+.tabBtnActive {
+  background: #0f6efd;
+  color: #fff;
+  border-color: #0f6efd;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 32, 55, 0.32);
+  /* Must sit above mobile bottom sheet (2700) and search bar (2800)
+     so taps on parameter rows / history reveal info. */
+  z-index: 3500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.modalCard {
+  max-width: 560px;
+  width: 100%;
+  font-weight: 400;
+  max-height: min(92vh, 1040px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalCard b,
+.modalCard strong {
+  font-weight: 600;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.modalHeader .sectionTitle {
+  flex: 1;
+  margin: 0;
+  font-weight: 600;
+  padding-right: 0.3rem;
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+.modalCloseBtn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(100, 120, 160, 0.1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  padding: 0;
+}
+
+.modalCloseBtn:hover,
+.modalCloseBtn:active {
+  background: rgba(100, 120, 160, 0.2);
+  color: var(--text);
+}
+
+.modalCloseBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+html[data-theme="dark"] .modalCloseBtn {
+  background: rgba(180, 200, 230, 0.12);
+  color: #d5e0f2;
+}
+
+.modalCard .sectionTitle {
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+
+.modalBody {
+  flex: 0 1 auto;
+  max-height: calc(min(92vh, 1040px) - 6rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-right: 0.2rem;
+}
+
+.modalFooter {
+  margin-top: 0.65rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #d8e5f6;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.leaflet-container {
+  /* Base color matching Esri World Topo tiles so the map has a solid
+     background even before tiles download. Prevents the transparent /
+     white flash visible on mobile during initial load. */
+  background: #e8e0d8;
+}
+
+.leaflet-container,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-content {
+  font-family: "Space Grotesk", "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.zoneTag {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #bfd3ea;
+  color: #1f2a44;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.infoCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.7rem;
+}
+
+.infoCard {
+  border: 1px solid #d8e4f3;
+  background: #f7fbff;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+}
+
+.infoCardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.infoCardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: #eaf3ff;
+  border: 1px solid #c9dcf4;
+  font-size: 1.1rem;
+}
+
+.infoCard h5 {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+}
+
+.infoRich {
+  margin: 0.35rem 0 0.7rem;
+}
+
+.infoHeading {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.infoLine {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 0.2rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.infoBullet {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin-top: 0.18rem;
+  padding-left: 0.9rem;
+  position: relative;
+}
+
+.infoBullet::before {
+  content: "•";
+  position: absolute;
+  left: 0.15rem;
+  color: #4c6b95;
+}
+
+.infoSpacer {
+  height: 0.3rem;
+}
+
+.infoTableWrap {
+  margin-top: 0.6rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.infoMiniTable {
+  font-size: 0.8rem;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.infoMiniTable th,
+.infoMiniTable td {
+  padding: 0.4rem 0.45rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  vertical-align: top;
+  line-height: 1.35;
+}
+
+/* Narrow screens (mobile popup) — the four-column model table can't
+   fit side-by-side, so we flatten each <tr> into a small card with the
+   header labels injected via data-* attributes. */
+@media (max-width: 560px) {
+  .infoTableWrap {
+    overflow-x: visible;
+  }
+
+  .infoMiniTable,
+  .infoMiniTable thead,
+  .infoMiniTable tbody,
+  .infoMiniTable tr,
+  .infoMiniTable th,
+  .infoMiniTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .infoMiniTable thead {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+  }
+
+  .infoMiniTable tr {
+    border: 1px solid rgba(120, 140, 180, 0.22);
+    border-radius: 10px;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.5rem;
+    background: rgba(244, 248, 255, 0.55);
+  }
+
+  html[data-theme="dark"] .infoMiniTable tr {
+    background: rgba(24, 34, 56, 0.55);
+    border-color: rgba(120, 140, 180, 0.3);
+  }
+
+  .infoMiniTable td {
+    padding: 0.2rem 0;
+    border: 0;
+  }
+
+  .infoMiniTable td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 0.08rem;
+  }
+
+  .infoMiniTable td:first-child::before {
+    content: none;
+  }
+
+  .infoMiniTable td:first-child {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--brand);
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed rgba(120, 140, 180, 0.25);
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* ================================================================
+   Tablet/mobile structural breakpoints (theme-independent layout).
+   Dark colors live in html[data-theme="dark"] below.
+   ================================================================ */
+@media (max-width: 1024px) {
+  .page:has(.dashboardSidebar),
+  .page:has(.dashboardSidebarCollapsed) {
+    border-left: none;
+    border-right: none;
+  }
+
+  .dashboardPinned,
+  .dashboardSidebar,
+  .dashboardSidebarCollapsed {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer.pinned {
+    position: fixed;
+    left: 0;
+    top: calc(var(--topbar-h) + 1.1rem);
+    width: min(360px, 92vw);
+    max-height: calc(100vh - var(--topbar-h) - 1.5rem);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .reportsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pointGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fontToggle {
+    display: none;
+  }
+}
+
+/* ================================================================
+   Dark theme (opt-in via data-theme="dark" on <body>).
+   Light is the default. Toggle from the burger panel.
+   ================================================================ */
+html[data-theme="dark"] {
+  --bg: #0b1220;
+  --panel: #111b2d;
+  --panel-soft: #162338;
+  --text: #e6eef9;
+  --muted: #9fb0c8;
+  --brand: #63a4ff;
+  --good: #34d399;
+  --bad: #f87171;
+  --warn: #fbbf24;
+  background: linear-gradient(180deg, #0b1220 0%, #0a1322 100%);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .header,
+html[data-theme="dark"] .footerNote {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .btn {
+  background: #1a2740;
+  border-color: #2f4569;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .btnActive {
+  background: #24406a;
+  border-color: #4d75ab;
+  color: #eaf2ff;
+}
+
+html[data-theme="dark"] .tabBtn {
+  background: #17263e;
+  border-color: #304a72;
+  color: #dbe8fa;
+}
+
+html[data-theme="dark"] .tabBtnActive {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .stat,
+html[data-theme="dark"] .reportPanel,
+html[data-theme="dark"] .nearbyPanel,
+html[data-theme="dark"] .alertList li,
+html[data-theme="dark"] .tableWrap,
+html[data-theme="dark"] .modalCard {
+  background: #111b2d;
+  border-color: #2b3f5f;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .gmWatchlistBtn {
+  background: #0f1a2b;
+  border-color: #2b3f5f;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .gmWatchlistBtn:hover {
+  background: #152238;
+  border-color: #3b82f6;
+}
+
+html[data-theme="dark"] .gmWatchlistBtnOn {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+html[data-theme="dark"] .table th,
+html[data-theme="dark"] .table td {
+  border-bottom-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .table thead th {
+  /* `background-color: var(--panel)` already resolves to the dark
+     panel colour; we only need to retint the inset separator line. */
+  box-shadow: inset 0 -1px 0 #2b3f5f;
+}
+
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .field input {
+  background: #0f1a2b;
+  border-color: #2b3f5f;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .mobileBottomSheet {
+  background: rgba(15, 24, 40, 0.96);
+  border-color: #314a70;
+}
+
+html[data-theme="dark"] .drawer.pinned {
+  background: rgba(14, 24, 39, 0.78);
+  border: 1px solid rgba(92, 121, 165, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+html[data-theme="dark"] .infoCard {
+  background: #111b2d;
+  border-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .infoCardIcon {
+  background: #1a2b45;
+  border-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .badge.good {
+  background: rgba(52, 211, 153, 0.18);
+}
+
+html[data-theme="dark"] .badge.bad {
+  background: rgba(248, 113, 113, 0.18);
+}
+
+html[data-theme="dark"] .badge.warn {
+  background: rgba(251, 191, 36, 0.16);
+}
+
+html[data-theme="dark"] .unifiedTopBar {
+  background: var(--panel);
+  border-color: rgba(55, 82, 128, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .drawer {
+  background: linear-gradient(180deg, #0e1b2e 0%, #0b1521 100%);
+  border-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .mapPanelFullscreen .sectionTitle {
+  background: rgba(11, 18, 32, 0.88);
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .mapFreshnessOverlay {
+  background: rgba(11, 18, 32, 0.85);
+  color: #b0c4de;
+}
+html[data-theme="dark"] .mapFreshnessLabel {
+  color: #7b93b0;
+}
+
+html[data-theme="dark"] .mapFloatingBtn {
+  background: rgba(17, 27, 45, 0.93);
+  border-color: #314a70;
+  color: #e6eef9;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] .mobileMapQuickActions .btn {
+  background: rgba(17, 27, 45, 0.93);
+  border-color: #314a70;
+}
+
+html[data-theme="dark"] .nearMeFabBtn {
+  background: linear-gradient(180deg, #162d56 0%, #102244 100%) !important;
+  border-color: #3d6ab0 !important;
+  color: #93c5fd !important;
+}
+
+html[data-theme="dark"] .clearFiltersBtn {
+  background: #131f33;
+  border-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .alertFocusBtn {
+  background: linear-gradient(180deg, #2d1520 0%, #25101a 100%);
+  border-color: #7f3545;
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .alertFocusBtnActive {
+  background: linear-gradient(180deg, #3d1825 0%, #30121e 100%);
+  border-color: #dc3545;
+  color: #fca5a5;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.22);
+}
+
+html[data-theme="dark"] .openFiltersBtn {
+  background: linear-gradient(180deg, #162d52 0%, #102244 100%);
+  border-color: #3d6ab0;
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .footerNote {
+  border-top-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .drawerHeader {
+  border-bottom-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .modalFooter {
+  border-top-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .zoneTag {
+  background: rgba(17, 27, 45, 0.93);
+  border-color: #2b3f5f;
+  color: #c8daf0;
+}
+
+html[data-theme="dark"] .mobileSheetHandle span,
+html[data-theme="dark"] .gmSheetHandlePill {
+  background: #3a5478;
+}
+
+html[data-theme="dark"] .gmSearchBar {
+  background: #1a2535;
+  border-color: #2a3b55;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .gmSearchDivider {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme="dark"] .gmChip {
+  background: #1a2535;
+  border-color: #2a3b55;
+  color: #e6eef9;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .gmChip.gmChipActive {
+  background: #1a5fc4;
+  border-color: #1a5fc4;
+}
+
+html[data-theme="dark"] .gmSheetCloseBtn {
+  background: rgba(70, 100, 150, 0.2);
+}
+
+html[data-theme="dark"] .gmSectionTitle {
+  color: #8fa5c2;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .gmPlaceCounty {
+  color: #8fa5c2;
+}
+
+html[data-theme="dark"] .rowViolated td {
+  background: rgba(220, 53, 69, 0.12);
+}
+
+html[data-theme="dark"] .valueViolated {
+  color: #ff6b6b !important;
+}
+
+html[data-theme="dark"] .infoPageOverlay {
+  background: #0f1828;
+  border-color: rgba(92, 121, 165, 0.5);
+  color: var(--text);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55),
+              0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .infoPageBackdrop {
+  background: rgba(2, 6, 14, 0.7);
+}
+
+html[data-theme="dark"] .infoPageHeader {
+  background: #0f1828;
+  border-bottom-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .infoPageTabRow {
+  background: #0d1622;
+  border-bottom-color: #2b3f5f;
+}
+
+html[data-theme="dark"] .infoPageTab {
+  color: #8fa5c2;
+}
+
+html[data-theme="dark"] .infoPageTab.active {
+  color: #63a4ff;
+  border-bottom-color: #63a4ff;
+}
+
+html[data-theme="dark"] .langDialogCard {
+  background: #111b2d;
+  border: 1px solid rgba(43, 63, 95, 0.7);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .langDialogAccent {
+  background: linear-gradient(135deg, #1f8a4f 0%, #1a6cb0 50%, #5a3cba 100%);
+}
+
+html[data-theme="dark"] .langDialogIcon {
+  background: #1a2740;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .langDialogSubtitle {
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .langBtn {
+  background: linear-gradient(180deg, #1a2740 0%, #152030 100%);
+  border-color: #2f4569;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .langBtn:hover {
+  background: linear-gradient(180deg, #243754 0%, #1c2d48 100%);
+  border-color: #4d8fd4;
+  box-shadow: 0 6px 20px rgba(56, 163, 241, 0.12);
+}
+
+html[data-theme="dark"] .langBtnLabel {
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .dateRangeField input[type="date"] {
+  background: #131f33;
+  border-color: #2b3f5f;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .dateRangeField input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) grayscale(1);
+}
+
+html[data-theme="dark"] .dateRangeSep {
+  color: #9fb0c8;
+}
+
+@media (max-width: 900px) {
+  /* Lock the body scroll on mobile: `.mapTopPanel` is position:fixed +
+     inset:0 (see below), so any body scroll would only reveal empty
+     space from `.desktopOnly` nodes that are still in the DOM. This
+     matches `body.mapFullscreenActive` (toggled by Dashboard after
+     hydration) but applies from the first paint, so there is no brief
+     flash of the desktop layout scrolling before React takes over. */
+  html,
+  body {
+    overflow: hidden;
+    /* `vh` first as fallback, `dvh` second so modern browsers use the
+       dynamic (visible) viewport — matches the convention used by
+       `.mobileBottomSheet` / `.mapShell`. */
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .page {
+    padding: 0;
+  }
+
+  .unifiedTopBar {
+    top: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 0.25rem 0.45rem;
+    gap: 0.35rem;
+  }
+
+  .unifiedTopBar.compact {
+    opacity: 0.08;
+    transform: translateY(-10px);
+    pointer-events: none;
+  }
+
+  .unifiedBrandLogo {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .unifiedBrandTitle {
+    font-size: 0.88rem;
+  }
+
+  .unifiedBrandSubtitle {
+    font-size: 0.68rem;
+    max-width: 140px;
+  }
+
+  .topBarControls .langBtn,
+  .topBarControls .langDropdown,
+  .topBarControls .headerInfoNav,
+  .topBarControls .headerDivider {
+    display: none;
+  }
+
+  .mainContent {
+    gap: 0.6rem;
+  }
+
+  .panel {
+    border-radius: 10px;
+    padding: 0.7rem;
+  }
+
+  /* Edge-to-edge map on mobile. Targeted on `.mapTopPanel` directly (not
+     on the JS-added `.mobileMapPanel` class) so the overrides apply
+     during SSR / pre-hydration paint — otherwise `.panel` padding +
+     border remains visible as a thin frame around the map until React
+     hydrates and toggles the `mobileMapPanel` class.
+
+     The panel is ALSO promoted to the fullscreen overlay position
+     (`position: fixed; inset: 0; z-index: 2500`) by default. Mobile is
+     always fullscreen — `toggleMapFullscreen` is disabled on mobile in
+     Dashboard.tsx. Applying fullscreen from CSS (not from the
+     `.mapPanelFullscreen` class added by React state) means the SSR
+     paint already matches the hydrated layout, so users no longer see
+     a brief flash of the in-flow 58vh map + desktop chrome before
+     React hydrates and flips `isMapFullscreen` to true. */
+  .mapTopPanel,
+  .mobileMapPanel {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    /* Ensure the map fills the viewport with no gap from the page chrome. */
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    margin: 0;
+  }
+
+  /* Belt-and-suspenders: pin the map shell + leaflet root to the
+     viewport horizontally on mobile so no ancestor border/padding/
+     margin can leak the dark `.panel` bg as ~10px side strips next
+     to the leaflet canvas. Static CSS analysis came up clean for the
+     ancestor chain, but the strips were still visible in dark mode
+     on the user's screenshot — this rule guarantees the leaflet
+     container is exactly viewport-wide regardless of any unknown
+     ancestor inset. Safe because `body.mapFullscreenActive` already
+     sets `overflow: hidden` on mobile (Dashboard.tsx auto-fullscreen
+     effect), so 100vw == visible viewport width with no scrollbar
+     reservation. */
+  .mapTopPanel .mapShell,
+  .mobileMapPanel .mapShell,
+  .mapTopPanel .leaflet-container,
+  .mobileMapPanel .leaflet-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .mapTopPanel .sectionTitle,
+  .mobileMapPanel .sectionTitle {
+    display: none;
+  }
+
+  /* The map header row holds the (now hidden) section title. With its
+     children gone the row collapses to 0 height, but its margin-bottom
+     (0.45rem) still leaves a thin white strip above the map — visible as
+     a subtle border. Hide the row entirely so the leaflet canvas hugs the
+     top edge of the viewport. */
+  .mapTopPanel .mapHeaderRow,
+  .mobileMapPanel .mapHeaderRow {
+    display: none;
+  }
+
+  /* On mobile, hide the persistent overlay — freshness is shown via toast bubble on load. */
+  .mapFreshnessOverlay {
+    display: none;
+  }
+
+  /* Move Leaflet's native zoom +/- from top-left to bottom-left on mobile
+     so it doesn't hide behind the search bar / chip bar.
+     Mirrors Google Maps placement: zoom at bottom-left, custom controls
+     (🧭 ◎) at bottom-right. Both sit above the collapsed bottom sheet. */
+  .leaflet-top.leaflet-left {
+    top: auto !important;
+    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .leaflet-control-zoom {
+    margin-bottom: 0 !important;
+  }
+
+  /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
+     position:fixed + inset:0 on mobile (see above), so the shell must
+     be 100vh to match — otherwise the leaflet canvas would still size
+     to a smaller height and leave an empty strip at the bottom of the
+     viewport during SSR / before hydration.
+
+     Unit order follows the project convention documented on
+     `.mobileBottomSheet`: `vh` first as fallback, `dvh` second so
+     modern browsers use the dynamic (visible) viewport, matching
+     window.innerHeight. */
+  .mapShell,
+  .mapPanelFullscreen .mapShell {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .mobileBottomSheet {
+    touch-action: none;
+    left: max(0px, env(safe-area-inset-left, 0px));
+    right: max(0px, env(safe-area-inset-right, 0px));
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    padding: 0.35rem 0.6rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .mobileBottomSheet.dragging {
+    transition: none;
+  }
+
+  /* Touch target: tab buttons need ≥40px height for reliable tapping */
+  .tabBtn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 0.9rem;
+  }
+
+  /* Touch target: sheet action buttons (Filters / Near Me) */
+  .mobileSheetActions .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Contain overscroll so sheet scroll doesn't bleed to page */
+  .mobilePointContent,
+  .drawer,
+  .controls {
+    overscroll-behavior: contain;
+  }
+
+  /* Stat cards fill row evenly on narrow phones */
+  .stat {
+    flex: 1;
+    min-width: 90px;
+  }
+
+  /* Language buttons: compact on mobile — they fit in one row */
+  .topBarControls .btn {
+    padding: 0.28rem 0.48rem;
+    font-size: 0.78rem;
+    min-height: 32px;
+  }
+
+  /* Filter drawer: full-page overlay on mobile */
+  .drawer {
+    width: 100%;
+    border-radius: 0;
+    z-index: 2000;
+    border-right: 0;
+  }
+
+  /* Pin button makes no sense on mobile — hide it */
+  .drawerPinBtn {
+    display: none;
+  }
+
+  /* Show "Done" label on close button so users know how to dismiss */
+  .drawerDoneBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+  }
+
+  .drawerDoneLabel {
+    display: inline;
+  }
+
+  /* Horizontal scroll on data tables instead of overflow */
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ---- Language dialog ---- */
+.langDialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 30, 50, 0.3);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  animation: langBackdropIn 400ms ease-out;
+}
+
+@keyframes langBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.langDialogCard {
+  max-width: 380px;
+  width: calc(100% - 2rem);
+  border-radius: 24px;
+  padding: 0 0 1.75rem 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border: 1px solid rgba(180, 210, 240, 0.5);
+  box-shadow:
+    0 4px 16px rgba(15, 110, 180, 0.08),
+    0 20px 60px rgba(15, 60, 130, 0.12);
+  overflow: hidden;
+  animation: langDialogIn 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes langDialogIn {
+  from { opacity: 0; transform: scale(0.88) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.langDialogAccent {
+  width: 100%;
+  height: 72px;
+  background: linear-gradient(135deg, #43e97b 0%, #38a3f1 50%, #7c5cf8 100%);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.langDialogIcon {
+  position: absolute;
+  bottom: -22px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 80, 160, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.langDialogTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 2.2rem 0 0 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.langDialogSubtitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0.15rem 0 0 0;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.langDialogHint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.25rem 0 0 0;
+  letter-spacing: 0.02em;
+}
+
+.langDialogButtons {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+  padding: 0 1.5rem;
+  width: 100%;
+}
+
+.langBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 16px;
+  border: 1.5px solid #dce8f5;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms ease,
+              border-color 200ms ease,
+              background 200ms ease;
+  min-height: 72px;
+  position: relative;
+}
+
+.langBtn:hover {
+  transform: translateY(-3px);
+  border-color: #7cc4fa;
+  box-shadow: 0 6px 20px rgba(56, 163, 241, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #edf6ff 100%);
+}
+
+.langBtn:active {
+  transform: translateY(0px) scale(0.97);
+  box-shadow: 0 2px 8px rgba(56, 163, 241, 0.12);
+}
+
+.langBtnFlag {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.langBtnLabel {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+/* ---- Floating toolbar (mobile) ---- */
+.mobileFloatingToolbar {
+  position: fixed;
+  top: calc(44px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1250;
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(55, 82, 128, 0.55);
+  background: rgba(11, 18, 32, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.mobileFloatingToolbar.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+  pointer-events: none;
+}
+
+.mobileFloatingToolbar .fabBtn {
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #314a70;
+  background: #1a2740;
+  color: #e6eef9;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.mobileFloatingToolbar .fabBtn:active {
+  transform: scale(0.93);
+}
+
+.mobileFloatingToolbar .fabBtn.active {
+  background: #24406a;
+  border-color: #4d75ab;
+}
+
+/* ---- Info pane (floating modal) ---- */
+.infoPageBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: rgba(8, 16, 32, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: infoPageBackdropFade 220ms ease-out;
+}
+
+@keyframes infoPageBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.infoPageOverlay {
+  position: relative;
+  z-index: 2810;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: min(1120px, 100%);
+  max-height: min(90vh, 920px);
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid rgba(191, 211, 234, 0.85);
+  box-shadow: 0 28px 80px rgba(8, 16, 32, 0.45),
+              0 6px 20px rgba(8, 16, 32, 0.18);
+  animation: infoPagePop 280ms cubic-bezier(0.22, 0.9, 0.32, 1);
+}
+
+@keyframes infoPagePop {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.infoPageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid #d9e5f4;
+  background: var(--panel);
+}
+
+.infoPageTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Icon-only close button in the info page overlay header (replaces the
+   previous btn+label layout). Matches the round modalCloseBtn style so
+   users recognise it as a "dismiss" affordance regardless of language. */
+.infoPageCloseBtn {
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.infoPageCloseBtn .btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.infoPageCloseBtn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.infoPageTabRow {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  border-bottom: 1px solid #d9e5f4;
+  padding: 0 0.5rem;
+  scrollbar-width: none;
+  background: var(--panel);
+}
+
+.infoPageTabRow::-webkit-scrollbar {
+  display: none;
+}
+
+.infoPageTab {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.infoPageTab.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.infoPageBody {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 1.1rem;
+  overscroll-behavior: contain;
+}
+
+/* ---- Freshness section in Diagnostics info page ---- */
+.freshnessDiag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: #f0f7ff;
+  border: 1px solid #d6e6f9;
+}
+.freshnessDiagRow {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  width: 100%;
+}
+.freshnessDiagLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.freshnessDiagValue {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+html[data-theme="dark"] .freshnessDiag {
+  background: #17263e;
+  border-color: #2a4060;
+}
+
+/* ---- Toast notification (info string) ---- */
+.toastBanner {
+  position: fixed;
+  top: calc(4px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3100;
+  padding: 0.45rem 1rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(15, 110, 253, 0.92);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  animation: toastIn 300ms ease, toastOut 500ms ease 2.5s forwards;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ---- Freshness bubble (data/model update times, mobile only) ----
+   Positioned below the search bar so it doesn't cover UI controls.
+   Two-line layout: "Data: <date>" + "Model: <date>". */
+.freshnessBubble {
+  position: fixed;
+  top: calc(62px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3100;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  animation: freshnessBubbleIn 400ms ease, freshnessBubbleOut 600ms ease 4s forwards;
+  pointer-events: none;
+}
+
+@keyframes freshnessBubbleIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.95); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes freshnessBubbleOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  to { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.97); }
+}
+
+/* ---- Transient count bubble (Alerts / Near-me chip feedback) ----
+   A small, border-less, frosted "cloud" that flashes above the map when
+   the user taps an Alerts or Near-me icon on the mobile chip bar. Shows
+   a count, fades in, drifts up a few pixels and fades out on its own. */
+.countBubble {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3150;
+  padding: 0.45rem 0.95rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: countBubbleFade 1.8s ease-out forwards;
+}
+
+@keyframes countBubbleFade {
+  0%   { opacity: 0; transform: translate(-50%, 6px) scale(0.94); }
+  18%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  75%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -6px) scale(0.98); }
+}
+
+/* ---- Mobile table fix ---- */
+.mobileResponsiveTable {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobileResponsiveTable .table {
+  min-width: 600px;
+}
+
+.mobileResponsiveTable .table th,
+.mobileResponsiveTable .table td {
+  white-space: nowrap;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.mobileResponsiveTable .table td:first-child {
+  white-space: normal;
+  min-width: 120px;
+  max-width: 180px;
+  word-break: break-word;
+}
+
+@media (max-width: 420px) {
+  .panel {
+    padding: 0.6rem;
+    border-radius: 8px;
+  }
+
+  .mapFloatingBtn {
+    min-width: 38px;
+    min-height: 38px;
+    font-size: 0.86rem;
+  }
+
+  /* On mobile: no fullscreen toggle — map is always fullscreen */
+  .mapFullscreenBtn {
+    display: none;
+  }
+
+  .mapFloatingControls {
+    gap: 0.32rem;
+    right: calc(0.5rem + env(safe-area-inset-right, 0px));
+    /* Keep above the collapsed bottom sheet (62px) */
+    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mapZoomControls {
+    right: auto;
+    left: calc(0.5rem + env(safe-area-inset-left, 0px));
+  }
+
+  .infoCardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Google Maps-style search bar (mobile) ---- */
+.gmSearchBar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
+  /* Hug the viewport edges; only the safe-area inset trims the bar.
+     This recovers the wasted side margins seen on phones. */
+  left: max(0.3rem, env(safe-area-inset-left, 0px));
+  right: max(0.3rem, env(safe-area-inset-right, 0px));
+  z-index: 2800;
+  display: none;
+  align-items: center;
+  gap: 0.15rem;
+  height: 50px;
+  padding: 0 0.45rem;
+  border-radius: 25px;
+  background: var(--panel);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.07);
+  overflow: hidden; /* clip content to pill shape */
+  min-width: 0; /* prevent bar from overflowing its positioned bounds */
+}
+
+@media (max-width: 900px) {
+  .gmSearchBar { display: flex; }
+}
+
+.gmSearchMenuBtn,
+.gmSearchLocateBtn,
+.gmSearchInfoBtn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  padding: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.gmSearchInfoBtn {
+  color: var(--brand);
+  background: rgba(15, 110, 253, 0.1);
+}
+
+.gmSearchInfoBtn:active {
+  background: rgba(15, 110, 253, 0.22);
+}
+
+html[data-theme="dark"] .gmSearchInfoBtn {
+  color: #93c5fd;
+  background: rgba(99, 164, 255, 0.18);
+}
+
+.gmSearchMenuBtn:active,
+.gmSearchLocateBtn:active,
+.gmSearchInfoBtn:active {
+  background: rgba(100, 120, 160, 0.12);
+}
+
+.gmSearchLocateBtn.active {
+  color: #1a73e8;
+}
+
+.gmSearchIconSvg {
+  flex-shrink: 0;
+  color: var(--muted);
+  margin: 0 0.1rem;
+}
+
+.gmSearchInput {
+  flex: 1;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+.gmSearchInput::placeholder {
+  color: var(--muted);
+}
+
+.gmSearchClearBtn {
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.gmSearchDivider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  margin: 0 0.1rem;
+}
+
+/* Narrow phones (< 390px CSS width): shrink icon buttons so all fit in bar */
+@media (max-width: 389px) {
+  .gmSearchMenuBtn,
+  .gmSearchLocateBtn,
+  .gmSearchInfoBtn {
+    width: 32px;
+    height: 32px;
+  }
+  .gmSearchBar {
+    padding: 0 0.25rem;
+    gap: 0.1rem;
+  }
+}
+
+/* ---- Domain filter chip bar ---- */
+.gmChipBar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.35rem + 50px + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 2800;
+  display: none;
+  /* Centre the chip row on mobile — on narrow screens the 7 icons
+     don't fill the width, and flex-start would leave them hugging
+     the left edge. justify-content:center keeps them horizontally
+     centred; when the row is wider than the viewport it falls back
+     to scroll starting from flex-start thanks to `justify-content`
+     gracefully clamping with the overflow. */
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.4rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gmChipBar::-webkit-scrollbar { display: none; }
+
+@media (max-width: 900px) {
+  .gmChipBar { display: flex; }
+}
+
+.gmChip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  height: 32px;
+  padding: 0 0.78rem;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid rgba(0, 0, 0, 0.09);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.gmChip.gmChipActive {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.35);
+}
+
+.gmChip.gmChipAlert.gmChipActive {
+  background: #ea4335;
+  border-color: #ea4335;
+  box-shadow: 0 2px 6px rgba(234, 67, 53, 0.35);
+}
+
+/* Icon-only chips (mobile chip bar) — circular, fixed 40px tap target.
+   Uses explicit flex centring on both axes and line-height:0 so the
+   22×22 svg always sits in the optical centre of the circle regardless
+   of font metrics. */
+.gmChip.gmChipIcon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  line-height: 0;
+}
+
+.gmChip.gmChipIcon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  margin: 0;
+}
+
+/* Clear-all chip on the mobile chip bar — subtle rotate on hover/focus
+   so it visually echoes the desktop `.mapChipClear` affordance. */
+.gmChip.gmChipClear:hover svg,
+.gmChip.gmChipClear:focus-visible svg {
+  transform: rotate(-18deg);
+  transition: transform 160ms ease;
+}
+
+/* Hover / focus bubble tooltip for mobile chips — mirrors the desktop
+   `.mapChip[data-tooltip]` styling so icon chips surface their label on
+   pointer hover (mouse-equipped mobile browsers) and keyboard focus. */
+.gmChip[data-tooltip] {
+  position: relative;
+}
+
+.gmChip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 2810;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+}
+
+.gmChip[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 0.05rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.92);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 2810;
+}
+
+.gmChip[data-tooltip]:hover::after,
+.gmChip[data-tooltip]:focus-visible::after,
+.gmChip[data-tooltip]:hover::before,
+.gmChip[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Drawer lang row (also inside filter sheet) ---- */
+.drawerLangRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+}
+
+.drawerLangLabel {
+  font-size: 0.8rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* Hide sidebar drawer on mobile — filters live in bottom sheet */
+@media (max-width: 900px) {
+  .drawer { display: none !important; }
+  .drawerBackdrop { display: none !important; }
+}
+
+/* ---- Teardrop pin pulse animation ---- */
+@keyframes pinPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+}
+
+/* ================================================================
+   Desktop filter drawer — refined look
+   Grouped "cards" for related filters, iconed labels, custom
+   select chevrons, and a filled range slider. Hidden on mobile
+   (the bottom sheet takes over below 900px).
+   ================================================================ */
+
+/* Section title with a small funnel icon */
+.drawerSectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drawerTitleIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #e8f0ff 0%, #d4e3ff 100%);
+  color: var(--brand);
+  border: 1px solid #b8cdf0;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.drawerTitleIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Nudge drawer rhythm: a touch more breathing room, slightly
+   softer edges. */
+.drawer {
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem 1rem;
+}
+
+.drawer.pinned {
+  padding: 0.85rem 0.95rem 1rem;
+}
+
+/* ── Hero search field ─────────────────────────────────────── */
+.drawerSearchField label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.drawerSearchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.drawerSearchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.drawerSearchIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.drawerSearchField input[type="search"] {
+  width: 100%;
+  padding: 0.72rem 2.25rem 0.72rem 2.3rem;
+  border-radius: 12px;
+  border: 1px solid #cfddf0;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  font-size: 0.92rem;
+  box-shadow: 0 1px 2px rgba(15, 40, 80, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.drawerSearchField input[type="search"]:focus {
+  outline: none;
+  border-color: #6ea8fe;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 110, 253, 0.15), 0 2px 6px rgba(15, 40, 80, 0.08);
+}
+
+.drawerSearchField input[type="search"]::placeholder {
+  color: #9eaec8;
+}
+
+.drawerSearchClear {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  background: #e7eefa;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.drawerSearchClear:hover {
+  background: #d4dff2;
+  color: var(--text);
+}
+
+.drawerSearchClear svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Grouped filter card ───────────────────────────────────── */
+.filterGroup {
+  position: relative;
+  padding: 0.1rem 0 0;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid rgba(191, 211, 234, 0.5);
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.filterGroup:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.filterGroupHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+  padding: 0.55rem 0 0.1rem;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.filterGroupIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--brand);
+}
+
+.filterGroupIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Field labels: icon + text inline ──────────────────────── */
+.filterGroup .field {
+  margin: 0;
+}
+
+.filterGroup .field label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.filterGroup .field .fieldIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.filterGroup .field .fieldIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Custom select with chevron ────────────────────────────── */
+.selectWrap {
+  position: relative;
+  display: block;
+}
+
+.selectWrap select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0.58rem 2.2rem 0.58rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #cfddf0;
+  background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.selectWrap select:hover {
+  border-color: #b7cdf0;
+  background: #ffffff;
+}
+
+.selectWrap select:focus {
+  outline: none;
+  border-color: #6ea8fe;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 110, 253, 0.15);
+}
+
+.selectChevron {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color 140ms ease, transform 140ms ease;
+}
+
+.selectChevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.selectWrap:hover .selectChevron,
+.selectWrap select:focus + .selectChevron {
+  color: var(--brand);
+}
+
+/* ── Range slider (filled portion + bigger thumb) ──────────── */
+.rangeField label {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.rangeField .rangeValue {
+  margin-left: auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 2px rgba(15, 110, 253, 0.25);
+}
+
+.rangeSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--brand) 0%,
+    var(--brand) var(--range-fill, 0%),
+    #dce7f7 var(--range-fill, 0%),
+    #dce7f7 100%
+  );
+  cursor: pointer;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0;
+  border: 0;
+  outline: none;
+}
+
+.rangeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--brand);
+  box-shadow: 0 2px 6px rgba(15, 110, 253, 0.35);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.rangeSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 10px rgba(15, 110, 253, 0.45);
+}
+
+.rangeSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--brand);
+  box-shadow: 0 2px 6px rgba(15, 110, 253, 0.35);
+  cursor: pointer;
+}
+
+.rangeSlider:focus-visible {
+  box-shadow: 0 0 0 3px rgba(15, 110, 253, 0.18);
+}
+
+.rangeScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.66rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+}
+
+/* Date range inside the date group: tighten to match card */
+.filterGroup .dateRangeRow {
+  margin-top: 0.15rem;
+}
+
+/* ================================================================
+   Dark theme overrides for the refined filter drawer
+   ================================================================ */
+html[data-theme="dark"] .drawerTitleIcon {
+  background: linear-gradient(180deg, #1b2d4c 0%, #15253f 100%);
+  border-color: #324b73;
+  color: #9cc4ff;
+}
+
+html[data-theme="dark"] .drawerSearchField input[type="search"] {
+  background: linear-gradient(180deg, #0f1a2b 0%, #0c1526 100%);
+  border-color: #2b3f5f;
+  color: #e6eef9;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"] .drawerSearchField input[type="search"]:focus {
+  background: #0f1a2b;
+  border-color: #4d7cc5;
+  box-shadow: 0 0 0 3px rgba(99, 164, 255, 0.22);
+}
+
+html[data-theme="dark"] .drawerSearchField input[type="search"]::placeholder {
+  color: #6a7e9c;
+}
+
+html[data-theme="dark"] .drawerSearchClear {
+  background: #1a2840;
+  color: #9fb0c8;
+}
+
+html[data-theme="dark"] .drawerSearchClear:hover {
+  background: #243654;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .filterGroup {
+  background: transparent;
+  border-color: rgba(50, 75, 115, 0.4);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .filterGroupHead {
+  color: #9cc4ff;
+}
+
+html[data-theme="dark"] .filterGroup .field label {
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .filterGroup .field .fieldIcon {
+  color: #8aa0c0;
+}
+
+html[data-theme="dark"] .selectWrap select {
+  background: linear-gradient(180deg, #0f1a2b 0%, #0c1526 100%);
+  border-color: #2b3f5f;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .selectWrap select:hover {
+  border-color: #3d5780;
+  background: #0f1a2b;
+}
+
+html[data-theme="dark"] .selectWrap select:focus {
+  background: #0f1a2b;
+  border-color: #4d7cc5;
+  box-shadow: 0 0 0 3px rgba(99, 164, 255, 0.22);
+}
+
+html[data-theme="dark"] .selectChevron {
+  color: #8aa0c0;
+}
+
+html[data-theme="dark"] .selectWrap:hover .selectChevron,
+html[data-theme="dark"] .selectWrap select:focus + .selectChevron {
+  color: #9cc4ff;
+}
+
+html[data-theme="dark"] .rangeField .rangeValue {
+  background: #3b82f6;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .rangeSlider {
+  background: linear-gradient(
+    to right,
+    #63a4ff 0%,
+    #63a4ff var(--range-fill, 0%),
+    #22324e var(--range-fill, 0%),
+    #22324e 100%
+  );
+}
+
+html[data-theme="dark"] .rangeSlider::-webkit-slider-thumb {
+  background: #0f1a2b;
+  border-color: #63a4ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .rangeSlider::-moz-range-thumb {
+  background: #0f1a2b;
+  border-color: #63a4ff;
+}
+
+html[data-theme="dark"] .rangeScale {
+  color: #8aa0c0;
+}

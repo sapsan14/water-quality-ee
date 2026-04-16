@@ -1,0 +1,4 @@
+# Поверх корневого requirements.txt (pandas, sklearn, geopy, …)
+python-dotenv>=1.0.0
+folium>=0.15.0
+joblib>=1.3.0

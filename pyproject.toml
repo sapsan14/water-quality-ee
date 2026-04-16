@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "water-quality-ee"
+version = "0.1.0"
+description = "Probabilistic risk estimator for water quality compliance in Estonia"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Anton Sokolov"}]
+keywords = ["water-quality", "machine-learning", "estonia", "classification", "environmental-monitoring"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "requests>=2.31.0",
+    "lxml>=4.9.0",
+    "geopy>=2.4.0",
+    "pyproj>=3.6.0",
+    "joblib>=1.3.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.13.0",
+    "lightgbm>=4.0.0",
+    "shap>=0.44.0",
+]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools]
+py-modules = ["data_loader", "features", "evaluate", "county_infer", "terviseamet_reference_coords"]
+
+[project.urls]
+Homepage = "https://h2oatlas.ee"
+Repository = "https://github.com/sapsan14/water-quality-ee"
+Documentation = "https://github.com/sapsan14/water-quality-ee/tree/main/docs"
+"Bug Tracker" = "https://github.com/sapsan14/water-quality-ee/issues"

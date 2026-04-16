@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "domain": "basseinid",
+      "location": "Astangu Kutserehabilitatsioonikeskuse väikebassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Aura Terviseklubi välimullivann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Bassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Hestia Hotel Haapsalu SPA lastebassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Jõgeva haigla taastusravi vesivõimlemise bassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Kernu Keller Spa bassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Kernu Keller Spa mullivann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lasteaed Naba",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lasteaia  Naba bassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA jaapani vann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA külmaveeauk",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA kümblusbassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Lavendel SPA mullivann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Loksa Lasteaed Õnnetriinu",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Maidla lasteaia valgus- ja veeteraapia bassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Mullivann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Narva hotelli mullivann",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Noorus Spa Inn lastebassein mullivanniga",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Noorus Spa Inn põhibassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    },
+    {
+      "domain": "basseinid",
+      "location": "Noorus Spa Inn soolabassein",
+      "action": "set_manual_or_hide",
+      "lat": null,
+      "lon": null,
+      "note": ""
+    }
+  ],
+  "_comment": "Это шаблон. Для применения сохраните в citizen-service/data/coordinate_overrides.json и замените action на set_manual|hide. Для set_manual укажите lat/lon."
+}

@@ -1,0 +1,173 @@
+# Обновление данных и модели для citizen-service.
+#
+# Расписание (cron — full): снимок с 4 моделями + координаты.
+#   Понедельник  05:00 UTC
+#   1-е число    04:00 UTC
+#
+# Ручной запуск: Actions → Citizen snapshot → mode по умолчанию full; map-only — только если нужен быстрый снимок без ML.
+#
+# Координаты (каскад):
+#   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha, без ключа)
+#   2. veevargid.xml — координаты объектов водопровода из vtiav.sm.ee (veevark, без ключа)
+#   3. Google Maps Geocoding → Geoapify → OpenCage — полный каскад для всех доменов.
+#   4. patch_geocode_approximate.py — дополнительный проход для approximate_ee точек.
+# Секреты: OPENCAGE_API_KEY, GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY.
+# Лимит HTTP: dispatch → из inputs; cron → 4000. Кэши и артефакты коммитятся в репо.
+
+name: Citizen snapshot
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full — данные + 4 модели + координаты. map-only — быстро, без прогнозов моделей."
+        type: choice
+        required: true
+        default: full
+        options:
+          - full
+          - map-only
+      geocode_limit:
+        description: "Лимит HTTP на каскад координат за этот запуск (OpenCage)."
+        type: string
+        required: false
+        default: "1200"
+  schedule:
+    - cron: "0 5 * * 1"
+    - cron: "0 4 1 * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Режим снимка и лимит геокода
+        id: wf
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            m='${{ github.event.inputs.mode }}'
+            echo "mode=${m:-full}" >> "$GITHUB_OUTPUT"
+            lim='${{ github.event.inputs.geocode_limit }}'
+            echo "geocode=${lim:-1200}" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "geocode=4000" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt', 'citizen-service/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install dependencies (map-only — slim)
+        if: steps.wf.outputs.mode != 'full'
+        run: |
+          pip install -e .
+          pip install -r citizen-service/requirements.txt
+
+      - name: Install dependencies (full — все ML-зависимости)
+        if: steps.wf.outputs.mode == 'full'
+        run: |
+          pip install -e .
+          pip install -r requirements.txt
+          pip install -r citizen-service/requirements.txt
+
+      - name: Download open data from vtiav.sm.ee
+        id: download
+        run: |
+          python src/data_loader.py && echo "status=ok" >> "$GITHUB_OUTPUT" || echo "status=fallback" >> "$GITHUB_OUTPUT"
+
+      - name: Warn if data download failed (using cached XML)
+        if: steps.download.outputs.status == 'fallback'
+        run: |
+          echo "::warning::vtiav.sm.ee недоступен или вернул ошибку — используем кэшированный XML из предыдущего запуска."
+
+      - name: Build snapshot — map-only (данные + координаты, без модели)
+        if: steps.wf.outputs.mode != 'full'
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+        run: |
+          python citizen-service/scripts/build_citizen_snapshot.py \
+            --map-only \
+            --infer-county \
+            --resolve-coordinates \
+            --geocode-limit "${{ steps.wf.outputs.geocode }}" \
+            --log-level INFO
+
+      - name: Build snapshot — full (данные + 4 модели + координаты)
+        if: steps.wf.outputs.mode == 'full'
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+        run: |
+          python citizen-service/scripts/build_citizen_snapshot.py \
+            --infer-county \
+            --resolve-coordinates \
+            --geocode-limit "${{ steps.wf.outputs.geocode }}" \
+            --log-level INFO
+
+      - name: Enrich coordinates (EEA bathing water → veevargid.xml → OpenCage cache)
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+        run: |
+          python citizen-service/scripts/enrich_coordinates.py \
+            --limit 0 \
+            --quiet
+
+      - name: Geocode approximate_ee points (Google → Geoapify → OpenCage cascade)
+        env:
+          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+        run: |
+          python citizen-service/scripts/patch_geocode_approximate.py
+
+      - name: Export frontend snapshot JSON
+        run: |
+          python citizen-service/scripts/export_frontend_snapshot.py
+
+      - name: Commit and push refreshed snapshot + model + geocode caches
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f \
+            citizen-service/artifacts/snapshot.json \
+            citizen-service/artifacts/citizen_model.joblib \
+            citizen-service/data/coordinate_resolve_cache.json \
+            citizen-service/data/geocode_cache.json \
+            citizen-service/data/paged_address_cache.json \
+            frontend/public/data/snapshot.frontend.json \
+            frontend/public/data/snapshot.history.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(citizen): refresh snapshot [${{ steps.wf.outputs.mode }}]"
+            git pull --rebase origin main
+            git push
+          fi
+
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citizen-snapshot-${{ steps.wf.outputs.mode }}
+          path: |
+            citizen-service/artifacts/snapshot.json
+            frontend/public/data/snapshot.frontend.json
+            frontend/public/data/snapshot.history.json
