@@ -874,6 +874,13 @@ html[data-theme="dark"] .langDropdownItem:hover {
   bottom: auto;
 }
 
+/* Elevate the hovered th above sibling sticky headers so the tooltip
+   pseudo-element (which lives inside the th's stacking context) is not
+   painted below adjacent th cells that share the same z-index: 5. */
+.table thead th:has(.iconTooltip:hover) {
+  z-index: 10;
+}
+
 .cellIcon {
   display: inline-flex;
   align-items: center;
