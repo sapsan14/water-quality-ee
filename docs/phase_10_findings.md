@@ -156,15 +156,15 @@ For drinking water (veevark + joogivesi): iron / manganese are the main sources.
 
 Revisiting the five hypotheses from `docs/data_gaps.md` § "Evidence-ranked revisit":
 
-| # | Hypothesis | Phase 10 verdict |
+| # | Hypothesis | Verdict (Phase 10 + 13) |
 |---|---|---|
-| 1 | **Partial publication** — open-data is a subset of internal logs | **Strongly supported.** 1 260 basseinid hidden_violation have systematically absent microbiology (e_coli unmeasured in most). 777 veevark hidden_violation cluster around gaps in chemistry params. |
-| 2 | **Selective measurement by site type** — different mandatory profiles | **Partially supported.** Basseinid hidden_violation cluster around missing microbiology parameters that ARE measured for other pools at the same site in different years, suggesting temporal variation, not hard site-type rules. |
-| 3 | **Measurement frequency variance** — seasonal / periodic | **Now evaluable.** Full corpus spans 6 years; temporal patterns visible in per-year breakdowns. Detailed temporal clustering analysis deferred to Phase 11. |
+| 1 | **Partial publication** — open-data is a subset of internal logs | **Supported (45.1% of param-instances).** Dominant for supluskoha (97.9%) where chemistry is never measured per EU 2006/7/EC. 63% of basseinid unmeasured params are also never-at-site. |
+| 2 | **Selective measurement by site type** — different mandatory profiles | **Partially supported.** Supluskoha consistently lacks chemistry; basseinid lacks microbiology at some sites. But temporal analysis (Phase 13) shows much of this is periodic, not per-site-type. |
+| 3 | **Measurement frequency variance** — seasonal / periodic | **Strongly supported (54.9% of param-instances, Phase 13).** For veevark, 97.9% of "unmeasured" chemistry params ARE measured at the same site in other probes — periodic scheduling (quarterly nitrates, annual chlorides). For joogivesi, 78.4%. Hidden_violation distribution is uniform across months (not seasonal). See `scripts/temporal_hidden_violation_analysis.py`. |
 | 4 | **Parser loss** | **Definitively closed.** Live XML parity scan on 160 MB of production data (Phase 10b) confirmed zero measurement parameters lost. All 9 unparsed tags are metadata. |
-| 5 | **Compliance calculated on unpublished data** | **Strong examples.** veevark sid 377387 and sid 380948 have ALL published parameters clean — yet label = violation. With hypothesis #4 now closed, these can only be explained by unpublished data or a contextual/metadata decision rule. |
+| 5 | **Compliance calculated on unpublished data** | **Strong examples.** veevark sid 377387 and sid 380948 have ALL published parameters clean — yet label = violation. With #4 closed and #3 explaining the periodic gaps, these probes can only be explained by unpublished data or a contextual decision rule. |
 
-**Bottom line for the inquiry:** hypotheses #1 and #5 are the leading explanations. Hypothesis #4 is closed. The Terviseamet draft inquiry asks Q1–Q5 to discriminate between #1, #2, #3, and #5.
+**Bottom line:** hypotheses #1 and #3 together explain the structural pattern (partial publication + periodic chemistry). Hypothesis #5 explains the residual cases where ALL params are published and clean. Hypothesis #4 is closed. The Terviseamet cooperation letter asks Q1–Q5 to confirm.
 
 ---
 
@@ -201,14 +201,17 @@ All 92 tests pass on branch.
 
 ---
 
-## 8. Recommended next actions (Phase 11+)
+## 8. Recommended next actions — status
 
-1. **Model retrain.** The `free_chlorine_deviation` feature was computed with the wrong range. Retrain all four models (LR, RF, GB, LightGBM) on corrected features. Add `coliforms_detected` to `RATIO_COLS` / `FEATURE_COLS` alongside the retrain.
-2. **Citizen-service snapshot rebuild.** After retrain, run `build_citizen_snapshot.py` to propagate corrected pool probabilities.
-3. **Full-corpus audit.** Run `notebooks/07_data_gaps_audit.ipynb` on `load_all()` with the corrected norms. Refresh the 30 → N hidden_violation count and update the inquiry before sending.
-4. **XML parity scan.** Run `scripts/audit_xml_field_coverage.py` on a populated `data/raw/` to close hypothesis #4 with certainty (not just structurally).
-5. **Send inquiry.** After supervisor sign-off and Estonian translation of `docs/terviseamet_inquiry.md`.
-6. **Temporal analysis.** On the full corpus, evaluate hypothesis #3 (measurement frequency variance) by cross-referencing hidden_violation sample dates with per-parameter coverage-over-time plots per `location_key`.
+| # | Action | Status |
+|---|---|---|
+| ~~1~~ | ~~Model retrain with corrected features~~ | ✅ Phase 11 (LR/RF/GB) + Phase 13 (LightGBM AUC=0.984) |
+| ~~2~~ | ~~Citizen-service snapshot rebuild~~ | ✅ Phase 13 (4 models on [h2oatlas.ee](https://h2oatlas.ee)) |
+| ~~3~~ | ~~Full-corpus audit~~ | ✅ Phase 10b (69,536 probes) |
+| ~~4~~ | ~~XML parity scan~~ | ✅ Phase 10b (160 MB, zero measurement params lost) |
+| ~~5~~ | ~~Temporal analysis~~ | ✅ Phase 13 (H3 strongly supported, 54.9%) |
+| 6 | Send Terviseamet cooperation letter | Draft ready; awaits supervisor sign-off + Estonian translation |
+| 7 | `mineraalvesi` domain | Blocked: stable opendata URLs not available |
 
 ---
 
@@ -216,11 +219,15 @@ All 92 tests pass on branch.
 
 - Phase plan: `docs/phase_10_plan.md`
 - Audit method: `docs/data_gaps.md`
-- Inquiry draft: `docs/terviseamet_inquiry.md`
+- Cooperation letter: `docs/terviseamet_inquiry.md`
 - Norm reference: `docs/normy.md`
 - Pool parameters: `docs/parametrid_ujula_avavee.md`
 - Parameter descriptions: `docs/parametry.md`
 - Checker module: `src/audit/label_vs_norms.py`
 - Snapshot adapter: `src/audit/snapshot_audit.py`
 - Parser parity: `scripts/audit_xml_field_coverage.py`
+- Temporal analysis: `scripts/temporal_hidden_violation_analysis.py`
 - Audit notebook: `notebooks/07_data_gaps_audit.ipynb`
+- Learning journey: `docs/learning_journey.md`
+- Presentation notes: `docs/presentation_notes.md`
+- Live site: [h2oatlas.ee](https://h2oatlas.ee)
