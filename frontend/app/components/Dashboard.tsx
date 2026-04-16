@@ -1421,10 +1421,12 @@ export default function Dashboard({ snapshot }: Props) {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  // Load county GeoJSON once. Shared with MapClient (via prop) so both
-  // polygon-based county filtering in `filtered` and overlay rendering
-  // use the same data without duplicate fetches.
+  // Load county GeoJSON on desktop/pad only. On mobile (<= 900px) the
+  // overlay is not rendered and polygon-based filtering is too expensive
+  // (pointInFeature on ~600 places against 12 MB polygons freezes the UI).
+  // Mobile uses fast string-based county filtering via p.county instead.
   useEffect(() => {
+    if (isMobile) return; // skip on mobile — too heavy
     if (countyGeoJson) return;
     let alive = true;
     const idle = (cb: () => void) => {
@@ -1445,7 +1447,7 @@ export default function Dashboard({ snapshot }: Props) {
         .catch(() => { if (alive) setCountyGeoJson(null); });
     });
     return () => { alive = false; cancelIdle(handle); };
-  }, [countyGeoJson]);
+  }, [countyGeoJson, isMobile]);
 
   // Track the on-screen keyboard via VisualViewport so map focus calls
   // can offset the marker above the IME / bottom sheet.
