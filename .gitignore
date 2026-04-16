@@ -1,5 +1,7 @@
 # Данные — не коммитим (могут быть большими, регенерируем)
+data/raw/
 data/processed/
+data/audit/
 
 # Python
 __pycache__/
