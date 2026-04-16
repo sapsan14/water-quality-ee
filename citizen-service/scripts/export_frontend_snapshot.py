@@ -17,6 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "citizen-service" / "artifacts" / "snapshot.json"
 DST = ROOT / "frontend" / "public" / "data" / "snapshot.frontend.json"
+DST_HISTORY = ROOT / "frontend" / "public" / "data" / "snapshot.history.json"
 RAW_COMBINED_PATH = ROOT / "data" / "processed" / "raw_combined.csv"
 HISTORY_MEASUREMENT_COLUMNS = [
     "e_coli",
@@ -260,9 +261,18 @@ def main() -> None:
         "places": out_places,
     }
 
+    # Split sample_history into a separate lazy-loaded file (saves ~3 MB from initial load)
+    history_map: dict[str, list] = {}
+    for p in out_places:
+        h = p.pop("sample_history", [])
+        if h:
+            history_map[p["id"]] = h
+
     DST.parent.mkdir(parents=True, exist_ok=True)
     DST.write_text(json.dumps(out_payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    DST_HISTORY.write_text(json.dumps(history_map, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"Exported {len(out_places)} places to {DST}")
+    print(f"Exported {len(history_map)} place histories to {DST_HISTORY} ({DST_HISTORY.stat().st_size / 1024:.0f} KB)")
 
 
 if __name__ == "__main__":

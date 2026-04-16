@@ -1339,5 +1339,375 @@
 "lat": 59.42046749999999,
 "lon": 24.7748594,
 "matched_address": "Järvevana tee 3, 10112 Tallinn, Eesti"
+},
+"google|vana-koiola järv, eesti": {
+"lat": 57.959316,
+"lon": 27.0499701,
+"matched_address": "Vana-Koiola järv, Vana-Koiola, 63010 Põlva maakond, Eesti"
+},
+"google|viimsi myfitness, eesti": {
+"lat": 59.50470199999999,
+"lon": 24.8269213,
+"matched_address": "Sõpruse tee 15, Haabneeme, 74001 Harju maakond, Eesti"
+},
+"google|noorus spa inn, eesti": {
+"lat": 58.595272,
+"lon": 25.013607,
+"matched_address": "Eesti"
+},
+"google|lustivere paisjärv umbusi jõel, eesti": {
+"lat": 58.6569685,
+"lon": 26.0842324,
+"matched_address": "Lustivere, Jõgeva maakond, Eesti"
+},
+"google|kohtla-järve järve kooli, eesti": {
+"lat": 59.39952770000001,
+"lon": 27.2944966,
+"matched_address": "Katse 2, kohtla, 30327 Ida-Viru maakond, Eesti"
+},
+"google|häädemeeste, eesti": {
+"lat": 58.0792088,
+"lon": 24.4931663,
+"matched_address": "Häädemeeste, 86001 Pärnu maakond, Eesti"
+},
+"google|inju küla, eesti": {
+"lat": 59.2661807,
+"lon": 26.3639502,
+"matched_address": "Inju, Lääne-Viru maakond, Eesti"
+},
+"google|lammasmäe puhkekeskuse, eesti": {
+"lat": 59.4624794,
+"lon": 26.5457743,
+"matched_address": "Linnuse, 44014 Lääne-Viru maakond, Eesti"
+},
+"google|auvere küla, eesti": {
+"lat": 59.3186346,
+"lon": 27.9158381,
+"matched_address": "Auvere, Ida-Viru maakond, Eesti"
+},
+"google|olgina aleviku, eesti": {
+"lat": 59.3978791,
+"lon": 28.1267536,
+"matched_address": "Olgina, 40103 Ida-Viru maakond, Eesti"
+},
+"google|ülemiste järv — ülemiste järv, vpj sissevool, eesti": {
+"lat": 59.4190607,
+"lon": 24.7734959,
+"matched_address": "Ülemistejärve, Tallinn, Eesti"
+},
+"google|intsu küla, eesti": {
+"lat": 58.29860919999999,
+"lon": 25.5984362,
+"matched_address": "Intsu, Viljandi maakond, Eesti"
+},
+"google|saaremaa veetehase, eesti": {
+"lat": 58.4849721,
+"lon": 22.6136407,
+"matched_address": "Saaremaa, Saare maakond, Eesti"
+},
+"google|variku küla, eesti": {
+"lat": 59.1140207,
+"lon": 23.803855,
+"matched_address": "Variku, 91106 Lääne maakond, Eesti"
+},
+"google|nelijärve puhkekeskuse, eesti": {
+"lat": 59.2659848,
+"lon": 25.6492245,
+"matched_address": "Nelijärve tn 4, Aegviidu, 74501 Harju maakond, Eesti"
+},
+"google|roela aleviku allika põik, eesti": {
+"lat": 59.1657958,
+"lon": 26.5916263,
+"matched_address": "Allika põik, Roela, 46602 Lääne-Viru maakond, Eesti"
+},
+"google|altküla pae tn, eesti": {
+"lat": 59.4191863,
+"lon": 27.5036926,
+"matched_address": "Pae tänav, Altküla, 41713 Ida-Viru maakond, Eesti"
+},
+"google|kutimuti noortelaagri, eesti": {
+"lat": 59.37921110000001,
+"lon": 24.2358807,
+"matched_address": "Laulasmaa, 76702 Harju maakond, Eesti"
+},
+"google|liivi küla, eesti": {
+"lat": 58.8270291,
+"lon": 23.9622389,
+"matched_address": "Liivi, Lääne maakond, Eesti"
+},
+"google|marguse spordibaasi, eesti": {
+"lat": 58.0432768,
+"lon": 26.4984485,
+"matched_address": "Nüpli küla, Otepää, 67408 Valga maakond, Eesti"
+},
+"google|avispea küla, eesti": {
+"lat": 59.1193635,
+"lon": 26.426388,
+"matched_address": "Avispea, Lääne-Viru maakond, Eesti"
+},
+"google|nõo hooldekodu, eesti": {
+"lat": 58.2515334,
+"lon": 26.5144378,
+"matched_address": "küla, Luke, 61601 Tartu maakond, Eesti"
+},
+"google|karujärve kämpingu, eesti": {
+"lat": 58.3781124,
+"lon": 22.2312679,
+"matched_address": "Paiküla, 93562 Saare maakond, Eesti"
+},
+"google|pandivere küla, eesti": {
+"lat": 59.1614402,
+"lon": 26.3045081,
+"matched_address": "Pandivere, Lääne-Viru maakond, Eesti"
+},
+"google|eipri küla, eesti": {
+"lat": 59.15269319999999,
+"lon": 26.3588668,
+"matched_address": "Eipri, Lääne-Viru maakond, Eesti"
+},
+"google|laulasmaa laager, eesti": {
+"lat": 59.3773804,
+"lon": 24.2385735,
+"matched_address": "Laulasmaa, Harju maakond, Eesti"
+},
+"google|pahkla camphilli küla, eesti": {
+"lat": 59.1751302,
+"lon": 24.8927542,
+"matched_address": "Vahtrapere tee, Pahkla, 79742 Rapla maakond, Eesti"
+},
+"google|polesno, eesti": {
+"lat": 58.595272,
+"lon": 25.013607,
+"matched_address": "Eesti"
+},
+"google|tänassilma, eesti": {
+"lat": 58.3922981,
+"lon": 25.8459988,
+"matched_address": "Tänassilma, Viljandi maakond, Eesti"
+},
+"google|altmetsa vms-1 kuni kreegipuu vms-2 lõik, eesti": {
+"lat": 59.4670396,
+"lon": 24.946473,
+"matched_address": "Altmetsa tee, Maardu, Harju maakond, Eesti"
+},
+"google|vasavere-rausvere piirkonna, eesti": {
+"lat": 59.3125645,
+"lon": 27.4978906,
+"matched_address": "Vasavere, Rausvere, 41214 Ida-Viru maakond, Eesti"
+},
+"google|klooga asula, eesti": {
+"lat": 59.31180999999999,
+"lon": 24.2294907,
+"matched_address": "Klooga, Harju maakond, Eesti"
+},
+"google|karjamaa spordi- ja puhkebaasi, eesti": {
+"lat": 59.4536849,
+"lon": 24.7103495,
+"matched_address": "Karjamaa, Tallinn, Eesti"
+},
+"google|prillimäe aleviku, eesti": {
+"lat": 59.1805019,
+"lon": 24.8005717,
+"matched_address": "Prillimäe, 79702 Rapla maakond, Eesti"
+},
+"google|uus-rebala (endine sillaotsa ii evü veevärk), eesti": {
+"lat": 58.90565640000001,
+"lon": 25.5920138,
+"matched_address": "Sillaotsa, Järva maakond, Eesti"
+},
+"google|otsa-miko, liikva külas ja loopealse sõrve külas, eesti": {
+"lat": 59.4494363,
+"lon": 24.837938,
+"matched_address": "Loopealse, Tallinn, Eesti"
+},
+"google|värska originaal as, eesti": {
+"lat": 57.93882800000001,
+"lon": 27.6524522,
+"matched_address": "Pikk tn 41, Värska, 64001 Võru maakond, Eesti"
+},
+"google|kõidama küla, eesti": {
+"lat": 58.53785970000001,
+"lon": 25.5027817,
+"matched_address": "Kõidama, Viljandi maakond, Eesti"
+},
+"google|olustvere aleviku, eesti": {
+"lat": 58.5527065,
+"lon": 25.5554501,
+"matched_address": "Olustvere, Viljandi maakond, Eesti"
+},
+"google|kelvingi küla, eesti": {
+"lat": 59.5499545,
+"lon": 24.839273,
+"matched_address": "Kelvingi, Harju maakond, Eesti"
+},
+"google|tallinna vana-pääsküla üvk piirkond, eesti": {
+"lat": 59.3552572,
+"lon": 24.6306317,
+"matched_address": "Vana-Pääsküla, 10915 Tallinn, Eesti"
+},
+"google|vääna küla, eesti": {
+"lat": 59.38847810000001,
+"lon": 24.3993817,
+"matched_address": "Vääna, Harju maakond, Eesti"
+},
+"google|sutlepa küla, eesti": {
+"lat": 59.05313100000001,
+"lon": 23.6062579,
+"matched_address": "Sutlepa, Sutlepa / Sutlep, 91230 Lääne maakond, Eesti"
+},
+"google|urvaste küla, eesti": {
+"lat": 59.2558765,
+"lon": 25.10042,
+"matched_address": "Urvaste, 75218 Harju maakond, Eesti"
+},
+"google|paekna küla, eesti": {
+"lat": 59.2771786,
+"lon": 24.8309403,
+"matched_address": "Paekna, Harju maakond, Eesti"
+},
+"google|soldina küla, eesti": {
+"lat": 59.3711843,
+"lon": 28.0398032,
+"matched_address": "Soldina, Ida-Viru maakond, Eesti"
+},
+"google|ihasalu pansionaadi, eesti": {
+"lat": 59.4966127,
+"lon": 25.2026627,
+"matched_address": "Ihasalu, Harju maakond, Eesti"
+},
+"google|aespa aleviku (sh vilivere küla), eesti": {
+"lat": 59.20768,
+"lon": 24.65695,
+"matched_address": "Aespa, Aespa, 79705 Rapla maakond, Eesti"
+},
+"google|jausa aiandi, eesti": {
+"lat": 58.7837491,
+"lon": 22.7031967,
+"matched_address": "Aiandi tee, Jausa, 92003 Hiiu maakond, Eesti"
+},
+"google|laupa elamute, eesti": {
+"lat": 58.77344559999999,
+"lon": 25.3670922,
+"matched_address": "Laupa, Järva maakond, Eesti"
+},
+"google|kuri asula, eesti": {
+"lat": 58.949483,
+"lon": 22.9280262,
+"matched_address": "Kuri, Hiiu maakond, Eesti"
+},
+"google|jõõpre küla, eesti": {
+"lat": 58.486306,
+"lon": 24.3282256,
+"matched_address": "Jõõpre, Pärnu maakond, Eesti"
+},
+"google|mõigu elamukvartal, eesti": {
+"lat": 59.4095186,
+"lon": 24.8072595,
+"matched_address": "Mõigu, Tallinn, Eesti"
+},
+"google|karilatsi küla, eesti": {
+"lat": 58.1143298,
+"lon": 26.9185288,
+"matched_address": "Karilatsi, 63505 Põlva maakond, Eesti"
+},
+"google|uuesalu piirkond, eesti": {
+"lat": 59.3617852,
+"lon": 24.8228415,
+"matched_address": "Uuesalu, Harju maakond, Eesti"
+},
+"google|suurpea küla, eesti": {
+"lat": 59.61630489999999,
+"lon": 25.7117219,
+"matched_address": "Suurpea, Harju maakond, Eesti"
+},
+"google|soodevahe ja vene küla piirkond, eesti": {
+"lat": 59.4133641,
+"lon": 24.9036194,
+"matched_address": "Soodevahe, Harju maakond, Eesti"
+},
+"google|põhja piirkond (järveküla, peetri, assaku, kodala, rae küla, põrguvälja, lehmja küla), eesti": {
+"lat": 59.3978923,
+"lon": 24.8112974,
+"matched_address": "Peetri, Harju maakond, Eesti"
+},
+"google|päkste küla, eesti": {
+"lat": 58.28857420000001,
+"lon": 26.8698457,
+"matched_address": "Päkste, Tartu maakond, Eesti"
+},
+"google|värska originaal as puurkaev 8, eesti": {
+"lat": 57.93882800000001,
+"lon": 27.6524522,
+"matched_address": "Pikk tn 41, Värska, 64001 Võru maakond, Eesti"
+},
+"google|piira küla, eesti": {
+"lat": 59.32706340000001,
+"lon": 26.3975384,
+"matched_address": "Piira, Lääne-Viru maakond, Eesti"
+},
+"google|kallaste linna, eesti": {
+"lat": 58.6668045,
+"lon": 27.1597215,
+"matched_address": "Kallaste, Tartu maakond, Eesti"
+},
+"google|sinimäe aleviku, eesti": {
+"lat": 59.37607060000001,
+"lon": 27.8706977,
+"matched_address": "Sinimäe, Ida-Viru maakond, Eesti"
+},
+"google|himma küla, eesti": {
+"lat": 57.983698,
+"lon": 27.0726882,
+"matched_address": "Himma, Põlva maakond, Eesti"
+},
+"google|kuusalu keskkooli, eesti": {
+"lat": 59.4506836,
+"lon": 25.4191685,
+"matched_address": "Kuusalu, 74601 Harju maakond, Eesti"
+},
+"google|aarna küla, eesti": {
+"lat": 58.0782174,
+"lon": 26.9689468,
+"matched_address": "Aarna, 63203 Põlva maakond, Eesti"
+},
+"google|uuri küla, eesti": {
+"lat": 59.5041808,
+"lon": 25.5826309,
+"matched_address": "Uuri, Harju maakond, Eesti"
+},
+"google|arkna küla, eesti": {
+"lat": 59.3961879,
+"lon": 26.393474,
+"matched_address": "Arkna, Lääne-Viru maakond, Eesti"
+},
+"google|toila sanatooriumi, eesti": {
+"lat": 59.4250193,
+"lon": 27.5141769,
+"matched_address": "Ranna tn 12, Toila, 41702 Ida-Viru maakond, Eesti"
+},
+"google|karla küla, eesti": {
+"lat": 58.3301129,
+"lon": 22.2615353,
+"matched_address": "Kärla, Saare maakond, Eesti"
+},
+"google|rämsi küla, eesti": {
+"lat": 58.30957999999999,
+"lon": 25.5399968,
+"matched_address": "Ramsi, Viljandi maakond, Eesti"
+},
+"google|kudruküla küla, eesti": {
+"lat": 59.43417950000001,
+"lon": 28.0922587,
+"matched_address": "Kudruküla, Ida-Viru maakond, Eesti"
+},
+"google|viru-nigula aleviku, eesti": {
+"lat": 59.4465026,
+"lon": 26.6958934,
+"matched_address": "Viru-Nigula, 44001 Lääne-Viru maakond, Eesti"
+},
+"google|järlepa küla, eesti": {
+"lat": 59.13393840000001,
+"lon": 24.9310304,
+"matched_address": "Järlepa, Rapla maakond, Eesti"
 }
 }

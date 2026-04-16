@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
@@ -296,20 +296,22 @@ function MarkerClusterLayer({
       }
     });
 
-    // At max zoom, the default zoomToBoundsOnClick does nothing useful
-    // and spiderfyOnMaxZoom is disabled (spiderfy collapses on mobile
-    // map moves). Instead, show the cluster's children as a pick-list
-    // in the bottom sheet. For all other zoom levels, the default
-    // zoomToBoundsOnClick handles zoom reliably — no custom override.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
         const currentZoom = map.getZoom();
         const maxZoom = map.getMaxZoom() || 15;
+        const evt = e as { layer: ClusterLike };
+        const children = evt.layer.getAllChildMarkers();
 
-        if (currentZoom >= maxZoom && onSelectCluster) {
-          const evt = e as { layer: ClusterLike };
-          const ids = evt.layer.getAllChildMarkers()
+        const allSameCoord = children.length > 1 && children.every((m) => {
+          const ll = m.getLatLng();
+          const first = children[0].getLatLng();
+          return ll.lat === first.lat && ll.lng === first.lng;
+        });
+
+        if ((currentZoom >= maxZoom || allSameCoord) && onSelectCluster) {
+          const ids = children
             .map((m) => m.options?.place?.id)
             .filter((id): id is string => Boolean(id));
           onSelectCluster(ids);
@@ -661,36 +663,6 @@ function MapClient({
     };
   }, []);
 
-  // Diagnostic: log Leaflet container dims vs internal state after init
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      const m = mapRef.current;
-      if (!m) { console.warn("[map-diag] mapRef is null after 2s"); return; }
-      const el = m.getContainer();
-      const rect = el.getBoundingClientRect();
-      const size = m.getSize();
-      const center = m.getCenter();
-      const zoom = m.getZoom();
-      const tallinn = m.latLngToContainerPoint([59.437, 24.7536]);
-      const tartu = m.latLngToContainerPoint([58.378, 26.729]);
-      const pane = (m as unknown as { _mapPane: HTMLElement })._mapPane;
-      const paneTransform = pane ? getComputedStyle(pane).transform : "n/a";
-      console.log("[map-diag]", JSON.stringify({
-        containerClient: { w: el.clientWidth, h: el.clientHeight },
-        containerBCR: { w: Math.round(rect.width), h: Math.round(rect.height), x: Math.round(rect.x), y: Math.round(rect.y) },
-        leafletSize: { w: size.x, h: size.y },
-        leafletCenter: { lat: center.lat.toFixed(4), lng: center.lng.toFixed(4) },
-        zoom,
-        tallinnPx: { x: Math.round(tallinn.x), y: Math.round(tallinn.y) },
-        tartuPx: { x: Math.round(tartu.x), y: Math.round(tartu.y) },
-        paneTransform,
-        boxSizing: getComputedStyle(el).boxSizing,
-        shellOverflow: el.parentElement ? getComputedStyle(el.parentElement).overflow : "n/a"
-      }, null, 2));
-    }, 2000);
-    return () => window.clearTimeout(id);
-  }, []);
-
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
@@ -789,7 +761,7 @@ function MapClient({
   const zoomIn = () => mapRef.current?.zoomIn();
   const zoomOut = () => mapRef.current?.zoomOut();
 
-  const countyStyle = (feature?: GeoJSON.Feature) => {
+  const countyStyle = useCallback((feature?: GeoJSON.Feature) => {
     const countyName = countyFeatureName(feature);
     const avg = countyRisk.get(countyName);
     let fill = "#243249";
@@ -805,15 +777,15 @@ function MapClient({
       fillColor: fill,
       fillOpacity: selected ? 0.3 : 0.16
     };
-  };
+  }, [countyRisk, selectedCountyNorm]);
 
-  const onEachCounty = (feature: GeoJSON.Feature, layer: L.Layer) => {
+  const onEachCounty = useCallback((feature: GeoJSON.Feature, layer: L.Layer) => {
     const countyName = countyFeatureName(feature);
     layer.on("click", () => {
       if (!countyName) return;
       onSelectCounty?.(countyName);
     });
-  };
+  }, [onSelectCounty]);
 
   return (
     <div className={`mapShell ${isFullscreen ? "isFullscreen" : ""}`}>
@@ -866,7 +838,7 @@ function MapClient({
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
         zoomControl={false}
-        style={{ height: "100%", width: "100%", borderRadius: (isFullscreen || isMobile) ? "0" : "12px" }}
+        style={{ height: "100%", width: "100%", borderRadius: "0" }}
         scrollWheelZoom
         preferCanvas
       >

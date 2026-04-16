@@ -386,6 +386,10 @@ export default function Dashboard({ snapshot }: Props) {
     const saved = window.localStorage.getItem("water.ui.filters-pinned.v1");
     return saved !== "false"; // default to pinned (true)
   });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("water.ui.sidebar-collapsed.v1") === "true";
+  });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoPageOpen, setInfoPageOpen] = useState(false);
   const [infoPageTab, setInfoPageTab] = useState<TabKey>("analytics");
@@ -474,6 +478,12 @@ export default function Dashboard({ snapshot }: Props) {
   const [placeCountyGeo, setPlaceCountyGeo] = useState<Map<string, string> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const desktopDetailRef = useRef<HTMLElement | null>(null);
+
+  // Draggable chip bar state
+  const chipBarRef = useRef<HTMLDivElement | null>(null);
+  const chipDragOrigin = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const [chipPos, setChipPos] = useState<{ left: number; top: number } | null>(null);
+  const chipDragging = useRef(false);
   const sheetDragStartY = useRef<number | null>(null);
   const sheetDragLastY = useRef<number | null>(null);
   const sheetDragLastTs = useRef<number | null>(null);
@@ -1146,7 +1156,7 @@ export default function Dashboard({ snapshot }: Props) {
   const explainViolation = (place: FrontendPlace) => explainViolationFromMeasurements(place.domain, place.measurements || {});
 
   const historyMeasurements = (place: FrontendPlace, idx: number): Record<string, number> => {
-    const item = place.sample_history[idx];
+    const item = place.sample_history?.[idx];
     if (!item) return {};
     const direct = item.measurements || {};
     if (Object.keys(direct).length > 0) return direct;
@@ -1158,14 +1168,14 @@ export default function Dashboard({ snapshot }: Props) {
       if (Object.keys(current).length > 0) return current;
     }
 
-    const sibling = place.sample_history.find(
+    const sibling = (place.sample_history || []).find(
       (h) => fmtDate(h.sample_date) === itemDay && h.measurements && Object.keys(h.measurements).length > 0
     );
     return sibling?.measurements || {};
   };
 
   const explainHistoryMeasurements = (place: FrontendPlace, idx: number) => {
-    const item = place.sample_history[idx];
+    const item = place.sample_history?.[idx];
     if (!item) return lruet(lang, "Запись истории не найдена.", "Ajaloo kirjet ei leitud.", "History record not found.");
     const rows = Object.entries(historyMeasurements(place, idx))
       .slice(0, 30)
@@ -1487,7 +1497,7 @@ export default function Dashboard({ snapshot }: Props) {
     const fc = countyGeoJson as GeoJSON.FeatureCollection;
     const places = snapshot.places;
     const m = new Map<string, string>();
-    const CHUNK = 80;
+    const CHUNK = 500;
     let offset = 0;
     const processChunk = () => {
       if (!alive) return;
@@ -1658,10 +1668,48 @@ export default function Dashboard({ snapshot }: Props) {
       .slice(0, 8);
   }, [filtered]);
 
-  const selectedPlace = useMemo(() => {
+  const selectedPlaceBase = useMemo(() => {
     if (!selectedId) return null;
     return snapshot.places.find((p) => p.id === selectedId) || null;
   }, [selectedId, snapshot.places]);
+
+  // Lazy-load sample_history from separate file when a place is selected
+  const historyCache = useRef<Record<string, FrontendPlace["sample_history"]>>({});
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  useEffect(() => {
+    if (!selectedPlaceBase) return;
+    if (selectedPlaceBase.sample_history?.length) return;
+    if (historyCache.current[selectedPlaceBase.id]) {
+      selectedPlaceBase.sample_history = historyCache.current[selectedPlaceBase.id];
+      setHistoryLoaded((v) => !v); // trigger re-render
+      return;
+    }
+    if (historyLoaded && historyCache.current[selectedPlaceBase.id] === undefined) {
+      // already tried loading
+    }
+    // Lazy-load entire history file once, then cache
+    if (Object.keys(historyCache.current).length === 0) {
+      fetch("/data/snapshot.history.json")
+        .then((r) => r.ok ? r.json() : {})
+        .then((all: Record<string, FrontendPlace["sample_history"]>) => {
+          historyCache.current = all;
+          if (selectedPlaceBase && all[selectedPlaceBase.id]) {
+            selectedPlaceBase.sample_history = all[selectedPlaceBase.id];
+          }
+          setHistoryLoaded((v) => !v);
+        })
+        .catch(() => {});
+    }
+  }, [selectedPlaceBase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedPlace = useMemo(() => {
+    if (!selectedPlaceBase) return null;
+    // Attach cached history if available
+    if (!selectedPlaceBase.sample_history?.length && historyCache.current[selectedPlaceBase.id]) {
+      selectedPlaceBase.sample_history = historyCache.current[selectedPlaceBase.id];
+    }
+    return selectedPlaceBase;
+  }, [selectedPlaceBase, historyLoaded]);
 
   // Resolved places for a tapped co-located cluster (bottom-sheet list).
   const clusterPlaces = useMemo(() => {
@@ -1860,6 +1908,61 @@ export default function Dashboard({ snapshot }: Props) {
     setGeoError(null);
   };
 
+  const chipPointerId = useRef<number | null>(null);
+
+  const onChipPointerDown = useCallback((e: React.PointerEvent) => {
+    const bar = chipBarRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    chipDragOrigin.current = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
+    chipDragging.current = false;
+    chipPointerId.current = e.pointerId;
+  }, []);
+
+  const onChipPointerMove = useCallback((e: React.PointerEvent) => {
+    const origin = chipDragOrigin.current;
+    const bar = chipBarRef.current;
+    if (!origin || !bar) return;
+    const dx = e.clientX - origin.x;
+    const dy = e.clientY - origin.y;
+    if (!chipDragging.current) {
+      if (Math.abs(dx) + Math.abs(dy) < 5) return;
+      chipDragging.current = true;
+      if (chipPointerId.current !== null) {
+        bar.setPointerCapture(chipPointerId.current);
+      }
+    }
+    const parent = bar.parentElement;
+    if (!parent) return;
+    const pr = parent.getBoundingClientRect();
+    const bw = bar.offsetWidth;
+    const bh = bar.offsetHeight;
+    const newLeft = Math.max(0, Math.min(pr.width - bw, origin.left - pr.left + dx));
+    const newTop = Math.max(0, Math.min(pr.height - bh, origin.top - pr.top + dy));
+    setChipPos({ left: newLeft, top: newTop });
+  }, []);
+
+  const onChipPointerUp = useCallback((e: React.PointerEvent) => {
+    const bar = chipBarRef.current;
+    if (bar && chipPointerId.current !== null) {
+      try { bar.releasePointerCapture(chipPointerId.current); } catch { /* not captured */ }
+    }
+    chipPointerId.current = null;
+    if (chipDragging.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      setTimeout(() => { chipDragging.current = false; }, 0);
+    }
+    chipDragOrigin.current = null;
+  }, []);
+
+  const onChipClick = useCallback((e: React.MouseEvent) => {
+    if (chipDragging.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
   // Pop a short-lived count bubble above the map. Self-cleans after ~1.8s
   // so no extra interaction is needed — the user just sees "N alerts on map"
   // fade in and out.
@@ -1915,6 +2018,10 @@ export default function Dashboard({ snapshot }: Props) {
     if (isMobile) {
       setSheetMode("place");
       setMobilePanelState("half");
+    } else {
+      requestAnimationFrame(() => {
+        desktopDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
     }
   }, [isMobile]);
 
@@ -2023,7 +2130,7 @@ export default function Dashboard({ snapshot }: Props) {
   };
 
   return (
-    <div className={`dashboard ${filtersPinned ? "dashboardPinned" : ""}`}>
+    <div className={`dashboard ${!isMobile ? (sidebarCollapsed ? "dashboardSidebarCollapsed" : "dashboardSidebar") : ""}`}>
       {toast ? <div className="toastBanner">{toast}</div> : null}
       {freshnessBubble ? (
         <div className="freshnessBubble" aria-live="polite">
@@ -2376,41 +2483,59 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </>
 
-      {drawerOpen && !filtersPinned ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
-      <aside className={`drawer panel ${drawerOpen || filtersPinned ? "open" : ""} ${filtersPinned ? "pinned" : ""}`}>
-        <div className="drawerHeader">
-          <h3 className="sectionTitle drawerSectionTitle">
-            <span className="drawerTitleIcon" aria-hidden="true">
-              <Icon name="filters" />
-            </span>
-            {t.filters}
-          </h3>
-          <div className="drawerHeaderActions">
+      {isMobile && drawerOpen ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
+      <aside className={
+        isMobile
+          ? `drawer panel ${drawerOpen ? "open" : ""}`
+          : `sidebar ${sidebarCollapsed ? "sidebarCollapsed" : ""}`
+      }>
+        {/* Desktop sidebar header: title + collapse toggle */}
+        {!isMobile ? (
+          <div className="sidebarHeader">
+            {!sidebarCollapsed ? (
+              <span className="sidebarTitle">{t.filters}</span>
+            ) : null}
             <button
-              className={`btn btnSmall iconBtn drawerPinBtn ${filtersPinned ? "btnActive" : ""}`}
+              className="sidebarToggleBtn"
               onClick={() => {
-                const next = !filtersPinned;
-                if (typeof window !== "undefined") window.localStorage.setItem("water.ui.filters-pinned.v1", String(next));
-                setFiltersPinned(next);
-                if (!next) setDrawerOpen(true); // when unpinning, keep panel visible as floating
+                const next = !sidebarCollapsed;
+                if (typeof window !== "undefined") window.localStorage.setItem("water.ui.sidebar-collapsed.v1", String(next));
+                setSidebarCollapsed(next);
               }}
-              aria-label={filtersPinned ? t.unpin : t.pin}
-              title={filtersPinned ? t.unpin : t.pin}
+              aria-label={sidebarCollapsed
+                ? lruet(lang, "Показать фильтры", "Näita filtreid", "Show filters")
+                : lruet(lang, "Скрыть фильтры", "Peida filtrid", "Hide filters")}
+              title={sidebarCollapsed
+                ? lruet(lang, "Показать фильтры", "Näita filtreid", "Show filters")
+                : lruet(lang, "Скрыть фильтры", "Peida filtrid", "Hide filters")}
             >
-              <span className="btnIcon" aria-hidden="true">
-                <Icon name={filtersPinned ? "unpin" : "pin"} />
-              </span>
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {sidebarCollapsed
+                  ? <><line x1="3" y1="6" x2="17" y2="6"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="14" x2="17" y2="14"/></>
+                  : <polyline points="11,4 5,10 11,16"/>}
+              </svg>
             </button>
-            {!filtersPinned ? (
+          </div>
+        ) : (
+          /* Mobile drawer header (existing) */
+          <div className="drawerHeader">
+            <h3 className="sectionTitle drawerSectionTitle">
+              <span className="drawerTitleIcon" aria-hidden="true">
+                <Icon name="filters" />
+              </span>
+              {t.filters}
+            </h3>
+            <div className="drawerHeaderActions">
               <button className="btn btnSmall drawerDoneBtn" onClick={() => setDrawerOpen(false)} aria-label={t.close}>
                 <span className="btnIcon" aria-hidden="true">
                   <Icon name="close" />
                 </span>
-                <span className="drawerDoneLabel">{lruet(lang, "Готово", "Valmis", "Done")}</span>
               </button>
-            ) : null}
+            </div>
           </div>
-        </div>
+        )}
+        {/* Sidebar body: hidden on desktop when collapsed */}
+        {(isMobile || !sidebarCollapsed) ? <>
         {nearbyOnly && userCoords ? (
           <div className="nearbyPanel">
             <label htmlFor="nearby-radius">
@@ -2606,35 +2731,41 @@ export default function Dashboard({ snapshot }: Props) {
             <label>{t.latestSampleDate}</label>
           <div className="dateRangeRow">
             <div className="dateRangeField">
-              <span className="dateRangeIcon" aria-hidden="true">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <rect x="1.5" y="2.5" width="13" height="12" rx="2"/>
-                  <path d="M1.5 6.5h13M5 1v3M11 1v3"/>
-                </svg>
-              </span>
-              <input
-                type="date"
-                value={sampleDateFrom}
-                onChange={(e) => setSampleDateFrom(e.target.value)}
-                aria-label={t.dateFrom}
-                title={t.dateFrom}
-              />
+              <span className="dateRangeLabel">{t.dateFrom}</span>
+              <div style={{ position: "relative" }}>
+                <span className="dateRangeIcon" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <rect x="1.5" y="2.5" width="13" height="12" rx="2"/>
+                    <path d="M1.5 6.5h13M5 1v3M11 1v3"/>
+                  </svg>
+                </span>
+                <input
+                  type="date"
+                  value={sampleDateFrom}
+                  onChange={(e) => setSampleDateFrom(e.target.value)}
+                  aria-label={t.dateFrom}
+                  title={t.dateFrom}
+                />
+              </div>
             </div>
             <span className="dateRangeSep" aria-hidden="true">—</span>
             <div className="dateRangeField">
-              <span className="dateRangeIcon" aria-hidden="true">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <rect x="1.5" y="2.5" width="13" height="12" rx="2"/>
-                  <path d="M1.5 6.5h13M5 1v3M11 1v3"/>
-                </svg>
-              </span>
-              <input
-                type="date"
-                value={sampleDateTo}
-                onChange={(e) => setSampleDateTo(e.target.value)}
-                aria-label={t.dateTo}
-                title={t.dateTo}
-              />
+              <span className="dateRangeLabel">{t.dateTo}</span>
+              <div style={{ position: "relative" }}>
+                <span className="dateRangeIcon" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <rect x="1.5" y="2.5" width="13" height="12" rx="2"/>
+                    <path d="M1.5 6.5h13M5 1v3M11 1v3"/>
+                  </svg>
+                </span>
+                <input
+                  type="date"
+                  value={sampleDateTo}
+                  onChange={(e) => setSampleDateTo(e.target.value)}
+                  aria-label={t.dateTo}
+                  title={t.dateTo}
+                />
+              </div>
             </div>
             {(sampleDateFrom || sampleDateTo) ? (
               <button
@@ -2678,7 +2809,7 @@ export default function Dashboard({ snapshot }: Props) {
             </ul>
           )}
         </div>
-
+        </> : null}
       </aside>
 
       <div className="mainContent">
@@ -2694,22 +2825,22 @@ export default function Dashboard({ snapshot }: Props) {
             users can toggle quick filters without opening the drawer.
             The first chip opens the full filter drawer. */}
         {!isMobile ? (
-          <div className="mapChipBar desktopOnly" role="toolbar" aria-label={t.filters}>
-            {!filtersPinned ? (
-              <>
-                <button
-                  type="button"
-                  className={`mapChip mapChipDrawer ${drawerOpen ? "mapChipActive" : ""}`}
-                  onClick={() => setDrawerOpen((v) => !v)}
-                  aria-label={drawerOpen ? t.close : t.openFilters}
-                  aria-pressed={drawerOpen}
-                  data-tooltip={drawerOpen ? t.close : t.openFilters}
-                >
-                  <Icon name={drawerOpen ? "filter-x" : "filters"} />
-                </button>
-                <div className="mapChipDivider" aria-hidden="true" />
-              </>
-            ) : null}
+          <div
+            ref={chipBarRef}
+            className="mapChipBar desktopOnly"
+            role="toolbar"
+            aria-label={t.filters}
+            style={chipPos ? {
+              left: chipPos.left,
+              top: chipPos.top,
+              bottom: "auto",
+              transform: "none",
+            } : undefined}
+            onPointerDown={onChipPointerDown}
+            onPointerMove={onChipPointerMove}
+            onPointerUp={onChipPointerUp}
+            onClickCapture={onChipClick}
+          >
             {(() => {
               const allLabel = lruet(lang, "Все", "Kõik", "All");
               const countText = lruet(
@@ -2929,7 +3060,29 @@ export default function Dashboard({ snapshot }: Props) {
 
       <section ref={desktopDetailRef} className="panel selectedPointDesktop desktopOnly">
         <h3 className="sectionTitle">{t.selectedPoint}</h3>
-        {!selectedPlace ? (
+        {!selectedPlace && clusterPlaces ? (
+          <div className="clusterPickList">
+            <p className="hint" style={{ marginBottom: "0.5rem" }}>
+              {lruet(lang, `${clusterPlaces.length} мест в этой точке — выберите:`, `${clusterPlaces.length} kohta selles punktis — vali:`, `${clusterPlaces.length} places at this location — pick one:`)}
+            </p>
+            {clusterPlaces.map((cp) => (
+              <button
+                key={cp.id}
+                type="button"
+                className="btn clusterPickBtn"
+                onClick={() => selectPoint(cp.id)}
+              >
+                <span>{cp.place_kind === "swimming" ? "🏖" : cp.place_kind === "pool_spa" ? "🏊" : cp.place_kind === "drinking_water" ? "🚰" : "💧"}</span>
+                <span style={{ flex: 1, textAlign: "left" }}>{cp.location}</span>
+                {cp.model_violation_prob !== null ? (
+                  <span className={`badge ${cp.risk_level === "high" ? "bad" : cp.risk_level === "medium" ? "warn" : "good"}`}>
+                    {cp.model_violation_prob.toFixed(2)}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : !selectedPlace ? (
           <p className="hint">{t.noSelectedPoint}</p>
         ) : (
           <div className="pointGrid">

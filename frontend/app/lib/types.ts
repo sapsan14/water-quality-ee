@@ -19,7 +19,7 @@ export type FrontendPlace = {
   search_text: string;
   measurements_count: number;
   measurements: Record<string, number>;
-  sample_history: Array<{
+  sample_history?: Array<{
     sample_date: string;
     official_compliant: number | null;
     measurements?: Record<string, number>;

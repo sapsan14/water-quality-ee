@@ -83,6 +83,17 @@ a {
   max-width: 1440px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
+  background: #ffffff;
+}
+
+/* When sidebar layout is active, constrain width and center */
+.page:has(.dashboardSidebar),
+.page:has(.dashboardSidebarCollapsed) {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0;
+  border-left: 1px solid #d9e5f4;
+  border-right: 1px solid #d9e5f4;
 }
 
 .header {
@@ -158,10 +169,69 @@ a {
   gap: 1rem;
 }
 
+.dashboardSidebar,
+.dashboardSidebarCollapsed {
+  display: grid;
+  align-items: start;
+  gap: 0;
+}
+
+.dashboardSidebar {
+  grid-template-columns: 300px 1fr;
+}
+
+.dashboardSidebarCollapsed {
+  grid-template-columns: 44px 1fr;
+}
+
 .mainContent {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  min-width: 0;
+}
+
+.dashboardSidebar > .mainContent,
+.dashboardSidebarCollapsed > .mainContent {
+  grid-column: 2;
+  padding: 0;
+}
+
+.dashboardSidebar > .topBar,
+.dashboardSidebarCollapsed > .topBar {
+  grid-column: 2;
+  margin-right: 0;
+}
+
+.dashboardSidebar .unifiedTopBar,
+.dashboardSidebarCollapsed .unifiedTopBar {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #e4ecf5;
+  box-shadow: none;
+  padding: 0.4rem 1rem;
+  top: 0;
+  background: #ffffff;
+}
+
+.dashboardSidebar > .mapStatsRow,
+.dashboardSidebarCollapsed > .mapStatsRow {
+  grid-column: 2;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  border-bottom: 1px solid #e4ecf5;
+}
+
+/* Toasts/bubbles/dialogs should span full width above sidebar */
+.dashboardSidebar > .toastBanner,
+.dashboardSidebar > .freshnessBubble,
+.dashboardSidebar > .countBubble,
+.dashboardSidebar > .langDialogBackdrop,
+.dashboardSidebarCollapsed > .toastBanner,
+.dashboardSidebarCollapsed > .freshnessBubble,
+.dashboardSidebarCollapsed > .countBubble,
+.dashboardSidebarCollapsed > .langDialogBackdrop {
+  grid-column: 1 / -1;
 }
 
 .panel {
@@ -228,6 +298,113 @@ a {
   transform: none;
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ── Desktop sidebar (always-visible, embedded in grid) ──── */
+.sidebar {
+  grid-column: 1;
+  grid-row: 1 / 99;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem 1rem;
+  background: #ffffff;
+  border-right: 1px solid #e4ecf5;
+  z-index: 1400;
+  scrollbar-width: thin;
+  scrollbar-color: #d0daea transparent;
+  transition: width 0.22s ease, padding 0.22s ease;
+}
+
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb { background: #d0daea; border-radius: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+
+.sidebarCollapsed {
+  padding: 0.6rem 0;
+  align-items: center;
+  width: 44px;
+  min-width: 44px;
+  overflow: hidden;
+}
+
+.sidebarCollapsed .sidebarToggleBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f0f5fc;
+  color: var(--brand);
+}
+
+.sidebarCollapsed .sidebarToggleBtn:hover {
+  background: #dce7f7;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.3rem;
+  min-height: 28px;
+}
+
+.sidebarCollapsed .sidebarHeader {
+  justify-content: center;
+  padding-bottom: 0;
+}
+
+.sidebarTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.sidebarToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  flex-shrink: 0;
+}
+
+.sidebarToggleBtn:hover {
+  background: #edf2fa;
+  color: var(--text);
+}
+
+html[data-theme="dark"] .page {
+  background: var(--bg);
+  border-left-color: #1e2d42;
+  border-right-color: #1e2d42;
+}
+
+html[data-theme="dark"] .sidebar {
+  background: #0d1520;
+  border-right-color: #1e2d42;
+}
+
+html[data-theme="dark"] .sidebar::-webkit-scrollbar-thumb { background: #2a3d58; }
+
+html[data-theme="dark"] .sidebarToggleBtn:hover {
+  background: #1a2840;
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .sidebarTitle {
+  color: #e6eef9;
 }
 
 .drawerBackdrop {
@@ -637,6 +814,26 @@ html[data-theme="dark"] .langDropdownItem:hover {
   border-radius: 10px;
   padding: 0.62rem 0.72rem;
   font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field select:focus,
+.field input:focus {
+  outline: none;
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 2.5px rgba(15, 110, 253, 0.12);
+}
+
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%237a8ea8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 12px;
+  padding-right: 2rem;
+  cursor: pointer;
 }
 
 .drawer .field label {
@@ -647,6 +844,10 @@ html[data-theme="dark"] .langDropdownItem:hover {
 .drawer .field input {
   font-size: 0.9rem;
   padding: 0.52rem 0.64rem;
+}
+
+.drawer .field select {
+  padding-right: 1.8rem;
 }
 
 .stats {
@@ -1220,7 +1421,6 @@ html[data-theme="dark"] .langDropdownItem:hover {
 }
 
 .dateRangeField {
-  position: relative;
   flex: 1;
   min-width: 0;
 }
@@ -1242,21 +1442,44 @@ html[data-theme="dark"] .langDropdownItem:hover {
   height: 13px;
 }
 
+.dateRangeLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
 .dateRangeField input[type="date"] {
   width: 100%;
-  padding: 0.38rem 0.4rem 0.38rem 1.75rem;
+  padding: 0.42rem 0.5rem 0.42rem 1.85rem;
   border: 1px solid #c8d7eb;
   background: #f8fbff;
   color: var(--text);
   border-radius: 9px;
   font-size: 0.82rem;
+  font-family: inherit;
   cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dateRangeField input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  filter: grayscale(1);
+  transition: opacity 0.15s;
+}
+
+.dateRangeField input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 0.8;
 }
 
 .dateRangeField input[type="date"]:focus {
   outline: none;
   border-color: #6ea8fe;
-  box-shadow: 0 0 0 2px rgba(15, 110, 253, 0.12);
+  box-shadow: 0 0 0 2.5px rgba(15, 110, 253, 0.12);
 }
 
 .dateRangeSep {
@@ -1264,6 +1487,8 @@ html[data-theme="dark"] .langDropdownItem:hover {
   font-size: 0.85rem;
   flex-shrink: 0;
   padding: 0 0.1rem;
+  align-self: flex-end;
+  margin-bottom: 0.45rem;
 }
 
 .dateRangeClearBtn {
@@ -1332,6 +1557,31 @@ html[data-theme="dark"] .langDropdownItem:hover {
   position: relative;
 }
 
+/* Desktop sidebar layout: edge-to-edge map, no card chrome */
+.dashboardSidebar .mapTopPanel,
+.dashboardSidebarCollapsed .mapTopPanel {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.dashboardSidebar .mapTopPanel .mapHeaderRow,
+.dashboardSidebarCollapsed .mapTopPanel .mapHeaderRow {
+  display: none;
+}
+
+.dashboardSidebar .mapTopPanel .mapShell,
+.dashboardSidebarCollapsed .mapTopPanel .mapShell {
+  border-radius: 0;
+}
+
+.dashboardSidebar .mapTopPanel .leaflet-container,
+.dashboardSidebarCollapsed .mapTopPanel .leaflet-container {
+  border-radius: 0 !important;
+}
+
 /* ── Desktop on-map chip bar (filter icons overlaying the map) ──
    A frosted-glass pill that floats below the map title. The pill
    gives every icon a legible backdrop against arbitrary map tiles
@@ -1339,9 +1589,10 @@ html[data-theme="dark"] .langDropdownItem:hover {
    with the pinned filters drawer or the section heading. */
 .mapChipBar {
   position: absolute;
-  top: 4.4rem;
+  bottom: 0.75rem;
   left: 50%;
   transform: translateX(-50%);
+  top: auto;
   z-index: 650;
   display: inline-flex;
   flex-wrap: nowrap !important;
@@ -1358,7 +1609,14 @@ html[data-theme="dark"] .langDropdownItem:hover {
   width: max-content;
   max-width: calc(100% - 2rem);
   white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   overflow: visible;
+}
+
+.mapChipBar:active {
+  cursor: grabbing;
 }
 
 .mapChip {
@@ -2313,6 +2571,29 @@ html[data-theme="dark"] .gmDateField input::-webkit-datetime-edit {
   flex-wrap: wrap;
 }
 
+.clusterPickList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.clusterPickBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e4ecf5;
+  border-radius: 8px;
+  background: #f8fafd;
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.clusterPickBtn:hover {
+  background: #e8f0fe;
+  border-color: var(--brand);
+}
+
 .pointGrid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -2668,7 +2949,15 @@ html[data-theme="dark"] .modalCloseBtn {
    Dark colors live in html[data-theme="dark"] below.
    ================================================================ */
 @media (max-width: 1024px) {
-  .dashboardPinned {
+  .page:has(.dashboardSidebar),
+  .page:has(.dashboardSidebarCollapsed) {
+    border-left: none;
+    border-right: none;
+  }
+
+  .dashboardPinned,
+  .dashboardSidebar,
+  .dashboardSidebarCollapsed {
     display: flex;
     flex-direction: column;
   }
@@ -2679,6 +2968,10 @@ html[data-theme="dark"] .modalCloseBtn {
     top: calc(var(--topbar-h) + 1.1rem);
     width: min(360px, 92vw);
     max-height: calc(100vh - var(--topbar-h) - 1.5rem);
+  }
+
+  .sidebar {
+    display: none;
   }
 
   .reportsGrid {
@@ -3009,6 +3302,10 @@ html[data-theme="dark"] .dateRangeField input[type="date"] {
   background: #131f33;
   border-color: #2b3f5f;
   color: #e6eef9;
+}
+
+html[data-theme="dark"] .dateRangeField input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) grayscale(1);
 }
 
 html[data-theme="dark"] .dateRangeSep {
@@ -4099,22 +4396,22 @@ html[data-theme="dark"] .gmSearchInfoBtn {
 /* Nudge drawer rhythm: a touch more breathing room, slightly
    softer edges. */
 .drawer {
-  gap: 0.7rem;
-  padding: 0.9rem 0.9rem 1rem;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem 1rem;
 }
 
 .drawer.pinned {
-  padding: 0.9rem 0.9rem 1rem;
+  padding: 0.85rem 0.95rem 1rem;
 }
 
 /* ── Hero search field ─────────────────────────────────────── */
 .drawerSearchField label {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
   color: var(--muted);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 
 .drawerSearchWrap {
@@ -4191,28 +4488,34 @@ html[data-theme="dark"] .gmSearchInfoBtn {
 /* ── Grouped filter card ───────────────────────────────────── */
 .filterGroup {
   position: relative;
-  padding: 0.85rem 0.85rem 0.9rem;
-  border-radius: 14px;
-  border: 1px solid rgba(191, 211, 234, 0.7);
-  background: linear-gradient(180deg, rgba(246, 250, 255, 0.85) 0%, rgba(237, 244, 255, 0.6) 100%);
-  box-shadow: 0 1px 2px rgba(15, 40, 80, 0.04);
+  padding: 0.1rem 0 0;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid rgba(191, 211, 234, 0.5);
+  background: transparent;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.6rem;
+}
+
+.filterGroup:first-of-type {
+  border-top: none;
+  padding-top: 0;
 }
 
 .filterGroupHead {
   display: inline-flex;
   align-items: center;
   gap: 0.42rem;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--brand);
-  padding-bottom: 0.15rem;
-  border-bottom: 1px dashed rgba(120, 160, 220, 0.35);
-  margin-bottom: 0.1rem;
+  padding: 0.55rem 0 0.1rem;
+  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .filterGroupIcon {
@@ -4436,14 +4739,13 @@ html[data-theme="dark"] .drawerSearchClear:hover {
 }
 
 html[data-theme="dark"] .filterGroup {
-  background: linear-gradient(180deg, rgba(22, 35, 56, 0.75) 0%, rgba(17, 27, 45, 0.65) 100%);
-  border-color: #2b3f5f;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: transparent;
+  border-color: rgba(50, 75, 115, 0.4);
+  box-shadow: none;
 }
 
 html[data-theme="dark"] .filterGroupHead {
   color: #9cc4ff;
-  border-bottom-color: rgba(80, 120, 180, 0.3);
 }
 
 html[data-theme="dark"] .filterGroup .field label {
