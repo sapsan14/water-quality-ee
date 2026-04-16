@@ -14,7 +14,6 @@
 | `src/data_loader.py` | Загрузка и кэш XML |
 | `src/features.py` | `build_dataset_with_meta()` — признаки + привязка к `location` / `domain` |
 | `citizen-service/scripts/build_citizen_snapshot.py` | Офлайн-сбор: последняя проба на точку, RF, координаты |
-| `citizen-service/app/streamlit_app.py` | UI: Folium + таблица |
 | `citizen-service/artifacts/snapshot.json` | Небольшой файл для деплоя и Git |
 
 ## Координаты
@@ -29,12 +28,6 @@
 - Коммит только `citizen-service/artifacts/snapshot.json` (и при необходимости `citizen_model.joblib`) через `stefanzweifel/git-auto-commit-action` или аналог — при включении нужен `GITHUB_TOKEN` с правом на push.
 
 Файл-заготовка: `.github/workflows/citizen-snapshot.yml`.
-
-## Streamlit Cloud
-
-- Репозиторий публичный, путь к файлу: `citizen-service/app/streamlit_app.py`.
-- Указать зависимости (объединённый файл или основной + дополнительный — по документации Streamlit).
-- Холодный старт и лимиты — заложить в README для пользователей.
 
 ## Юридически / этично
 

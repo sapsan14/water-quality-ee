@@ -19,7 +19,7 @@ A reproducible pipeline from raw XML to trained classifier:
 1. **Data loader** (`src/data_loader.py`) — downloads, caches, parses XML for 4 domains, handles Estonian decimal commas, `µg/l → mg/l` conversion, cross-year location name normalization (`normalize_location()`).
 2. **Feature engineering** (`src/features.py`) — ratio-to-norm features, domain-conditional pool norms (`NORMS_POOL`), missing-value indicators (turned out to be surprisingly predictive), time features.
 3. **Model zoo** — LogReg, RandomForest, GradientBoosting, LightGBM. Temporal split (train ≤2024, test 2025+). SHAP for interpretability. Calibrated probabilities.
-4. **Citizen service** — Streamlit → Next.js map showing per-location latest sample with official status and model risk assessment.
+4. **Citizen service** — Next.js map showing per-location latest sample with official status and model risk assessment.
 
 ### What we learned
 
@@ -163,7 +163,7 @@ These constraints improved the architecture: the snapshot adapter, the bathing a
 | 4 | Baseline models | LR / RF / GB with random split; `trained_models.joblib` |
 | 5 | Evaluation | Confusion, ROC, threshold optimization; `evaluate.py` |
 | 6 | Advanced modelling | LightGBM + temporal split + SHAP + calibration; `best_model.joblib` |
-| 7 | Citizen service v0 | Streamlit map + 4-domain geocoding cascade + snapshot builder |
+| 7 | Citizen service v0 | Data pipeline + 4-domain geocoding cascade + snapshot builder |
 | 8 | Frontend | Next.js mobile/desktop UX, model tooltips, info dialogs (~40 PRs) |
 | 9 | Audit infrastructure | Deterministic checker + draft inquiry + parser parity script + audit notebook |
 | **10** | **Audit execution** | **Found free_chlorine bug (+9.3pp agree rate), 2,164 hidden_violation on 69k probes, XML parity clean** |
