@@ -2,7 +2,8 @@
 
 **Курс:** TalTech Masinõpe (Machine Learning)  
 **Данные:** Terviseamet (Департамент здоровья Эстонии) — [vtiav.sm.ee](https://vtiav.sm.ee)  
-**Период:** 2021–2026 · **Домены:** supluskoha (купальные места), veevark (водопровод)
+**Период:** 2021–2026 · **Домены:** supluskoha, veevark, basseinid, joogivesi (69 536 проб)  
+**Карта рисков:** [h2oatlas.ee](https://h2oatlas.ee) · **Код:** [github.com/sapsan14/water-quality-ee](https://github.com/sapsan14/water-quality-ee)
 
 ---
 

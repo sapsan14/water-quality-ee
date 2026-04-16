@@ -73,7 +73,7 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 
 ## Citizen service
 
-`citizen-service/` — Streamlit map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`), drinking water sources (`joogivesi`). Two layers: **official status** (from Terviseamet data) and **model risk assessment** (P(violation) from RF). The service does NOT predict future quality, does NOT replace official assessments, and does NOT provide health recommendations — it visualizes data and probabilistic risk estimates. Build: `python citizen-service/scripts/build_citizen_snapshot.py` (full RF layer) or `... --map-only` (official data + map only, no model). See `citizen-service/README.md`.
+`citizen-service/` — **[h2oatlas.ee](https://h2oatlas.ee)** — public map of **per-location points** (latest sample): swimming (`supluskoha`), pools/SPA (`basseinid`), drinking water network (`veevark`), drinking water sources (`joogivesi`). Two layers: **official status** (from Terviseamet data) and **model risk assessment** (P(violation) from 4 models: LR, RF, GB, LightGBM). The service does NOT predict future quality, does NOT replace official assessments, and does NOT provide health recommendations — it visualizes data and probabilistic risk estimates. Build: `python citizen-service/scripts/build_citizen_snapshot.py` (full 4-model layer) or `... --map-only` (official data + map only, no model). See `citizen-service/README.md`.
 
 ## Notebooks plan
 
