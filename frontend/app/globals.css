@@ -3115,12 +3115,9 @@ html[data-theme="dark"] .dateRangeSep {
     display: none;
   }
 
-  /* On mobile, lift the freshness overlay above the collapsed bottom sheet
-     handle (~56px) so it stays readable. */
+  /* On mobile, hide the persistent overlay — freshness is shown via toast bubble on load. */
   .mapFreshnessOverlay {
-    bottom: 64px;
-    left: 8px;
-    font-size: 0.62rem;
+    display: none;
   }
 
   /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now

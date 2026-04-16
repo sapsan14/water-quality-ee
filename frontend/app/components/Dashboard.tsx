@@ -1338,15 +1338,22 @@ export default function Dashboard({ snapshot }: Props) {
     toastFiredRef.current = true;
     const totalPlaces = snapshot.places.length;
     const totalViolations = snapshot.places.filter((p) => p.official_compliant === 0).length;
-    const msg = lruet(
+    const dataLabel = lruet(lang, "Данные", "Andmed", "Data");
+    const modelLabel = lruet(lang, "Модель", "Mudel", "Model");
+    const summaryMsg = lruet(
       lang,
       `${totalPlaces} точек · ${totalViolations} нарушений`,
       `${totalPlaces} punkti · ${totalViolations} rikkumist`,
       `${totalPlaces} points · ${totalViolations} violations`
     );
-    const timer = setTimeout(() => setToast(msg), 300);
-    return () => clearTimeout(timer);
-  }, [isMobile, lang, snapshot.places]);
+    const timer = setTimeout(() => setToast(summaryMsg), 300);
+    // Show a second toast with data/model freshness after the first fades
+    const freshnessMsg = dataFetchedLabel
+      ? `${dataLabel}: ${dataFetchedLabel}` + (modelTrainedLabel ? ` · ${modelLabel}: ${modelTrainedLabel}` : "")
+      : null;
+    const timer2 = freshnessMsg ? setTimeout(() => setToast(freshnessMsg), 4000) : undefined;
+    return () => { clearTimeout(timer); if (timer2) clearTimeout(timer2); };
+  }, [isMobile, lang, snapshot.places, dataFetchedLabel, modelTrainedLabel]);
 
   useEffect(() => {
     pushHeaderLang(lang);
