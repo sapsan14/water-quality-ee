@@ -468,6 +468,7 @@ export default function Dashboard({ snapshot }: Props) {
   // a single fetch.
   const [countyGeoJson, setCountyGeoJson] = useState<GeoJSON.GeoJsonObject | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
+  const desktopDetailRef = useRef<HTMLElement | null>(null);
   const sheetDragStartY = useRef<number | null>(null);
   const sheetDragLastY = useRef<number | null>(null);
   const sheetDragLastTs = useRef<number | null>(null);
@@ -1824,6 +1825,12 @@ export default function Dashboard({ snapshot }: Props) {
       setSheetMode("place");
       setMobilePanelState("half");
       // Map stays fullscreen — Google Maps style
+    } else {
+      // On desktop / pad the detail panel is below the map fold.
+      // Scroll it into view so the user sees measurements + history.
+      requestAnimationFrame(() => {
+        desktopDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
     }
   }, [isMobile]);
 
@@ -2827,7 +2834,7 @@ export default function Dashboard({ snapshot }: Props) {
         </div>
       </div>
 
-      <section className="panel selectedPointDesktop desktopOnly">
+      <section ref={desktopDetailRef} className="panel selectedPointDesktop desktopOnly">
         <h3 className="sectionTitle">{t.selectedPoint}</h3>
         {!selectedPlace ? (
           <p className="hint">{t.noSelectedPoint}</p>

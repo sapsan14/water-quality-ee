@@ -271,10 +271,12 @@ function MarkerClusterLayer({
     const markerClusterFactory = (L as unknown as { markerClusterGroup: (opts: unknown) => L.LayerGroup }).markerClusterGroup;
     const group = markerClusterFactory({
       chunkedLoading: true,
-      spiderfyOnMaxZoom: true,
+      spiderfyOnMaxZoom: false,
       spiderfyDistanceMultiplier: 1.35,
       showCoverageOnHover: false,
-      zoomToBoundsOnClick: false,
+      // Default zoomToBoundsOnClick: true — reliable native zoom on tap.
+      // We only intercept at max zoom to show the bottom-sheet pick-list
+      // instead of spiderfying (spiderfy collapses on mobile map moves).
       iconCreateFunction: (cluster: unknown) => {
         const c = cluster as ClusterLike;
         const children = c.getAllChildMarkers();
@@ -294,47 +296,25 @@ function MarkerClusterLayer({
       }
     });
 
-    // Custom cluster click: zoom to resolve sub-clusters first. Only
-    // show a pick-list in the bottom sheet when zooming can't separate
-    // the markers further (co-located points at the same physical
-    // location). This avoids dumping hundreds of items into the sheet
-    // for large geographic clusters that can still be broken down.
+    // At max zoom, the default zoomToBoundsOnClick does nothing useful
+    // and spiderfyOnMaxZoom is disabled (spiderfy collapses on mobile
+    // map moves). Instead, show the cluster's children as a pick-list
+    // in the bottom sheet. For all other zoom levels, the default
+    // zoomToBoundsOnClick handles zoom reliably — no custom override.
     (group as L.LayerGroup & { on: (event: string, fn: (e: unknown) => void) => void }).on(
       "clusterclick",
       (e: unknown) => {
-        const evt = e as { layer: ClusterLike };
-        const cluster = evt.layer;
-        const bounds = cluster.getBounds();
-
-        // getBoundsZoom returns the zoom level needed to fully fit the
-        // cluster's children. If it's still higher than the current
-        // zoom, zooming in will break the cluster into sub-clusters.
-        // We cap at maxZoom so we always make progress even when the
-        // required zoom exceeds the map's maximum.
-        const boundsZoom = map.getBoundsZoom(bounds);
         const currentZoom = map.getZoom();
         const maxZoom = map.getMaxZoom() || 15;
-        const canZoomFurther = boundsZoom > currentZoom;
 
-        if (canZoomFurther) {
-          // Use map.fitBounds (not cluster.zoomToBounds) for reliable
-          // zoom animation — cluster.zoomToBounds can silently fail
-          // on the first interaction after chunkedLoading finishes.
-          map.fitBounds(bounds, {
-            padding: [20, 20],
-            animate: true,
-            maxZoom
-          });
-        } else if (onSelectCluster) {
-          // At or beyond the zoom needed to fit — markers are truly
-          // co-located. Show pick-list in bottom sheet.
-          const ids = cluster.getAllChildMarkers()
+        if (currentZoom >= maxZoom && onSelectCluster) {
+          const evt = e as { layer: ClusterLike };
+          const ids = evt.layer.getAllChildMarkers()
             .map((m) => m.options?.place?.id)
             .filter((id): id is string => Boolean(id));
           onSelectCluster(ids);
-        } else {
-          cluster.spiderfy();
         }
+        // Otherwise: default zoomToBoundsOnClick handles zoom
       }
     );
 
