@@ -86,18 +86,20 @@ function placeKindGlyph(kind: string) {
 
 const markerBadgeHtml = (color: string, glyph: string, pulse = false) => `
   <div style="
-    position:relative;
+    box-sizing:border-box;position:relative;
     width:44px;
     height:56px;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,0.45));
   ">
     <div style="
+      box-sizing:border-box;
       width:44px;height:44px;border-radius:50%;background:${color};
       border:3px solid rgba(255,255,255,0.95);display:flex;align-items:center;
       justify-content:center;font-size:22px;line-height:1;
       ${pulse ? "animation:pinPulse 1.8s ease-in-out infinite;" : ""}
     ">${glyph}</div>
     <div style="
+      box-sizing:border-box;
       position:absolute;bottom:0;left:50%;transform:translateX(-50%);
       width:0;height:0;
       border-left:9px solid transparent;border-right:9px solid transparent;
@@ -288,7 +290,7 @@ function MarkerClusterLayer({
         const count = c.getChildCount();
         const size = count > 99 ? 52 : count > 9 ? 48 : 44;
         return L.divIcon({
-          html: `<div style="background:${color};color:#fff;border-radius:999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,0.95);font-weight:700;font-size:${count > 99 ? 13 : 15}px;box-shadow:0 3px 12px rgba(0,0,0,0.35)">${count}</div>`,
+          html: `<div style="box-sizing:border-box;background:${color};color:#fff;border-radius:999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,0.95);font-weight:700;font-size:${count > 99 ? 13 : 15}px;box-shadow:0 3px 12px rgba(0,0,0,0.35)">${count}</div>`,
           className: "",
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2]
@@ -661,6 +663,18 @@ function MapClient({
     };
   }, []);
 
+  // Ensure Leaflet reads the final container dimensions after the first
+  // paint and font swap. Without this, markers can be offset on desktop
+  // where the header row / chip bar shift the map shell's position after
+  // initial layout.
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const t = window.setTimeout(() => {
+      mapRef.current?.invalidateSize();
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
@@ -836,7 +850,7 @@ function MapClient({
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
         zoomControl={false}
-        style={{ height: "100%", width: "100%", borderRadius: (isFullscreen || isMobile) ? "0" : "12px" }}
+        style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
         preferCanvas
       >
