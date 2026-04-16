@@ -3741,6 +3741,7 @@ html[data-theme="dark"] .freshnessDiag {
   }
 
   .mapZoomControls {
+    right: auto;
     left: calc(0.5rem + env(safe-area-inset-left, 0px));
   }
 
