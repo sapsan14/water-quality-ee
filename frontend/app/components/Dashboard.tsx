@@ -2751,7 +2751,7 @@ export default function Dashboard({ snapshot }: Props) {
           onRecenterUser={activateNearMe}
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
-          showCountyOverlay={!isMobile}
+          showCountyOverlay
           countyGeoJson={countyGeoJson}
           fitBoundsKey={fitBoundsKey}
           fitBoundsPlaces={fitBoundsPlaces}
