@@ -34,3 +34,6 @@ citizen-service/artifacts/approximate_*
 
 # PDF-отчёт (генерируется из report.md)
 docs/report.pdf
+
+# Личные заметки (не для репозитория)
+notes/
