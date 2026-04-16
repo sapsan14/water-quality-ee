@@ -306,17 +306,28 @@ function MarkerClusterLayer({
         const cluster = evt.layer;
         const bounds = cluster.getBounds();
 
-        // Check if zooming would actually help separate children.
-        // getBoundsZoom returns the zoom level needed to fit the
-        // cluster's bounds — if that's beyond maxZoom or not higher
-        // than the current zoom, zooming won't resolve sub-clusters.
+        // getBoundsZoom returns the zoom level needed to fully fit the
+        // cluster's children. If it's still higher than the current
+        // zoom, zooming in will break the cluster into sub-clusters.
+        // We cap at maxZoom so we always make progress even when the
+        // required zoom exceeds the map's maximum.
         const boundsZoom = map.getBoundsZoom(bounds);
-        const canZoomFurther = boundsZoom > map.getZoom() && boundsZoom <= (map.getMaxZoom() || 15);
+        const currentZoom = map.getZoom();
+        const maxZoom = map.getMaxZoom() || 15;
+        const canZoomFurther = boundsZoom > currentZoom;
 
         if (canZoomFurther) {
-          cluster.zoomToBounds({ padding: [20, 20] });
+          // Use map.fitBounds (not cluster.zoomToBounds) for reliable
+          // zoom animation — cluster.zoomToBounds can silently fail
+          // on the first interaction after chunkedLoading finishes.
+          map.fitBounds(bounds, {
+            padding: [20, 20],
+            animate: true,
+            maxZoom
+          });
         } else if (onSelectCluster) {
-          // Can't zoom further — show pick-list in bottom sheet
+          // At or beyond the zoom needed to fit — markers are truly
+          // co-located. Show pick-list in bottom sheet.
           const ids = cluster.getAllChildMarkers()
             .map((m) => m.options?.place?.id)
             .filter((id): id is string => Boolean(id));
