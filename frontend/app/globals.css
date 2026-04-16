@@ -1493,10 +1493,13 @@ html[data-theme="dark"] .mapChipDivider {
   position: relative;
   height: 620px;
   width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .mapShell.isFullscreen {
   height: 100%;
+  border-radius: 0;
 }
 
 .mapFloatingBtn {
@@ -2474,6 +2477,16 @@ html[data-theme="dark"] .modalCloseBtn {
      background even before tiles download. Prevents the transparent /
      white flash visible on mobile during initial load. */
   background: #e8e0d8;
+}
+
+/* Reset box-sizing for Leaflet internals — Leaflet positions tiles,
+   markers and popups using explicit width/height + negative margins,
+   assuming the CSS default content-box. The project-wide
+   * { box-sizing: border-box } shrinks any bordered/padded element
+   inside the map, causing marker and tile offset on desktop. */
+.leaflet-container,
+.leaflet-container * {
+  box-sizing: content-box;
 }
 
 .leaflet-container,
