@@ -85,16 +85,21 @@ Five water domains defined in `src/data_loader.DOMAINS`. **Parsers in `PARSERS`:
 | `04_models.ipynb` | Logistic Regression + Random Forest + GradientBoosting + GridSearchCV RF → `trained_models.joblib` |
 | `05_evaluation.ipynb` | Confusion matrix, ROC, feature importance |
 | `06_advanced_models.ipynb` | LightGBM + temporal split + TimeSeriesSplit CV + calibration + threshold + SHAP → `best_model.joblib` |
+| `07_data_gaps_audit.ipynb` | Label-vs-norms audit: per-domain × year bucket distribution, hidden_violation profiles |
 
 ## Domain knowledge
 
 - See `docs/ml_framing.md` for **what the model predicts vs what it cannot** (ML problem framing, limitations, mental model)
-- See `docs/normy.md` for regulatory thresholds by parameter
+- See `docs/normy.md` for regulatory thresholds by parameter (Phase 10 corrected: pool free_chlorine [0.5, 1.5], combined_chlorine ≤ 0.5)
 - See `docs/glosarij.md` for RU/ET/EN terminology glossary
 - See `docs/parametry.md` for detailed descriptions of every water parameter (what it measures, health effects, typical sources, norms across domains)
 - See `docs/report.md` for the final project report (EDA insights, methodology, model results, interpretation, limitations)
 - See `docs/ml_metrics_guide.md` for the ML metrics guide: ROC-AUC, Precision/Recall, Calibration, SHAP — 4 levels of model understanding with intuition, formulas, and project-specific examples
+- See `docs/learning_journey.md` for the **project learning narrative** — what we discovered, what surprised us, meta-lessons for the TalTech presentation
+- See `docs/phase_10_findings.md` for the data-quality audit results (baseline → R1 → R2 → R3 deltas, full-corpus numbers, hypothesis verdicts)
+- See `docs/terviseamet_inquiry.md` for the draft inquiry to Terviseamet (populated with real numbers from 69,536-probe audit)
 - `features.NORMS` encodes the key thresholds used for ratio features
+- `features.NORMS_POOL` encodes pool-specific norms (Sotsiaalministri 49/2019, Lisa 4)
 
 ## Tests
 
