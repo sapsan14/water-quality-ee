@@ -18,6 +18,12 @@ env:
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ci/full-corpus-audit]
+    paths:
+      - '.github/workflows/full-corpus-audit.yml'
+      - 'scripts/full_corpus_audit.py'
+      - 'src/audit/**'
 
 jobs:
   audit:
