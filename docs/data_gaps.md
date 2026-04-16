@@ -43,15 +43,15 @@ These caveats mean the raw `hidden_*` counts over-state real gaps on bathing wat
 
 ## Evidence-ranked revisit of the reflection-note hypotheses
 
-The reflection note at `sapsan14/life:reflect/2026-04-15_health-data-gaps.md` listed five working hypotheses for why model predictions and the official label would diverge on probes with partially missing parameters. The audit does not prove any of them; it supplies evidence for and against each. Populate the evaluations below from the notebook outputs when it has been run:
+The reflection note at `sapsan14/life:reflect/2026-04-15_health-data-gaps.md` listed five working hypotheses for why model predictions and the official label would diverge on probes with partially missing parameters. The audit now has evidence for each — populated from Phase 10 (audit execution), Phase 10b (full-corpus + XML parity), and Phase 13 (temporal analysis).
 
-| # | Hypothesis | What the audit can say |
-|---|---|---|
-| 1 | **Partial publication** — internal logs complete, open-data exports a subset | If `hidden_violation` > 0 after ruling out hypothesis #4 (parser loss) via `scripts/audit_xml_field_coverage.py`, this hypothesis gains evidence. Look at the `unmeasured_norm_params` signature inside `hidden_violation`: a consistent pattern (e.g., always the same parameter unmeasured) is circumstantial evidence for a systematic withhold. |
-| 2 | **Selective measurement by site type** — different objects have different mandatory profiles | The `n_measured_norm_params` distribution stratified by domain and by site (`location_key`) shows whether missingness clusters by site type. If the same site always reports the same parameter set, that's evidence for "N/A by design," not a gap. |
-| 3 | **Measurement frequency variance** — seasonal / periodic measurements absent at snapshot time | Cross-reference `hidden_violation` sample dates with per-parameter coverage-over-time plots for the same `location_key`. If the missing parameter is present in other months at the same site, hypothesis 3 is supported over 1. |
-| 4 | **Export error** — trivial parser / ETL bugs lose fields on the way to the open layer | `scripts/audit_xml_field_coverage.py` is the direct test. Any row with `parsed=0` and a non-trivial `sample_value` is an in-repo gap to fix before blaming upstream. **This must be cleared first.** |
-| 5 | **Compliance calculated on unpublished data** — internal dataset is wider than what the open-data feed publishes | This is the "last resort" explanation. It becomes the leading hypothesis only after #4 is cleared, #2 is shown inconsistent across time, and #3 is shown inconsistent across neighbouring dates at the same site. |
+| # | Hypothesis | Evidence (Phases 10–13) | Status |
+|---|---|---|---|
+| 1 | **Partial publication** — internal logs complete, open-data exports a subset | 45.1% of unmeasured param-instances in hidden_violation are *never* measured at the same site. Dominant for supluskoha (97.9% — chemistry not required by EU 2006/7/EC) and basseinid (63% never-at-site). | **Supported** |
+| 2 | **Selective measurement by site type** — different objects have different mandatory profiles | Supluskoha consistently lacks chemistry; basseinid lacks microbiology at some sites. But temporal analysis (Phase 13) shows much of this is periodic, not per-site-type. | **Partially supported** |
+| 3 | **Measurement frequency variance** — seasonal / periodic measurements absent at snapshot time | **54.9% of unmeasured param-instances** ARE measured at the same site in other probes (`scripts/temporal_hidden_violation_analysis.py`). For veevark: 97.9% — chemistry is periodic (quarterly). For joogivesi: 78.4%. Hidden_violation uniform across months (not seasonal). | **Strongly supported** |
+| 4 | **Export error** — trivial parser / ETL bugs lose fields | Live XML parity scan on 160 MB production data (Phase 10b): all 9 unparsed tags are metadata. Zero measurement parameters lost. | **Definitively closed** |
+| 5 | **Compliance calculated on unpublished data** — internal dataset is wider | veevark sid 377387: all 14 params published and clean, label=violation. With #4 closed and #3 explaining periodic gaps, these residual cases can only be explained by unpublished data. | **Strong examples** |
 
 ## Reproducing the audit
 
@@ -71,6 +71,9 @@ The audit is reproducible: re-running it on a later snapshot shows whether a giv
 - Tests: `tests/test_label_vs_norms.py`
 - Notebook: `notebooks/07_data_gaps_audit.ipynb`
 - XML parity check: `scripts/audit_xml_field_coverage.py`
+- Temporal analysis: `scripts/temporal_hidden_violation_analysis.py` (Phase 13)
+- Audit findings: `docs/phase_10_findings.md`
+- Cooperation letter: `docs/terviseamet_inquiry.md`
 - Framing caveat: `docs/ml_framing.md` § 2.5 (open-data subset caveat)
-- Engineering inquiry draft: `docs/terviseamet_inquiry.md`
+- Learning journey: `docs/learning_journey.md`
 - Original motivation: `sapsan14/life:reflect/2026-04-15_health-data-gaps.md`
