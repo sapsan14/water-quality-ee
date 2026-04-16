@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Water Quality Estonia: Probabilistic Risk Estimator"
+authors:
+  - given-names: Anton
+    family-names: Sokolov
+    affiliation: "Tallinn University of Technology"
+version: 0.1.0
+date-released: "2026-04-13"
+license: MIT
+repository-code: "https://github.com/sapsan14/water-quality-ee"
+url: "https://h2oatlas.ee"
+keywords:
+  - water quality
+  - machine learning
+  - binary classification
+  - Estonia
+  - open data
+  - environmental monitoring
+  - risk assessment
+abstract: >-
+  Probabilistic risk estimator for water quality compliance in Estonia.
+  Classifies whether water samples violate health norms based on 15
+  chemical and biological parameters using Logistic Regression, Random
+  Forest, Gradient Boosting, and LightGBM models. Built on 69,536
+  samples from Terviseamet open data (2021-2026). Includes a public
+  citizen service at h2oatlas.ee with interactive map visualization.

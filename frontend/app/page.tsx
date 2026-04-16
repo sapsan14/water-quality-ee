@@ -12,7 +12,14 @@ export default function HomePage() {
       <WebVitalsReporter />
       <DashboardLoader />
       <footer className="footerNote">
-        <p>© {currentYear} H2O Atlas. Open data + ML decision support.</p>
+        <p>
+          &copy; {currentYear} H2O Atlas &middot;{" "}
+          <a href="https://github.com/sapsan14/water-quality-ee" target="_blank" rel="noreferrer">GitHub</a>
+          {" "}&middot; TalTech Masin&otilde;pe 2026
+        </p>
+        <p className="footerSub">
+          Data: <a href="https://vtiav.sm.ee" target="_blank" rel="noreferrer">Terviseamet</a> open data &middot; ML decision support, not medical advice
+        </p>
       </footer>
     </main>
   );
