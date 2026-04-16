@@ -2495,6 +2495,11 @@ html[data-theme="dark"] .modalCloseBtn {
   box-sizing: content-box;
 }
 
+/* Regression note: do not override this with `border-box` for Leaflet
+   internals — tiles/markers use explicit dimensions + negative margins
+   and assume the browser default (content-box). Custom marker HTML in
+   MapClient.tsx sets box-sizing on those nodes explicitly. */
+
 .leaflet-container,
 .leaflet-popup-content-wrapper,
 .leaflet-popup-content {

@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
@@ -243,13 +243,15 @@ function MarkerClusterLayer({
   locale,
   onSelectPoint,
   onSelectCluster,
-  disableHoverPopups = false
+  disableHoverPopups = false,
+  isMobile = false
 }: {
   places: FrontendPlace[];
   locale: "ru" | "et" | "en";
   onSelectPoint?: (id: string) => void;
   onSelectCluster?: (ids: string[]) => void;
   disableHoverPopups?: boolean;
+  isMobile?: boolean;
 }) {
   const map = useMap();
   const [clusterReady, setClusterReady] = useState(false);
@@ -273,6 +275,11 @@ function MarkerClusterLayer({
     const markerClusterFactory = (L as unknown as { markerClusterGroup: (opts: unknown) => L.LayerGroup }).markerClusterGroup;
     const group = markerClusterFactory({
       chunkedLoading: true,
+      /* Desktop/tablet viewports are wider — same 80px radius leaves many
+         unclustered markers (heavy DOM). Slightly larger radius = fewer bare
+         pins and less work for Leaflet. */
+      maxClusterRadius: isMobile ? 80 : 105,
+      chunkInterval: 90,
       spiderfyOnMaxZoom: false,
       spiderfyDistanceMultiplier: 1.35,
       showCoverageOnHover: false,
@@ -378,7 +385,7 @@ function MarkerClusterLayer({
     return () => {
       map.removeLayer(group as L.Layer);
     };
-  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups]);
+  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups, isMobile]);
   return null;
 }
 
@@ -663,16 +670,79 @@ function MapClient({
     };
   }, []);
 
-  // Ensure Leaflet reads the final container dimensions after the first
-  // paint and font swap. Without this, markers can be offset on desktop
-  // where the header row / chip bar shift the map shell's position after
-  // initial layout.
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const t = window.setTimeout(() => {
-      mapRef.current?.invalidateSize();
-    }, 120);
-    return () => window.clearTimeout(t);
+  /* Leaflet tile/markers layers share one pixel grid with the map container.
+     We must call invalidateSize() after the container's real size is known
+     (fonts, flex layout, SSR→hydration) and whenever the container resizes.
+     react-leaflet's ref stays null until MapContainer's second render, so a
+     naive `useEffect` on mount often ran too early; useLayoutEffect + rAF
+     waits for the map instance, then ResizeObserver covers header reflows
+     that change position/size without a window resize. */
+  useLayoutEffect(() => {
+    let cancelled = false;
+    let rafId = 0;
+    let attempt = 0;
+    const maxAttempts = 240;
+    const timers: number[] = [];
+    let ro: ResizeObserver | null = null;
+    let onWinResize: (() => void) | null = null;
+
+    const arm = (m: L.Map) => {
+      const el = m.getContainer();
+      const kick = () => {
+        if (cancelled) return;
+        m.invalidateSize({ animate: false });
+      };
+
+      kick();
+      requestAnimationFrame(kick);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(kick);
+      });
+
+      for (const ms of [0, 40, 120, 320, 600]) {
+        timers.push(window.setTimeout(kick, ms));
+      }
+
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        void document.fonts.ready.then(() => {
+          if (!cancelled) kick();
+        });
+      }
+
+      ro = new ResizeObserver(() => {
+        kick();
+      });
+      ro.observe(el);
+      const shell = el.parentElement;
+      if (shell) ro.observe(shell);
+
+      // trackResize only listens on window; pair with ResizeObserver above.
+      onWinResize = () => {
+        kick();
+      };
+      window.addEventListener("resize", onWinResize, { passive: true });
+    };
+
+    const waitForMap = () => {
+      if (cancelled) return;
+      const m = mapRef.current;
+      if (m) {
+        arm(m);
+        return;
+      }
+      if (++attempt > maxAttempts) return;
+      rafId = requestAnimationFrame(waitForMap);
+    };
+
+    waitForMap();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      for (const t of timers) window.clearTimeout(t);
+      ro?.disconnect();
+      if (onWinResize) window.removeEventListener("resize", onWinResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -858,7 +928,7 @@ function MapClient({
         <TileLayer
           attribution='Tiles &copy; Esri, OpenStreetMap contributors'
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-          keepBuffer={isMobile ? 2 : 5}
+          keepBuffer={isMobile ? 2 : 3}
         />
         <FocusOnUserLocation userLocation={userLocation} />
         <FocusOnSelectedPoint
@@ -873,7 +943,14 @@ function MapClient({
           bottomOverlayPx={bottomOverlayPx}
         />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
-      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
+      <MarkerClusterLayer
+        places={visiblePlaces}
+        locale={locale}
+        onSelectPoint={onSelectPoint}
+        onSelectCluster={onSelectCluster}
+        disableHoverPopups={disableHoverPopups}
+        isMobile={isMobile}
+      />
       </MapContainer>
       {children}
     </div>
