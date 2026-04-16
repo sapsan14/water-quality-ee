@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
-import { pointInFeature, findCountyFeature } from "../lib/geo";
+import { pointInFeature } from "../lib/geo";
 
 const MapClient = dynamic(() => import("./MapClient"), {
   ssr: false,
@@ -463,10 +463,14 @@ export default function Dashboard({ snapshot }: Props) {
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [mobilePanelState, setMobilePanelState] = useState<MobilePanelState>("collapsed");
   const [sheetMode, setSheetMode] = useState<MobileSheetMode>("place");
-  // County GeoJSON loaded at Dashboard level so both the `filtered` useMemo
-  // (polygon-based county filtering) and MapClient (overlay rendering) share
-  // a single fetch.
+  // County GeoJSON loaded on desktop/pad for overlay rendering.
+  // The expensive polygon work is done ONCE via placeCountyGeo (below),
+  // not on every filter change.
   const [countyGeoJson, setCountyGeoJson] = useState<GeoJSON.GeoJsonObject | null>(null);
+  // Pre-computed place→county mapping (built once in background when
+  // GeoJSON loads). Lets the `filtered` useMemo do O(1) Map lookups
+  // instead of running pointInFeature() on every filter interaction.
+  const [placeCountyGeo, setPlaceCountyGeo] = useState<Map<string, string> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const desktopDetailRef = useRef<HTMLElement | null>(null);
   const sheetDragStartY = useRef<number | null>(null);
@@ -1257,22 +1261,17 @@ export default function Dashboard({ snapshot }: Props) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    // When a county is selected, prefer geographic polygon containment so
-    // every point physically inside that county is counted — even if its
-    // `county` metadata field is empty or mismatched. Falls back to string
-    // matching when the GeoJSON hasn't loaded yet.
-    const countyFeature = county !== "all" ? findCountyFeature(county, countyGeoJson) : null;
     return snapshot.places.filter((p) => {
       if (segment !== "all") {
         if (p.place_kind !== segment) return false;
       }
       if (risk !== "all" && p.risk_level !== risk) return false;
       if (county !== "all") {
-        if (countyFeature) {
-          // Polygon-based: include any point geographically inside the county
-          if (!pointInFeature(p.lon, p.lat, countyFeature)) return false;
+        if (placeCountyGeo) {
+          // O(1) lookup from pre-computed polygon mapping
+          if (placeCountyGeo.get(p.id) !== county) return false;
         } else {
-          // Fallback to string-based before GeoJSON loads
+          // String-based fallback (mobile, or before pre-computation finishes)
           if (countyKey(p.county || "Unknown") !== county) return false;
         }
       }
@@ -1293,7 +1292,7 @@ export default function Dashboard({ snapshot }: Props) {
       if (q && !p.search_text.includes(q)) return false;
       return true;
     });
-  }, [snapshot.places, query, segment, risk, county, countyGeoJson, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
+  }, [snapshot.places, query, segment, risk, county, placeCountyGeo, official, alertsOnly, nearbyOnly, userCoords, nearbyRadiusKm, minProb, sampleDateFrom, sampleDateTo]);
   const mapPlaces = useMemo(() => filtered.slice(0, isMobile ? 1200 : 3000), [filtered, isMobile]);
 
   // Counts restricted to what's currently rendered on the map (after the
@@ -1448,6 +1447,43 @@ export default function Dashboard({ snapshot }: Props) {
     });
     return () => { alive = false; cancelIdle(handle); };
   }, [countyGeoJson, isMobile]);
+
+  // Pre-compute place→county mapping in the background once GeoJSON
+  // arrives. This runs ~600 × 15 pointInFeature checks ONCE, then
+  // every subsequent county filter change is a fast Map.get() lookup.
+  useEffect(() => {
+    if (!countyGeoJson || countyGeoJson.type !== "FeatureCollection") return;
+    if (placeCountyGeo) return; // already computed
+    let alive = true;
+    const fc = countyGeoJson as GeoJSON.FeatureCollection;
+    const compute = () => {
+      if (!alive) return;
+      const m = new Map<string, string>();
+      for (const p of snapshot.places) {
+        for (const f of fc.features) {
+          if (pointInFeature(p.lon, p.lat, f)) {
+            const name = (String(f.properties?.MNIMI || "").trim())
+              .split(/\s+/)
+              .map((x: string) => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase())
+              .join(" ");
+            m.set(p.id, countyKey(name));
+            break;
+          }
+        }
+      }
+      if (alive) setPlaceCountyGeo(m);
+    };
+    const ric = (window as unknown as { requestIdleCallback?: (fn: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+    const id = typeof ric === "function"
+      ? ric(compute, { timeout: 5000 })
+      : window.setTimeout(compute, 200);
+    return () => {
+      alive = false;
+      const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (typeof cic === "function") cic(id);
+      else window.clearTimeout(id);
+    };
+  }, [countyGeoJson, snapshot.places, placeCountyGeo]);
 
   // Track the on-screen keyboard via VisualViewport so map focus calls
   // can offset the marker above the IME / bottom sheet.
