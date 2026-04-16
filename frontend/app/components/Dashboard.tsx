@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocalizedSubtitle from "./LocalizedSubtitle";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
-import { pointInFeature, findCountyFeature, countyNameNorm as geoCountyNorm } from "../lib/geo";
+import { pointInFeature, findCountyFeature } from "../lib/geo";
 
 const MapClient = dynamic(() => import("./MapClient"), {
   ssr: false,

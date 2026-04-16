@@ -736,7 +736,7 @@ function MapClient({
       alive = false;
       cancelIdle(handle);
     };
-  }, [showCountyOverlay, countyGeoJson]);
+  }, [showCountyOverlay, countyGeoJson, countyGeoJsonProp]);
 
   useEffect(() => {
     if (!mapRef.current) return;
