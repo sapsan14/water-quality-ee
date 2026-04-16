@@ -283,10 +283,29 @@ def enrich_county_column(
             src.append(None)
     out["_county_src"] = src
 
+    # Apply overrides even to rows with XML county — fixes data-entry errors
+    # in the source XML (e.g. wrong maakond for a location).
+    if overrides:
+        override_corrections = 0
+        for i, row in out.iterrows():
+            nk = normalize_location(row.get("location"))
+            if nk and nk in overrides:
+                old_county = out.at[i, "county"]
+                new_county = overrides[nk]
+                if out.at[i, "_county_src"] == "xml" and str(old_county).strip().lower() != new_county.strip().lower():
+                    override_corrections += 1
+                out.at[i, "county"] = new_county
+                out.at[i, "_county_src"] = "override"
+        if verbose and override_corrections:
+            _county_log.info(
+                "Overrides скорректировали %s строк с XML-county",
+                override_corrections,
+            )
+
     # Уникальные нормализованные локации с пропуском county
     need_keys: Dict[str, str] = {}  # norm -> первый оригинальный текст для запроса
     for i, row in out.iterrows():
-        if out.at[i, "_county_src"] == "xml":
+        if out.at[i, "_county_src"] in ("xml", "override"):
             continue
         loc = row.get("location")
         nk = normalize_location(loc)
@@ -396,7 +415,7 @@ def enrich_county_column(
         save_geocode_cache(cache)
 
     for i, row in out.iterrows():
-        if out.at[i, "_county_src"] == "xml":
+        if out.at[i, "_county_src"] in ("xml", "override"):
             continue
         nk = normalize_location(row.get("location"))
         if nk in resolved:

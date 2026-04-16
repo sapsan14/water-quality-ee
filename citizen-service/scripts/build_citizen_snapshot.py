@@ -198,6 +198,47 @@ def _nearest_county_from_coords(lat: float | None, lon: float | None) -> str | N
         return None
     return " ".join(str(best_name).split()).strip().title()
 
+
+def _d2_to_county_centroid(lat: float, lon: float, county_name: str) -> float | None:
+    """Squared Euclidean distance from (lat, lon) to the centroid of *county_name*."""
+    key = " ".join(county_name.strip().lower().split())
+    if key not in COUNTY_CENTROIDS:
+        if "maakond" not in key:
+            key = f"{key} maakond"
+    centroid = COUNTY_CENTROIDS.get(key)
+    if centroid is None:
+        return None
+    clat, clon = centroid
+    return (lat - float(clat)) ** 2 + (lon - float(clon)) ** 2
+
+
+def _validate_county_against_coords(
+    county: str,
+    lat: float,
+    lon: float,
+) -> str | None:
+    """Return a corrected county if *county* is clearly wrong for (lat, lon).
+
+    Uses a conservative heuristic: the claimed county's centroid must be
+    at least 4× farther than the nearest county's centroid.  This catches
+    obvious XML data-entry errors (e.g. Valga for a Tallinn location) while
+    avoiding false corrections near county borders.
+
+    Returns the corrected county name or None if the original looks fine.
+    """
+    nearest = _nearest_county_from_coords(lat, lon)
+    if not nearest:
+        return None
+    if nearest.strip().lower() == county.strip().lower():
+        return None
+    d2_claimed = _d2_to_county_centroid(lat, lon, county)
+    d2_nearest = _d2_to_county_centroid(lat, lon, nearest)
+    if d2_claimed is None or d2_nearest is None or d2_nearest == 0:
+        return None
+    if d2_claimed > 4 * d2_nearest:
+        return nearest
+    return None
+
 # Kui pole Nominatimi ega maakonda: stabiilne punkt EE bbox-is (pole GPS, ainult ülevaade).
 EE_BBOX_LAT = (57.48, 59.68)
 EE_BBOX_LON = (21.65, 28.22)
@@ -970,6 +1011,27 @@ def main() -> None:
             county_from_coords = _nearest_county_from_coords(lat, lon)
             if county_from_coords:
                 county_out = county_from_coords
+
+        # Validate county against coordinates: catch obvious XML data-entry
+        # errors (e.g. "Valga maakond" for a location near Tallinn).
+        if (
+            county_out
+            and lat is not None
+            and lon is not None
+            and coord_source not in ("county_centroid", "approximate_ee", "none")
+        ):
+            corrected = _validate_county_against_coords(county_out, lat, lon)
+            if corrected:
+                LOG.warning(
+                    "County mismatch: %s/%s had '%s' but coords (%.4f, %.4f) → '%s'; correcting",
+                    domain,
+                    loc_name,
+                    county_out,
+                    lat,
+                    lon,
+                    corrected,
+                )
+                county_out = corrected
 
         kind = PLACE_KIND.get(domain, "other")
         sid = None
