@@ -1553,6 +1553,18 @@ html[data-theme="dark"] .mapChipDivider {
   cursor: not-allowed;
 }
 
+/* Mobile zoom +/− at bottom-left (mirrors Google Maps placement) */
+.mapZoomControls {
+  right: auto;
+  left: calc(0.7rem + env(safe-area-inset-left, 0px));
+}
+
+.mapZoomBtn {
+  position: static;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .mapPanelFullscreen {
   position: fixed;
   inset: 0;
@@ -3120,19 +3132,6 @@ html[data-theme="dark"] .dateRangeSep {
     display: none;
   }
 
-  /* Move Leaflet's native zoom +/- from top-left to bottom-left on mobile
-     so it doesn't hide behind the search bar / chip bar.
-     Mirrors Google Maps placement: zoom at bottom-left, custom controls
-     (🧭 ◎) at bottom-right. Both sit above the collapsed bottom sheet. */
-  .leaflet-top.leaflet-left {
-    top: auto !important;
-    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  .leaflet-control-zoom {
-    margin-bottom: 0 !important;
-  }
-
   /* Map shell fills the fullscreen panel. The `.mapTopPanel` is now
      position:fixed + inset:0 on mobile (see above), so the shell must
      be 100vh to match — otherwise the leaflet canvas would still size
@@ -3574,6 +3573,11 @@ html[data-theme="dark"] .dateRangeSep {
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
     /* Keep above the collapsed bottom sheet (62px) */
     bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mapZoomControls {
+    right: auto;
+    left: calc(0.5rem + env(safe-area-inset-left, 0px));
   }
 
   .infoCardGrid {
