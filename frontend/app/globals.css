@@ -658,6 +658,17 @@ html[data-theme="dark"] .langDropdownItem:hover {
   font-weight: 700;
 }
 
+.stat.statMuted {
+  background: transparent;
+  border-color: transparent;
+  min-width: auto;
+}
+.stat.statMuted .v {
+  font-weight: 500;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 /* ── Map stats row ──────────────────────────────────────────
    Compact label strip below the map. Sized so the full stat
    set fits a single line on standard desktop widths and only
@@ -723,6 +734,16 @@ html[data-theme="dark"] .langDropdownItem:hover {
 
 .mapStatBadText {
   color: var(--bad);
+}
+
+.mapStat.mapStatMuted {
+  background: transparent;
+  border-color: transparent;
+}
+.mapStat.mapStatMuted .mapStatV {
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .tableWrap {

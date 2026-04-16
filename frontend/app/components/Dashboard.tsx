@@ -522,7 +522,7 @@ export default function Dashboard({ snapshot }: Props) {
         aboutModel:
           "ML-модели (LR, RF, GB, LightGBM) оценивают вероятность нарушения по лабораторным показателям. Это инструмент поддержки решений, а не медицинская рекомендация.",
         aboutService:
-          "Сервис объединяет открытые данные Terviseamet, карту, аналитику и объяснения параметров воды для жителей, туристов и семей.",
+          "Сервис объединяет открытые данные Terviseamet, карту, аналитику и объяснения параметров воды для жителей, туристов и семей. Данные и модели обновляются автоматически: еженедельно (пн) и 1-го числа каждого месяца.",
         metricGuideTitle: "Как читать метрики: точно + интуитивно",
         metricGuide: {
           roc: {
@@ -604,7 +604,7 @@ export default function Dashboard({ snapshot }: Props) {
         aboutModel:
           "ML-mudelid (LR, RF, GB, LightGBM) hindavad rikkumise tõenäosust laborinäitajate põhjal. See on otsusetugi, mitte meditsiiniline soovitus.",
         aboutService:
-          "Teenuses on koos Terviseameti avaandmed, kaart, analüütika ja selgitused vee parameetrite kohta.",
+          "Teenuses on koos Terviseameti avaandmed, kaart, analüütika ja selgitused vee parameetrite kohta. Andmed ja mudelid uuendatakse automaatselt: iganädalaselt (E) ja iga kuu 1. kuupäeval.",
         metricGuideTitle: "Mõõdikud: täpselt + intuitiivselt",
         metricGuide: {
           roc: {
@@ -686,7 +686,7 @@ export default function Dashboard({ snapshot }: Props) {
         aboutModel:
           "ML models (LR, RF, GB, LightGBM) estimate violation probability from lab measurements. This is decision support, not medical advice.",
         aboutService:
-          "The service combines Terviseamet open data, map, analytics, and explanations of water parameters for residents and visitors.",
+          "The service combines Terviseamet open data, map, analytics, and explanations of water parameters for residents and visitors. Data and models are refreshed automatically: weekly (Mon) and on the 1st of each month.",
         metricGuideTitle: "How to read metrics: precise + intuitive",
         metricGuide: {
           roc: {
@@ -1220,6 +1220,19 @@ export default function Dashboard({ snapshot }: Props) {
     setInfoText(text);
     setInfoOpen(true);
   };
+
+  const dataUpdatedLabel = useMemo(() => {
+    const raw = snapshot.generated_at;
+    if (!raw) return null;
+    try {
+      const dt = new Date(raw);
+      if (Number.isNaN(dt.getTime())) return raw;
+      return dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) +
+        " " + dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC", hour12: false }) + " UTC";
+    } catch {
+      return raw;
+    }
+  }, [snapshot.generated_at]);
 
   const counties = useMemo(() => {
     const map = new Map<string, string>();
@@ -2797,6 +2810,12 @@ export default function Dashboard({ snapshot }: Props) {
           <span className="mapStatK">{lruet(lang, "Ср. P(нарушения)", "Kesk. P(rikkumine)", "Avg P(viol.)")}</span>
           <span className="mapStatV">{avgProb === null ? "n/a" : avgProb.toFixed(2)}</span>
         </div>
+        {dataUpdatedLabel ? (
+          <div className="mapStat mapStatMuted">
+            <span className="mapStatK">{lruet(lang, "Обновлено", "Uuendatud", "Updated")}</span>
+            <span className="mapStatV">{dataUpdatedLabel}</span>
+          </div>
+        ) : null}
       </div>
 
       <section className="panel selectedPointDesktop desktopOnly">
@@ -3152,6 +3171,9 @@ export default function Dashboard({ snapshot }: Props) {
                     <div className="stat"><div className="k">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</div><div className="v">{high}</div></div>
                     <div className="stat"><div className="k">{lruet(lang, "Низкий риск", "Madal risk", "Low risk")}</div><div className="v">{low}</div></div>
                     <div className="stat"><div className="k">{lruet(lang, "Офиц. нарушения", "Ametlik rikkumine", "Official violations")}</div><div className="v">{violations}</div></div>
+                    {dataUpdatedLabel ? (
+                      <div className="stat statMuted"><div className="k">{lruet(lang, "Обновлено", "Uuendatud", "Updated")}</div><div className="v">{dataUpdatedLabel}</div></div>
+                    ) : null}
                   </div>
 
                   {/* Burger settings panel: theme toggle, language, copyright —
