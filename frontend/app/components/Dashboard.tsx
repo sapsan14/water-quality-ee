@@ -2782,20 +2782,21 @@ export default function Dashboard({ snapshot }: Props) {
              flyTo() pans the marker into the still-visible area. */
           bottomOverlayPx={isMobile ? mobileBottomOverlayPx : 0}
           topOverlayPx={isMobile ? 105 : 20}
-        />
-        {/* Data/model freshness overlay — always visible on map */}
-        <div className="mapFreshnessOverlay">
-          <div className="mapFreshnessLine">
-            <span className="mapFreshnessLabel">{lruet(lang, "Данные", "Andmed", "Data")}:</span>
-            <span className="mapFreshnessValue">{dataFetchedLabel ?? "—"}</span>
-          </div>
-          {modelTrainedLabel ? (
+        >
+          {/* Data/model freshness overlay — rendered inside mapShell for correct z-order on mobile */}
+          <div className="mapFreshnessOverlay">
             <div className="mapFreshnessLine">
-              <span className="mapFreshnessLabel">{lruet(lang, "Модель", "Mudel", "Model")}:</span>
-              <span className="mapFreshnessValue">{modelTrainedLabel}</span>
+              <span className="mapFreshnessLabel">{lruet(lang, "Данные", "Andmed", "Data")}:</span>
+              <span className="mapFreshnessValue">{dataFetchedLabel ?? "—"}</span>
             </div>
-          ) : null}
-        </div>
+            {modelTrainedLabel ? (
+              <div className="mapFreshnessLine">
+                <span className="mapFreshnessLabel">{lruet(lang, "Модель", "Mudel", "Model")}:</span>
+                <span className="mapFreshnessValue">{modelTrainedLabel}</span>
+              </div>
+            ) : null}
+          </div>
+        </MapClient>
       </section>
 
       {/* Stats row — always visible below map on desktop */}
