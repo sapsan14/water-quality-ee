@@ -8,7 +8,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { FrontendPlace } from "../lib/types";
-import { pointInFeature, countyNameNorm as geoCountyNameNorm, countyFeatureName as geoCountyFeatureName } from "../lib/geo";
+import { countyNameNorm as geoCountyNameNorm, countyFeatureName as geoCountyFeatureName } from "../lib/geo";
 
 type DomainKey = "supluskoha" | "veevark" | "joogivesi" | "basseinid";
 type NormRule = { min?: number; max?: number; exact?: number; unit: string };
@@ -644,14 +644,10 @@ function MapClient({
   const countyGeoJson = countyGeoJsonProp ?? countyGeoJsonLocal;
   const setCountyGeoJson = setCountyGeoJsonLocal;
 
-  const visiblePlaces = useMemo(() => {
-    if (!selectedCountyNorm || !countyGeoJson || countyGeoJson.type !== "FeatureCollection") return places;
-    const featureCollection = countyGeoJson as GeoJSON.FeatureCollection;
-    const features = featureCollection.features as GeoJSON.Feature[];
-    const selectedFeature = features.find((f) => countyNameNorm(countyFeatureName(f)) === selectedCountyNorm);
-    if (!selectedFeature) return places;
-    return places.filter((p) => pointInFeature(p.lon, p.lat, selectedFeature));
-  }, [places, selectedCountyNorm, countyGeoJson]);
+  // Dashboard already filters places by county (pre-computed polygon
+  // mapping or string fallback). No need for a second polygon filter
+  // here — it was causing a ~1s UI freeze on every county click.
+  const visiblePlaces = places;
 
 
   useEffect(() => {
