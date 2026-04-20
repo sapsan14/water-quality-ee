@@ -11,7 +11,6 @@ import logging
 import os
 import re
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -22,7 +21,6 @@ if str(_CS_DIR) not in sys.path:
     sys.path.insert(0, str(_CS_DIR))
 
 import geocode_resolve as _geocode_resolve  # noqa: E402
-from county_centroids import county_to_latlon  # noqa: E402
 
 SNAPSHOT_PATH = ROOT / "citizen-service" / "artifacts" / "snapshot.json"
 RESOLVE_CACHE_PATH = ROOT / "citizen-service" / "data" / "coordinate_resolve_cache.json"
@@ -145,7 +143,6 @@ def main():
 
     budget = [len(approx) * 5]
     geocoded = 0
-    centroid_fallback = 0
     still_approx = 0
 
     for seq, (idx, place) in enumerate(approx, 1):
@@ -178,7 +175,6 @@ def main():
                 places[idx]["geocode_matched"] = matched
             geocoded += 1
         else:
-            county_str = place.get("county")
             # county from data is unreliable for approximate_ee — skip centroid
             # since the county was likely wrong too. Keep approximate_ee.
             LOG.warning("  -> MISS: no geocoding result for %s", loc[:70])
