@@ -38,6 +38,10 @@ export type FrontendSnapshot = {
   has_model_predictions: boolean;
   available_models: string[];
   model_labels: Record<string, string>;
+  /** Human-readable name of the model whose probability drives
+   *  `risk_level` / marker color on the map (e.g. "LightGBM").
+   *  Null on very old snapshots with no per-model columns. */
+  canonical_model?: string | null;
   data_catalog_url: string | null;
   disclaimer: string | null;
   places_count: number;

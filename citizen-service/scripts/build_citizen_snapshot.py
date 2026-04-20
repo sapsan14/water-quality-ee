@@ -786,7 +786,10 @@ def main() -> None:
         )
         clf.fit(X_imp, y)
         full["rf_violation_prob"] = clf.predict_proba(X_imp)[:, 0]
-        full["model_violation_prob"] = full["rf_violation_prob"]  # обратная совместимость
+        # Default canonical for the map layer = RF. LightGBM (if trained
+        # successfully below) overwrites this to LGBM, which has the
+        # best validation metrics of the four models.
+        full["model_violation_prob"] = full["rf_violation_prob"]
         _timer_print("4b) RandomForestClassifier.fit (120 деревьев)", t_run, last)
 
         # Gradient Boosting
@@ -822,9 +825,12 @@ def main() -> None:
             )
             lgbm_clf.fit(X_imp, y)  # LGBM нативно обрабатывает NaN до импутации, но для единообразия используем X_imp
             full["lgbm_violation_prob"] = lgbm_clf.predict_proba(X_imp)[:, 0]
+            # Promote LGBM as the canonical map probability — the
+            # frontend's risk_level / marker color reflect this column.
+            full["model_violation_prob"] = full["lgbm_violation_prob"]
             _timer_print("4d) LGBMClassifier.fit (300 деревьев)", t_run, last)
         except ImportError:
-            print("[citizen] lightgbm не установлен — lgbm_violation_prob не будет в снимке")
+            print("[citizen] lightgbm не установлен — lgbm_violation_prob не будет в снимке; model_violation_prob остаётся RF")
 
         _timer_print("5) predict_proba всех моделей → violation_prob в full DataFrame", t_run, last)
     model_trained_at = pd.Timestamp.now("UTC").isoformat() if not args.map_only else None
