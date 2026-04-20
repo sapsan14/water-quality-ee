@@ -2058,28 +2058,28 @@ export default function Dashboard({ snapshot }: Props) {
       setSheetMode("place");
       setMobilePanelState("half");
       // Map stays fullscreen — Google Maps style
-    } else {
-      // On desktop / pad the detail panel is below the map fold.
-      // Scroll it into view so the user sees measurements + history.
-      requestAnimationFrame(() => {
-        desktopDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      });
     }
+    // Desktop: the selectedPointDesktop panel is now rendered beside the
+    // map (see `.mapWithDetail` grid in globals.css), so there's nothing
+    // to scroll into view. The previous scrollIntoView() on every click
+    // was the cause of the "page scrolls when I click a pin" complaint
+    // — removed unconditionally. At widths where the side panel falls
+    // back to below the map (<1200px), the map itself is still mostly
+    // visible, so the user can scroll manually if they want details.
   }, [isMobile]);
 
-  // Called when a co-located cluster is tapped on mobile. Shows the
-  // cluster's children as a pick-list in the bottom sheet instead of
-  // spiderfying (which collapses on touch-driven map moves).
+  // Called when a co-located cluster is tapped. Shows the cluster's
+  // children as a pick-list in the side panel (desktop) or bottom
+  // sheet (mobile) instead of spiderfying — except in desktop
+  // fullscreen, where the MarkerClusterLayer spiderfies directly so
+  // the pins expand into visible petals (no side panel available
+  // behind the fullscreen overlay).
   const handleClusterSelect = useCallback((ids: string[]) => {
     setClusterPlaceIds(ids);
     setSelectedId(null);
     if (isMobile) {
       setSheetMode("place");
       setMobilePanelState("half");
-    } else {
-      requestAnimationFrame(() => {
-        desktopDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      });
     }
   }, [isMobile]);
 
@@ -2873,6 +2873,34 @@ export default function Dashboard({ snapshot }: Props) {
       </aside>
 
       <div className="mainContent">
+      {/* Stats row — moved ABOVE the map (was below) so the KPIs are the
+          first thing the eye lands on when the page loads. On mobile this
+          row is hidden via desktopOnly; the mobile bottom sheet / toast
+          surfaces the same numbers. */}
+      <div className="mapStatsRow desktopOnly">
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Видимых", "Nähtav", "Visible")}</span>
+          <span className="mapStatV">{filtered.length}</span>
+        </div>
+        <div className="mapStat mapStatBad">
+          <span className="mapStatK">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</span>
+          <span className="mapStatV">{filtered.filter((p) => p.risk_level === "high").length}</span>
+        </div>
+        <div className="mapStat">
+          <span className="mapStatK">{lruet(lang, "Нарушения", "Rikkumised", "Violations")}</span>
+          <span className="mapStatV mapStatBadText">{filtered.filter((p) => p.official_compliant === 0).length}</span>
+        </div>
+        <div className={`mapStat ${healthIndex >= 75 ? "mapStatGood" : healthIndex >= 50 ? "mapStatWarn" : "mapStatBad"}`}>
+          <span className="mapStatK">{lruet(lang, "Здоровье", "Tervis", "Health")}</span>
+          <span className="mapStatV">{healthIndex}/100</span>
+        </div>
+      </div>
+      {/* On wide viewports (>=1200px) `.mapWithDetail` becomes a 2-column
+          grid so the map and the selected-point panel sit side-by-side
+          — the user can click a pin and read the details without the
+          page scrolling. Below 1200px the wrapper collapses to a single
+          column and the detail panel stacks below the map as before. */}
+      <div className="mapWithDetail">
       <section
         ref={mapPanelRef}
         className={`panel mapTopPanel ${isMapFullscreen ? "mapPanelFullscreen" : ""} ${isMobile ? "mobileMapPanel" : ""}`}
@@ -3052,7 +3080,12 @@ export default function Dashboard({ snapshot }: Props) {
           isMobile={isMobile}
           onToggleFullscreen={isMobile ? undefined : toggleMapFullscreen}
           fullscreenLabel={isMobile ? "" : isMapFullscreen ? lruet(lang, "Выйти из полноэкранного", "Välju täisekraanist", "Exit fullscreen") : lruet(lang, "Полный экран", "Täisekraan", "Fullscreen")}
-          disableHoverPopups={isMobile}
+          /* Popups are now disabled on desktop non-fullscreen too — the
+             side panel (`.selectedPointDesktop` inside `.mapWithDetail`)
+             shows the same info without clipping at the map edge. In
+             fullscreen the side panel is behind the overlay, so we
+             re-enable popups so clicks still surface details. */
+          disableHoverPopups={isMobile || !isMapFullscreen}
           onRecenterUser={activateNearMe}
           recenterLabel={t.nearMe}
           resetViewLabel={lruet(lang, "Сбросить вид", "Lähtesta vaade", "Reset view")}
@@ -3081,26 +3114,6 @@ export default function Dashboard({ snapshot }: Props) {
           </div>
         </MapClient>
       </section>
-
-      {/* Stats row — compact strip below map on desktop */}
-      <div className="mapStatsRow desktopOnly">
-        <div className="mapStat">
-          <span className="mapStatK">{lruet(lang, "Видимых", "Nähtav", "Visible")}</span>
-          <span className="mapStatV">{filtered.length}</span>
-        </div>
-        <div className="mapStat mapStatBad">
-          <span className="mapStatK">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</span>
-          <span className="mapStatV">{filtered.filter((p) => p.risk_level === "high").length}</span>
-        </div>
-        <div className="mapStat">
-          <span className="mapStatK">{lruet(lang, "Нарушения", "Rikkumised", "Violations")}</span>
-          <span className="mapStatV mapStatBadText">{filtered.filter((p) => p.official_compliant === 0).length}</span>
-        </div>
-        <div className={`mapStat ${healthIndex >= 75 ? "mapStatGood" : healthIndex >= 50 ? "mapStatWarn" : "mapStatBad"}`}>
-          <span className="mapStatK">{lruet(lang, "Здоровье", "Tervis", "Health")}</span>
-          <span className="mapStatV">{healthIndex}/100</span>
-        </div>
-      </div>
 
       <section ref={desktopDetailRef} className="panel selectedPointDesktop desktopOnly">
         <div className="selectedPointHeader">
@@ -3760,6 +3773,7 @@ export default function Dashboard({ snapshot }: Props) {
             </div>
           ) : null}
         </section>
+      </div>{/* /.mapWithDetail */}
 
 
       <section className="panel">

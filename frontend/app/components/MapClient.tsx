@@ -241,13 +241,21 @@ function MarkerClusterLayer({
   locale,
   onSelectPoint,
   onSelectCluster,
-  disableHoverPopups = false
+  disableHoverPopups = false,
+  isFullscreen = false
 }: {
   places: FrontendPlace[];
   locale: "ru" | "et" | "en";
   onSelectPoint?: (id: string) => void;
   onSelectCluster?: (ids: string[]) => void;
   disableHoverPopups?: boolean;
+  /** When true, clicking a co-located cluster spiderfies the pins
+   *  visually (petal expansion) instead of delegating to `onSelectCluster`
+   *  — the side panel isn't visible in fullscreen, so we need in-map
+   *  feedback. In non-fullscreen we still defer to `onSelectCluster`
+   *  which populates the side panel with a pick list, and we pop a
+   *  short hint bubble on the map so the user knows where to look. */
+  isFullscreen?: boolean;
 }) {
   const map = useMap();
   const [clusterReady, setClusterReady] = useState(false);
@@ -310,11 +318,39 @@ function MarkerClusterLayer({
           return ll.lat === first.lat && ll.lng === first.lng;
         });
 
-        if ((currentZoom >= maxZoom || allSameCoord) && onSelectCluster) {
-          const ids = children
-            .map((m) => m.options?.place?.id)
-            .filter((id): id is string => Boolean(id));
-          onSelectCluster(ids);
+        if (currentZoom >= maxZoom || allSameCoord) {
+          if (isFullscreen) {
+            // Fullscreen desktop: no side panel visible, so spiderfy
+            // the pins so the user can pick visually. (Normally
+            // spiderfyOnMaxZoom=false prevents this; we trigger it
+            // manually only on this specific click.)
+            evt.layer.spiderfy();
+          } else if (onSelectCluster) {
+            const ids = children
+              .map((m) => m.options?.place?.id)
+              .filter((id): id is string => Boolean(id));
+            onSelectCluster(ids);
+            // Drop a short hint bubble at the cluster location so the
+            // user knows their click was registered and where to look
+            // for the pick list. autoClose on first map interaction.
+            const at = children[0].getLatLng();
+            const hint =
+              locale === "ru"
+                ? `${ids.length} точек здесь — выберите на панели →`
+                : locale === "et"
+                  ? `${ids.length} punkti siin — vali paneelilt →`
+                  : `${ids.length} points here — pick one on the panel →`;
+            L.popup({
+              autoClose: true,
+              closeOnClick: true,
+              closeButton: false,
+              className: "clusterHintPopup",
+              offset: L.point(0, -8)
+            })
+              .setLatLng(at)
+              .setContent(`<div class="clusterHintPopupInner">${hint}</div>`)
+              .openOn(map);
+          }
         }
         // Otherwise: default zoomToBoundsOnClick handles zoom
       }
@@ -385,7 +421,7 @@ function MarkerClusterLayer({
     return () => {
       map.removeLayer(group as L.Layer);
     };
-  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups]);
+  }, [map, places, locale, onSelectPoint, onSelectCluster, clusterReady, disableHoverPopups, isFullscreen]);
   return null;
 }
 
@@ -948,7 +984,7 @@ function MapClient({
           bottomOverlayPx={bottomOverlayPx}
         />
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
-      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
+      <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} isFullscreen={isFullscreen} />
       </MapContainer>
       {showCountyOverlay ? (
         <div className="countyLegend" role="note" aria-label={
