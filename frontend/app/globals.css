@@ -148,6 +148,13 @@ a {
   display: grid;
   align-items: start;
   gap: 0;
+  /* Explicit grid areas = no reliance on auto-placement quirks.
+     Row 1: heading spans both columns. Row 2: sidebar | mainContent.
+     Filters sidebar NEVER extends above the heading again. */
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  grid-template-rows: auto 1fr;
 }
 
 .dashboardSidebar {
@@ -167,17 +174,17 @@ a {
 
 .dashboardSidebar > .mainContent,
 .dashboardSidebarCollapsed > .mainContent {
-  grid-column: 2;
+  grid-area: main;
   padding: 0;
 }
 
 .dashboardSidebar > .topBar,
 .dashboardSidebarCollapsed > .topBar {
-  /* Edge-to-edge heading bar spanning both sidebar and main content.
-     Previously lived only in column 2, which left a noticeable gap to
-     the left of "H2O Atlas" above the filter drawer. */
-  grid-column: 1 / -1;
-  grid-row: 1;
+  /* Pinned to the "header" grid area — spans both columns, sits above
+     the filter drawer + main content. Previously lived only in column
+     2, which left "H2O Atlas" floating next to an already-tall filter
+     panel. */
+  grid-area: header;
   margin-right: 0;
 }
 
@@ -295,11 +302,9 @@ a {
 
 /* ── Desktop sidebar (always-visible, embedded in grid) ──── */
 .sidebar {
-  grid-column: 1;
-  /* Start on grid row 2 so the filter drawer aligns with the stats
-     row / map / selected-point content to its right — the heading
-     bar above (row 1) spans the full page width. */
-  grid-row: 2 / 99;
+  /* Lives in the "sidebar" grid area (row 2, col 1) — below the
+     heading, beside the main content. */
+  grid-area: sidebar;
   position: sticky;
   top: calc(var(--topbar-h) + 0.5rem);
   height: calc(100vh - var(--topbar-h) - 0.5rem);
@@ -2143,17 +2148,34 @@ html[data-theme="dark"] .mapChipDivider {
   width: 100%;
 }
 
-/* ── Desktop side-by-side layout (>=1200px) ─────────────────
+/* ── Desktop side-by-side layout ─────────────────────────
    Map on the left, selected-point detail panel on the right. No
    more "click a pin, page scrolls down to show details" — the
    detail sits alongside the map so it's always in view. Below
-   1200px this grid collapses to a single column so the panel
-   stacks under the map (same as before this change). */
+   the breakpoint this grid collapses to a single column so the
+   panel stacks under the map. Breakpoint lowered to 1100px so
+   the two-column layout engages on typical 1280×720 / 1366×768
+   laptops where the user was seeing stacked + overflow artifacts. */
 .mapWithDetail {
   display: block;
+  /* Kill any horizontal overflow at all widths — a long measurement
+     table or location string should never give the whole panel an
+     outer horizontal scrollbar. The inner `.tableWrap` keeps its
+     own scroll for the history table. */
+  overflow-x: hidden;
 }
 
-@media (min-width: 1200px) {
+.mapWithDetail > .selectedPointDesktop {
+  /* Safety net: if a deeply-nested table or a very long string
+     escapes our width limits, clip it at the panel edge rather than
+     growing a horizontal scrollbar on the whole section. Applies at
+     every width, including the stacked (<1100px) layout. */
+  overflow-x: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 1100px) {
   .mapWithDetail {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 380px;
