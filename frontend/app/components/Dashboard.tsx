@@ -426,6 +426,17 @@ export default function Dashboard({ snapshot }: Props) {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("water.ui.sidebar-collapsed.v1") === "true";
   });
+  // Collapse state for the two long report sub-panels in the Selected-
+  // point side panel. Persisted per-user so a casual visitor who
+  // closed History doesn't have it re-open on every pin click.
+  const [measurementsOpen, setMeasurementsOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("water.ui.measurements-open.v1") !== "false";
+  });
+  const [historyOpen, setHistoryOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("water.ui.history-open.v1") !== "false";
+  });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoPageOpen, setInfoPageOpen] = useState(false);
   const [infoPageTab, setInfoPageTab] = useState<TabKey>("analytics");
@@ -3253,7 +3264,17 @@ export default function Dashboard({ snapshot }: Props) {
                     isCanonical ? "modelChipCanonical" : "",
                   ].filter(Boolean).join(" ");
                   return (
-                    <span key={abbr} className={chipCls} data-tooltip={tip}>
+                    <span
+                      key={abbr}
+                      className={chipCls}
+                      data-tooltip={tip}
+                      /* Native title: backup tooltip that never gets
+                         clipped by any ancestor overflow (the css
+                         ::after can still be cut off near the panel's
+                         bottom scroll boundary). */
+                      title={tip}
+                      tabIndex={0}
+                    >
                       {abbr} <b>{typeof prob === "number" ? prob.toFixed(2) : "–"}</b>
                     </span>
                   );
@@ -3261,20 +3282,48 @@ export default function Dashboard({ snapshot }: Props) {
               </div>
               <span className="pointCardId">ID {selectedPlace.id}</span>
             </div>
-            <div className="panel reportPanel">
-              <h4>{t.measurements}</h4>
-              <p className="hint measurementsHint">
-                {lruet(
-                  lang,
-                  "Показатели из последней пробы, по алфавиту (внутренние имена полей). Ячейка — справка или сравнение с нормой.",
-                  "Viimase proovi näitajad tähestikuliselt (väljanimetus). Klõpsa nimele või väärtusele — kirjeldus või norm.",
-                  "Latest-sample parameters sorted A–Z (field names). Tap name or value for info or norm check."
-                )}
-              </p>
-              {Object.keys(selectedPlace.measurements || {}).length === 0 ? (
-                <p className="hint">n/a</p>
-              ) : (
-                <div className="tableWrap compact">
+            <div className={`panel reportPanel reportPanelCollapsible ${measurementsOpen ? "" : "reportPanelClosed"}`}>
+              <div className="reportPanelHeader">
+                <button
+                  type="button"
+                  className="reportPanelToggle"
+                  aria-expanded={measurementsOpen}
+                  onClick={() => {
+                    const next = !measurementsOpen;
+                    setMeasurementsOpen(next);
+                    if (typeof window !== "undefined") window.localStorage.setItem("water.ui.measurements-open.v1", String(next));
+                  }}
+                >
+                  <span className={`reportPanelChevron ${measurementsOpen ? "open" : ""}`} aria-hidden="true">
+                    <Icon name="chevron-down" />
+                  </span>
+                  <h4>{t.measurements}</h4>
+                </button>
+                <button
+                  type="button"
+                  className="reportPanelInfoBtn"
+                  onClick={() =>
+                    openInfo(
+                      t.measurements,
+                      lruet(
+                        lang,
+                        "Показатели из последней пробы, по алфавиту (внутренние имена полей). Нажмите на название или значение — появится справка или сравнение с нормой.",
+                        "Viimase proovi näitajad tähestikuliselt (väljanimetus). Klõpsa nimele või väärtusele — kuvatakse kirjeldus või normi võrdlus.",
+                        "Latest-sample parameters sorted A–Z (field names). Tap name or value for a description or norm comparison."
+                      )
+                    )
+                  }
+                  aria-label={lruet(lang, "Справка о показателях", "Näitajate kirjeldus", "About the parameters")}
+                  title={lruet(lang, "Справка о показателях", "Näitajate kirjeldus", "About the parameters")}
+                >
+                  <Icon name="info" />
+                </button>
+              </div>
+              {measurementsOpen ? (
+                Object.keys(selectedPlace.measurements || {}).length === 0 ? (
+                  <p className="hint">n/a</p>
+                ) : (
+                  <div className="tableWrap compact">
                   <table className="table">
                     <thead>
                       <tr>
@@ -3319,10 +3368,28 @@ export default function Dashboard({ snapshot }: Props) {
                     </tbody>
                   </table>
                 </div>
-              )}
+                )
+              ) : null}
             </div>
-            <div className="panel reportPanel">
-              <h4>{t.history}</h4>
+            <div className={`panel reportPanel reportPanelCollapsible ${historyOpen ? "" : "reportPanelClosed"}`}>
+              <div className="reportPanelHeader">
+                <button
+                  type="button"
+                  className="reportPanelToggle"
+                  aria-expanded={historyOpen}
+                  onClick={() => {
+                    const next = !historyOpen;
+                    setHistoryOpen(next);
+                    if (typeof window !== "undefined") window.localStorage.setItem("water.ui.history-open.v1", String(next));
+                  }}
+                >
+                  <span className={`reportPanelChevron ${historyOpen ? "open" : ""}`} aria-hidden="true">
+                    <Icon name="chevron-down" />
+                  </span>
+                  <h4>{t.history}</h4>
+                </button>
+              </div>
+              {historyOpen ? (<>
               {selectedPlace.sample_history?.length ? (
                 <div className="tableWrap compact">
                   <table className="table">
@@ -3372,6 +3439,7 @@ export default function Dashboard({ snapshot }: Props) {
               ) : (
                 <p className="hint">{t.historyPlaceholder}</p>
               )}
+              </>) : null}
             </div>
           </div>
         )}
