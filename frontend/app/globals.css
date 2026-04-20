@@ -963,6 +963,82 @@ html[data-theme="dark"] .langDropdownItem:hover {
   font-weight: 500;
 }
 
+/* ── County color legend (desktop only) ──────────────────
+   Explains the risk bands used to color the county overlay so
+   users don't have to guess why one maakond is gray vs. green.
+   Positioned bottom-right above the map utility controls so it
+   doesn't overlap the freshness overlay on the left. */
+.countyLegend {
+  position: absolute;
+  right: 8px;
+  bottom: calc(0.7rem + 2 * (46px + 0.38rem) + env(safe-area-inset-bottom, 0px));
+  z-index: 800;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(191, 211, 234, 0.7);
+  border-radius: 8px;
+  padding: 6px 10px 7px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #1f2a44;
+  box-shadow: 0 2px 6px rgba(14, 40, 80, 0.12);
+  max-width: 200px;
+}
+
+.countyLegendTitle {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.countyLegendList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.countyLegendList li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #1f2a44;
+}
+
+.countyLegendSwatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  flex-shrink: 0;
+}
+
+.countyLegendSwatchMuted {
+  background: #243249;
+  opacity: 0.28;
+}
+
+.countyRiskTooltip {
+  pointer-events: none;
+}
+
+.countyRiskTooltip.leaflet-tooltip {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(100, 116, 139, 0.5);
+  box-shadow: 0 4px 14px rgba(14, 40, 80, 0.22);
+  color: #1f2a44;
+  padding: 6px 9px;
+  border-radius: 6px;
+}
+
 .tableWrap {
   margin-top: 1rem;
   max-height: 420px;
@@ -1980,7 +2056,14 @@ html[data-theme="dark"] .mapChipDivider {
 
 .mapShell {
   position: relative;
-  height: 620px;
+  /* Desktop: responsive to viewport so popups (~300px tall, anchored
+     above the pin) do not clip against a short fixed container. Lower
+     bound keeps the map usable on short laptops; upper bound prevents
+     the map from dwarfing the stats strip + selected-point panel on
+     4K monitors. Leaflet is told via invalidateSize() on the mapShell
+     ResizeObserver whenever the sidebar expand/collapse changes the
+     width, so tiles stay aligned when the column resizes. */
+  height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
   width: 100%;
 }
 
@@ -3369,6 +3452,26 @@ html[data-theme="dark"] .mapFreshnessLabel {
   color: #7b93b0;
 }
 
+html[data-theme="dark"] .countyLegend {
+  background: rgba(11, 18, 32, 0.88);
+  border-color: rgba(92, 121, 165, 0.5);
+  color: #e6eef9;
+}
+
+html[data-theme="dark"] .countyLegendTitle {
+  color: #9fb0c8;
+}
+
+html[data-theme="dark"] .countyLegendList li {
+  color: #dce5f2;
+}
+
+html[data-theme="dark"] .countyRiskTooltip.leaflet-tooltip {
+  background: rgba(11, 18, 32, 0.95);
+  border-color: rgba(92, 121, 165, 0.55);
+  color: #e6eef9;
+}
+
 html[data-theme="dark"] .mapFloatingBtn {
   background: rgba(17, 27, 45, 0.93);
   border-color: #314a70;
@@ -3692,6 +3795,12 @@ html[data-theme="dark"] .dateRangeSep {
 
   /* On mobile, hide the persistent overlay — freshness is shown via toast bubble on load. */
   .mapFreshnessOverlay {
+    display: none;
+  }
+
+  /* County overlay is desktop-only (Dashboard passes showCountyOverlay={!isMobile}),
+     but keep a CSS guard so the legend never leaks onto the mobile map. */
+  .countyLegend {
     display: none;
   }
 
