@@ -2556,6 +2556,48 @@ export default function Dashboard({ snapshot }: Props) {
         </>
 
       {isMobile && drawerOpen ? <div className="drawerBackdrop" onClick={() => setDrawerOpen(false)} /> : null}
+      {/* Stats row (row 2 of the dashboard grid) — spans both columns,
+          edge-to-edge, hosting the sidebar burger toggle on the left. */}
+      {!isMobile ? (
+        <div className="mapStatsRow desktopOnly">
+          <button
+            type="button"
+            className="dashboardSidebarToggleStats"
+            onClick={() => {
+              const next = !sidebarCollapsed;
+              setSidebarCollapsed(next);
+              if (typeof window !== "undefined") window.localStorage.setItem("water.ui.sidebar-collapsed.v1", String(next));
+            }}
+            aria-pressed={sidebarCollapsed}
+            aria-label={sidebarCollapsed
+              ? lruet(lang, "Развернуть фильтры", "Ava filtrid", "Expand filters")
+              : lruet(lang, "Свернуть фильтры", "Sulge filtrid", "Collapse filters")}
+            title={sidebarCollapsed
+              ? lruet(lang, "Развернуть фильтры", "Ava filtrid", "Expand filters")
+              : lruet(lang, "Свернуть фильтры", "Sulge filtrid", "Collapse filters")}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+          </button>
+          <div className="mapStat">
+            <span className="mapStatK">{lruet(lang, "Видимых", "Nähtav", "Visible")}</span>
+            <span className="mapStatV">{filtered.length}</span>
+          </div>
+          <div className="mapStat mapStatBad">
+            <span className="mapStatK">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</span>
+            <span className="mapStatV">{filtered.filter((p) => p.risk_level === "high").length}</span>
+          </div>
+          <div className="mapStat">
+            <span className="mapStatK">{lruet(lang, "Нарушения", "Rikkumised", "Violations")}</span>
+            <span className="mapStatV mapStatBadText">{filtered.filter((p) => p.official_compliant === 0).length}</span>
+          </div>
+          <div className={`mapStat ${healthIndex >= 75 ? "mapStatGood" : healthIndex >= 50 ? "mapStatWarn" : "mapStatBad"}`}>
+            <span className="mapStatK">{lruet(lang, "Здоровье", "Tervis", "Health")}</span>
+            <span className="mapStatV">{healthIndex}/100</span>
+          </div>
+        </div>
+      ) : null}
       <aside className={
         isMobile
           ? `drawer panel ${drawerOpen ? "open" : ""}`
@@ -2887,28 +2929,6 @@ export default function Dashboard({ snapshot }: Props) {
       </aside>
 
       <div className="mainContent">
-      {/* Stats row — moved ABOVE the map (was below) so the KPIs are the
-          first thing the eye lands on when the page loads. On mobile this
-          row is hidden via desktopOnly; the mobile bottom sheet / toast
-          surfaces the same numbers. */}
-      <div className="mapStatsRow desktopOnly">
-        <div className="mapStat">
-          <span className="mapStatK">{lruet(lang, "Видимых", "Nähtav", "Visible")}</span>
-          <span className="mapStatV">{filtered.length}</span>
-        </div>
-        <div className="mapStat mapStatBad">
-          <span className="mapStatK">{lruet(lang, "Высокий риск", "Kõrge risk", "High risk")}</span>
-          <span className="mapStatV">{filtered.filter((p) => p.risk_level === "high").length}</span>
-        </div>
-        <div className="mapStat">
-          <span className="mapStatK">{lruet(lang, "Нарушения", "Rikkumised", "Violations")}</span>
-          <span className="mapStatV mapStatBadText">{filtered.filter((p) => p.official_compliant === 0).length}</span>
-        </div>
-        <div className={`mapStat ${healthIndex >= 75 ? "mapStatGood" : healthIndex >= 50 ? "mapStatWarn" : "mapStatBad"}`}>
-          <span className="mapStatK">{lruet(lang, "Здоровье", "Tervis", "Health")}</span>
-          <span className="mapStatV">{healthIndex}/100</span>
-        </div>
-      </div>
       {/* On wide viewports (>=1200px) `.mapWithDetail` becomes a 2-column
           grid so the map and the selected-point panel sit side-by-side
           — the user can click a pin and read the details without the
@@ -4054,12 +4074,14 @@ export default function Dashboard({ snapshot }: Props) {
                     {placesTableSort.key === "prob" ? (placesTableSort.dir === "asc" ? " ↑" : " ↓") : ""}
                   </button>
                 </th>
-                <th className="dateCol" scope="col">
+                <th className="dateCol iconCol" scope="col">
                   <button
                     type="button"
                     className="tableSortBtn tableSortBtnDate"
                     onClick={() => cyclePlacesTableSort("date")}
                     aria-pressed={placesTableSort.key === "date"}
+                    title={lruet(lang, "Дата последней пробы", "Viimase proovi kuupäev", "Latest sample date")}
+                    aria-label={lruet(lang, "Дата последней пробы", "Viimase proovi kuupäev", "Latest sample date")}
                   >
                     <span
                       className="iconTooltip"
@@ -4069,16 +4091,18 @@ export default function Dashboard({ snapshot }: Props) {
                         <Icon name="calendar" />
                       </span>
                     </span>
-                    <span className="tableSortDateLabel">
-                      {lruet(lang, "Дата пробы", "Proovi kp", "Sample date")}
-                    </span>
-                    {placesTableSort.key === "date" ? (placesTableSort.dir === "asc" ? " ·↑" : " ·↓") : ""}
+                    {placesTableSort.key === "date" ? (
+                      <span className="tableSortArrow" aria-hidden="true">
+                        {placesTableSort.dir === "asc" ? " ·↑" : " ·↓"}
+                      </span>
+                    ) : null}
                   </button>
                 </th>
                 <th className="iconCol">
                   <span
                     className="iconTooltip"
                     data-tip={lruet(lang, "Отслеживание (избранное)", "Jälgimine (lemmikud)", "Watchlist (favorites)")}
+                    title={lruet(lang, "Отслеживание (избранное)", "Jälgimine (lemmikud)", "Watchlist (favorites)")}
                   >
                     <span className="cellIcon" style={{ color: "#f59e0b" }}>
                       <Icon name="star" />
@@ -4114,7 +4138,7 @@ export default function Dashboard({ snapshot }: Props) {
                     <td>{p.location}</td>
                     <td>{countyPretty(p.county || "Unknown")}</td>
                     <td className="iconCol">
-                      <span className="iconTooltip" data-tip={domTip} style={{ color: "var(--brand)" }}>
+                      <span className="iconTooltip" data-tip={domTip} title={domTip} style={{ color: "var(--brand)" }}>
                         <span className="cellIcon"><Icon name={domIcon} /></span>
                       </span>
                     </td>
@@ -4123,6 +4147,8 @@ export default function Dashboard({ snapshot }: Props) {
                         <button
                           className="starBtn iconTooltip"
                           data-tip={lruet(lang, "Нарушение — нажмите для подробностей", "Rikkumine — klõpsake üksikasjade jaoks", "Violation — click for details")}
+                          title={lruet(lang, "Нарушение — нажмите для подробностей", "Rikkumine — klõpsake üksikasjade jaoks", "Violation — click for details")}
+                          aria-label={lruet(lang, "Нарушение — нажмите для подробностей", "Rikkumine — klõpsake üksikasjade jaoks", "Violation — click for details")}
                           style={{ color: "var(--bad)" }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -4135,17 +4161,17 @@ export default function Dashboard({ snapshot }: Props) {
                           <span className="cellIcon"><Icon name="x-circle" /></span>
                         </button>
                       ) : p.official_compliant === 1 ? (
-                        <span className="iconTooltip" data-tip={officialStatusText(1)} style={{ color: "var(--good)" }}>
+                        <span className="iconTooltip" data-tip={officialStatusText(1)} title={officialStatusText(1)} style={{ color: "var(--good)" }}>
                           <span className="cellIcon"><Icon name="check-circle" /></span>
                         </span>
                       ) : (
-                        <span className="iconTooltip" data-tip={officialStatusText(null)} style={{ color: "var(--muted)" }}>
+                        <span className="iconTooltip" data-tip={officialStatusText(null)} title={officialStatusText(null)} style={{ color: "var(--muted)" }}>
                           <span className="cellIcon"><Icon name="dash-circle" /></span>
                         </span>
                       )}
                     </td>
                     <td className="iconCol">
-                      <span className="iconTooltip" data-tip={riskTip} style={{ color: riskColor }}>
+                      <span className="iconTooltip" data-tip={riskTip} title={riskTip} style={{ color: riskColor }}>
                         <span className="cellIcon"><Icon name="signal" /></span>
                       </span>
                     </td>
@@ -4154,18 +4180,23 @@ export default function Dashboard({ snapshot }: Props) {
                     </td>
                     <td className="dateCol">{fmtDate(p.sample_date)}</td>
                     <td className="iconCol">
-                      <button
-                        className="starBtn iconTooltip"
-                        data-tip={
-                          watching
-                            ? lruet(lang, "Убрать из избранного", "Eemalda jälgimisest", "Unwatch")
-                            : lruet(lang, "Добавить в избранное", "Lisa jälgimisse", "Watch")
-                        }
-                        style={{ color: watching ? "#f59e0b" : "var(--muted)" }}
-                        onClick={(e) => { e.stopPropagation(); toggleWatch(p.id); }}
-                      >
-                        <span className="cellIcon"><Icon name={watching ? "star" : "star-outline"} /></span>
-                      </button>
+                      {(() => {
+                        const label = watching
+                          ? lruet(lang, "Убрать из избранного", "Eemalda jälgimisest", "Unwatch")
+                          : lruet(lang, "Добавить в избранное", "Lisa jälgimisse", "Watch");
+                        return (
+                          <button
+                            className="starBtn iconTooltip"
+                            data-tip={label}
+                            title={label}
+                            aria-label={label}
+                            style={{ color: watching ? "#f59e0b" : "var(--muted)" }}
+                            onClick={(e) => { e.stopPropagation(); toggleWatch(p.id); }}
+                          >
+                            <span className="cellIcon"><Icon name={watching ? "star" : "star-outline"} /></span>
+                          </button>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );

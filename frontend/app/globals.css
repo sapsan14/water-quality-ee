@@ -148,13 +148,17 @@ a {
   display: grid;
   align-items: start;
   gap: 0;
-  /* Explicit grid areas = no reliance on auto-placement quirks.
-     Row 1: heading spans both columns. Row 2: sidebar | mainContent.
-     Filters sidebar NEVER extends above the heading again. */
+  /* Three explicit grid rows:
+     1. header  — H2O Atlas / language / About-model span both cols
+     2. stats   — edge-to-edge KPI strip hosting the sidebar-toggle
+     3. body    — filter sidebar | map + selected-point
+     Previously the stats row lived inside .mainContent (grid col 2),
+     which cropped it at the filter drawer's right edge. */
   grid-template-areas:
     "header header"
+    "stats  stats"
     "sidebar main";
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
 }
 
 .dashboardSidebar {
@@ -176,6 +180,67 @@ a {
 .dashboardSidebarCollapsed > .mainContent {
   grid-area: main;
   padding: 0;
+}
+
+/* Edge-to-edge stats row (row 2) — hosts the KPI chips AND a burger
+   toggle for the filter sidebar on its left edge so the user can
+   collapse/expand the drawer from the stats strip. */
+.dashboardSidebar > .mapStatsRow,
+.dashboardSidebarCollapsed > .mapStatsRow {
+  grid-area: stats;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e4ecf5;
+  background: var(--panel);
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  /* Override the base `.mapStatsRow { border-radius: 12px; }` so the
+     row hugs the page edges. */
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .dashboardSidebar > .mapStatsRow,
+html[data-theme="dark"] .dashboardSidebarCollapsed > .mapStatsRow {
+  background: #111b2d;
+  border-bottom-color: #2b3f5f;
+}
+
+.dashboardSidebarToggleStats {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brand);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.dashboardSidebarToggleStats:hover,
+.dashboardSidebarToggleStats:focus-visible {
+  background: #eaf3ff;
+  border-color: #c9dcf4;
+  outline: none;
+}
+
+html[data-theme="dark"] .dashboardSidebarToggleStats:hover,
+html[data-theme="dark"] .dashboardSidebarToggleStats:focus-visible {
+  background: #16243b;
+  border-color: #2b3f5f;
+}
+
+.dashboardSidebarToggleStats svg {
+  width: 18px;
+  height: 18px;
 }
 
 .dashboardSidebar > .topBar,
@@ -1110,53 +1175,22 @@ html[data-theme="dark"] .langDropdownItem:hover {
   background: rgba(15, 110, 253, 0.14) !important;
 }
 
-/* ── Icon-cell tooltips ─────────────────────────────────────── */
+/* ── Icon-cell tooltips ───────────────────────────────────────
+   We used to render a custom `::after` tooltip from `data-tip`,
+   but the dark bubble kept getting clipped by the parent
+   `.tableWrap { overflow: auto }` and the side-panel's
+   `overflow-x: hidden`. Browser-native `title` attribute
+   tooltips never clip regardless of ancestor overflow, so we
+   now render just an ARIA-equivalent container and let the
+   `title` shown on each icon surface the description on hover.
+   Keep the class so existing call sites render without visual
+   regressions; `data-tip` is harmless but no longer drives a
+   custom bubble. */
 .iconTooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-.iconTooltip::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  color: #e2e8f0;
-  font-size: 0.72rem;
-  font-weight: 400;
-  line-height: 1.35;
-  /* Wrap long labels ("Официальный статус", "Риск модели (ML)")
-     instead of extending off the icon column — the table wrap's
-     overflow previously clipped the single-line tooltip at the
-     right edge of narrow icon columns. */
-  white-space: normal;
-  width: max-content;
-  max-width: 220px;
-  padding: 0.35rem 0.6rem;
-  border-radius: 5px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.12s;
-  z-index: 300;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-}
-.iconTooltip:hover::after,
-.iconTooltip:focus-visible::after {
-  opacity: 1;
-}
-/* keep tooltip inside viewport near left/right edges */
-.table td:first-child .iconTooltip::after,
-.table th:first-child .iconTooltip::after { left: 0; transform: none; }
-.table td:last-child .iconTooltip::after,
-.table th:last-child .iconTooltip::after { left: auto; right: 0; transform: none; }
-
-/* Header tooltips open downward so they aren't clipped by the overflow container */
-.table thead th .iconTooltip::after {
-  top: calc(100% + 6px);
-  bottom: auto;
 }
 
 .cellIcon {
@@ -1476,11 +1510,27 @@ html[data-theme="dark"] .langDropdownItem:hover {
   height: 16px;
 }
 
-/* When a panel is collapsed, compress its outer padding so the row
-   reads like a slim title bar instead of a tall empty card. */
+/* Open sub-panels: a bit less vertical padding than the default
+   `.panel` (1rem) so the cards don't stretch the side panel taller
+   than the actual content. */
+.reportPanelCollapsible {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+/* When a panel is collapsed, compress further so the row reads like
+   a slim title bar instead of a tall empty card. */
 .reportPanelClosed {
-  padding-top: 0.55rem;
-  padding-bottom: 0.55rem;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
+.reportPanelClosed .reportPanelHeader {
+  min-height: 0;
+}
+
+.reportPanelClosed .reportPanelToggle h4 {
+  font-size: 0.94rem;
 }
 
 html[data-theme="dark"] .reportPanelToggle:hover h4 {
@@ -2320,10 +2370,11 @@ html[data-theme="dark"] .mapChipDivider {
   }
 
   .mapWithDetail > .selectedPointDesktop {
-    /* Match the exact height of the map so the two columns align and
-       the panel never extends past the map's bottom. Uses the same
-       clamp() as `.mapShell` — any change there propagates here. */
-    height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
+    /* Cap the panel at the map's height so it never extends past
+       the map's bottom, but let it shrink to its content when the
+       user collapses a sub-panel — leaving a blank strip below
+       the cards felt wasteful. */
+    max-height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
     /* Sticky so it stays beside the map as the user scrolls the page. */
     position: sticky;
     top: calc(var(--topbar-h) + 0.5rem);
