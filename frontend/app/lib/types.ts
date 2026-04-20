@@ -24,6 +24,11 @@ export type FrontendPlace = {
     official_compliant: number | null;
     measurements?: Record<string, number>;
   }>;
+  // AI Act Art 12 provenance (optional — older snapshots may not carry these).
+  prediction_id?: string;
+  feature_hash?: string;
+  model_version?: string;
+  created_at?: string;
 };
 
 export type FrontendSnapshot = {
@@ -45,4 +50,8 @@ export type FrontendSnapshot = {
     mean_model_probabilities: Record<string, number | null>;
   };
   places: FrontendPlace[];
+  // AI Act Art 12 snapshot-level provenance (optional).
+  model_version?: string;
+  git_sha?: string | null;
+  feature_hash_columns?: string[];
 };

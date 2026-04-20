@@ -258,6 +258,9 @@ flowchart LR
 | [`docs/report.md`](docs/report.md) | Final course report: EDA, methodology, results, limitations |
 | [`docs/ml_framing.md`](docs/ml_framing.md) | What the model predicts vs. what it cannot |
 | [`docs/ml_metrics_guide.md`](docs/ml_metrics_guide.md) | 4-level metrics guide: ROC-AUC, Precision/Recall, Calibration, SHAP |
+| [`docs/model_card.md`](docs/model_card.md) | Model Card (Mitchell et al. 2019) — intended use, metrics, caveats |
+| [`docs/datasheet.md`](docs/datasheet.md) | Datasheet (Gebru et al. 2021) — data provenance and maintenance |
+| [`docs/ai_act_self_assessment.md`](docs/ai_act_self_assessment.md) | EU AI Act voluntary self-assessment (risk tier + triggers) |
 | [`docs/parametry.md`](docs/parametry.md) | Water parameter descriptions, health effects, norms |
 | [`docs/normy.md`](docs/normy.md) | Regulatory thresholds by parameter and domain |
 | [`docs/glosarij.md`](docs/glosarij.md) | Terminology glossary (RU / ET / EN) |
@@ -266,6 +269,10 @@ flowchart LR
 | [`docs/data_gaps.md`](docs/data_gaps.md) | Label-vs-norms divergence analysis |
 | [`docs/terviseamet_inquiry.md`](docs/terviseamet_inquiry.md) | Draft inquiry to Terviseamet (with audit numbers) |
 | [`DATA_SOURCES.md`](DATA_SOURCES.md) | Comprehensive data source catalog |
+
+### Regulatory posture
+
+h2oatlas.ee is a public visualisation layered on top of already-public Terviseamet data. In its current configuration it is **not** a high-risk AI system under EU AI Act Annex III — it is neither a safety component nor integrated into any operational or regulatory decision loop. We fulfil Art 50 (transparency) through UI disclaimers and adopt the high-risk documentation stack voluntarily: Model Card, Datasheet, per-domain metrics, drift monitor (Phase 2), human-oversight tree (Phase 2), FRIA-light (Phase 2), and cryptographically signed snapshot provenance (Phase 3). Full reasoning and the list of triggers that would move the system into high-risk: [`docs/ai_act_self_assessment.md`](docs/ai_act_self_assessment.md).
 
 ---
 

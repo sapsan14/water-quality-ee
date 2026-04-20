@@ -102,7 +102,116 @@ Suur tänu teile avatud andmete haldamise eest, / Thank you for maintaining the 
 - [x] Pool norms correction documented with empirical evidence
 - [x] XML parity scan results (zero measurement params lost)
 - [x] Temporal analysis: veevark 97.9% frequency variance
+- [x] Model Card (`docs/model_card.md`) — Mitchell-style model documentation
+- [x] Datasheet (`docs/datasheet.md`) — Gebru-style data-provenance record
+- [x] AI Act voluntary self-assessment (`docs/ai_act_self_assessment.md`) — risk tier + triggers
+- [x] Per-domain metrics in `notebooks/05_evaluation.ipynb` (AI Act Art 15 disaggregation)
+- [x] Public data-gap notice banner live on h2oatlas.ee (Phase 1.5 of compliance roadmap)
+- [ ] Drift monitor output (Phase 2)
+- [ ] Human-oversight decision tree (Phase 2)
+- [ ] FRIA-light (Phase 2)
+- [ ] Signed `.aep` snapshot URL (Phase 3)
 - [ ] Estonian translation of the letter body
 - [ ] Attach audit notebook + parquet artifact (or link to repo)
 - [ ] Project supervisor sign-off
 - [ ] Send to: Terviseamet open-data team (email TBD)
+
+---
+
+## Addendum — questions raised during Phase 1 documentation work
+
+As we formalised the project documentation (Phase 1 of the AI Act compliance roadmap — see
+`docs/ai_act_self_assessment.md`), new concrete questions emerged that we would include in the final
+letter. This section is updated continuously as Phases 2–3 progress; the final version sent to
+Terviseamet will consolidate them.
+
+### A1 — Schema stability and location renames (from Datasheet §7)
+
+**Q7.** We observed year-over-year location renames that produce duplicate apparent sites unless a
+normalisation step is applied (e.g. "Harku järve supluskoht" in 2021 → "Harku järve rand" in 2025;
+"veevärk" → "ühisveevärk"). We handle this via `normalize_location()` in `src/data_loader.py`. Does
+Terviseamet maintain a crosswalk between historical and current site names, or is the rename policy
+documented? A published mapping would let downstream consumers avoid silent data-quality regressions.
+
+**Q8.** What is the retention policy for opendata XML files? Are older years ever republished with
+corrections (e.g. after a regulatory audit)? We would like to pin the exact file version used when
+signing snapshots (Phase 3), so a stable versioning guarantee — or a statement that files are
+append-only after publication — would be valuable.
+
+### A2 — Role classification under AI Act (from self-assessment §4)
+
+**Q9.** We have classified h2oatlas.ee as **not** a high-risk AI system under EU AI Act Annex III
+§2(a) on the basis that it is a post-hoc visualisation, not a safety component. The full reasoning
+is in `docs/ai_act_self_assessment.md` §4. Do you (or your legal team) see the classification
+differently? If you plan to deploy internal analytical models on top of open data, the same
+self-assessment template is reusable; we are happy to share the blank template.
+
+### A3 — Per-domain weakness (from Model Card §7 and `notebooks/05_evaluation.ipynb`)
+
+**Q10.** Our per-domain evaluation shows the model is weakest on `joogivesi` (n = 376 probes), where
+Recall on class 0 falls below the full-corpus average. Some of the drop likely reflects the small
+sample size, but some may be because drinking-water sources (wells, springs) have domain-specific
+parameter profiles we are not fully capturing. Is there published guidance on the canonical
+parameter set for joogivesi probes beyond what appears in the XML?
+
+### A4 — Documented probe refresh lag (from Datasheet §7)
+
+**Q11.** We plan to publish signed snapshots weekly (every Monday) plus the 1st of each month. If
+your publication cadence is different or varies by domain, we would be glad to tune our cadence to
+avoid serving users a fresher-looking snapshot than the underlying data actually justifies. A
+statement of typical end-to-end lag (sampling → lab → publication) would be useful.
+
+### A5 — Drift-monitor findings (from `scripts/drift_monitor.py`)
+
+Our CI drift monitor (PSI on each of the 15 numeric parameters + KL divergence on the label)
+compares the training window (2021–2024) to the most recent year. Whenever the monitor reports WARN
+or ALERT, we hold the snapshot and investigate. We would like to correlate our detections with any
+methodological changes you are aware of:
+
+**Q12.** Are there years where the analytical method, accredited lab panel, or reporting threshold
+changed for any of the 15 parameters? A short changelog (even informal) would let us label drift
+events as "known methodology change" rather than "unknown regression" and avoid false alerts.
+
+**Q13.** The label distribution (`compliant` derived from `hinnang`) shifts ~3 pp between 2024 and
+2025 in our corpus. Do you observe the same in your internal figures? If yes, is the cause
+operational (more sampling of high-risk sites) or definitional (threshold change)?
+
+### A6 — Human oversight proposal (from `docs/human_oversight.md`)
+
+We have drafted a three-party decision tree (citizen / maintainer / Terviseamet). The Terviseamet
+branch describes how you could use the `prediction_id` + `feature_hash` fields (Phase 2 artefacts in
+our snapshot) to reproduce any model output a citizen asks about.
+
+**Q14.** Is this workflow useful to you? If yes, we can add a short section to h2oatlas.ee that
+links back to a Terviseamet contact point; if no, we will document the branch as a suggestion only.
+
+### A7 — FRIA-light and child-safety mitigation (from `docs/fria_light.md`)
+
+Children are a disproportionate user group for pools and bathing sites. Our FRIA-light flags this
+as residual risk R1 and lists mitigations (UI ordering, data-gap banner, per-domain metrics).
+
+**Q15.** Does Terviseamet already produce any fundamental-rights or DPIA documentation on your own
+public-facing dashboards? If yes, we would like to align language and scope. If no, our FRIA-light
+template is reusable.
+
+### A8 — Signed snapshot provenance (from `scripts/sign_snapshot.py` + `docs/key_management.md`)
+
+Every published snapshot on h2oatlas.ee now ships with a co-located `.aep` evidence package: a
+canonicalised payload, a SHA-256 digest, an RSA-PSS-4096 signature, and the X.509 certificate used
+to sign it. Verification runs entirely in the user's browser on the `/verify` page (no server
+round-trip needed).
+
+The signing backend is the deployed Aletheia service (originally `eatf.duckdns.org`, being moved to
+Hetzner). A local-fallback signer exists for development and for the backend downtime window.
+
+**Q16.** We are happy to extend the same signing chain to any public XML file Terviseamet publishes.
+The benefit for you: downstream consumers (including h2oatlas.ee, journalists, researchers) can
+cryptographically verify that an XML they downloaded is the original, not a tampered copy. A pilot
+on one domain (say `basseinid`) is ~1 day of work on our side. Would this be useful to you?
+
+**Q17.** We do not yet hold a trusted third-party CA cert; the current key is self-signed. If
+Terviseamet already has — or is in the process of acquiring — a domain-validated certificate for
+`vtiav.sm.ee`, we could use it (or a derived intermediate) as the trust anchor for `.aep` packages
+that reference your data. This would tie the evidence chain to your organisation's public identity
+rather than ours.
+

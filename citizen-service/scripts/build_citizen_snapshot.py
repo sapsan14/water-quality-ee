@@ -430,6 +430,79 @@ def row_measurements(row: pd.Series) -> dict[str, float | int | str]:
     return out
 
 
+# ── AI Act Art 12 provenance ──────────────────────────────────────────────────
+# Per-record identifiers and feature hashes let an auditor trace any published
+# probability back to (a) the exact model weights used and (b) the exact feature
+# vector that produced it. Combined with the `.aep` snapshot signature (Phase 3
+# of the compliance roadmap), this is the record-keeping primitive required by
+# Art 12 and referenced in `docs/model_card.md`, `docs/ai_act_self_assessment.md`.
+
+
+def _git_sha() -> str | None:
+    """Короткий SHA HEAD-коммита репозитория (для привязки snapshot к коду)."""
+    try:
+        import subprocess
+        r = subprocess.run(
+            ["git", "rev-parse", "--short=12", "HEAD"],
+            cwd=ROOT, capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except (FileNotFoundError, OSError):
+        pass
+    return os.environ.get("GITHUB_SHA", "")[:12] or None
+
+
+def _model_version(map_only: bool, git_sha: str | None) -> str:
+    """Версия, идентифицирующая набор обученных моделей в этом снимке."""
+    if map_only:
+        return "map-only"
+    return f"citizen-2026.{git_sha}" if git_sha else "citizen-2026.unknown"
+
+
+_FEATURE_HASH_COLS: tuple[str, ...] = (
+    "domain",
+    "sample_date",
+    "county",
+    *META_EXTRA_NUMERIC,
+)
+
+
+def _feature_hash(row: pd.Series) -> str:
+    """
+    Детерминированный sha256 по канонизированному feature-вектору строки.
+
+    Канонизация: отсортированный список (key, value_or_null) с ISO-датами и
+    float → repr(float). Изменение любого измерения / даты / county меняет хеш,
+    что позволяет любому агенту снаружи проверить, по каким входным данным была
+    получена опубликованная вероятность.
+    """
+    items: list[tuple[str, object]] = []
+    for col in _FEATURE_HASH_COLS:
+        if col not in row.index:
+            items.append((col, None))
+            continue
+        v = row[col]
+        if v is None or (isinstance(v, float) and np.isnan(v)) or pd.isna(v):
+            items.append((col, None))
+        elif isinstance(v, (pd.Timestamp,)):
+            items.append((col, v.isoformat()))
+        elif isinstance(v, (int, bool, str)):
+            items.append((col, v if not isinstance(v, bool) else int(v)))
+        elif isinstance(v, (float, np.floating)):
+            items.append((col, repr(float(v))))
+        else:
+            items.append((col, str(v)))
+    payload = json.dumps(items, ensure_ascii=False, sort_keys=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _prediction_id(snapshot_generated_at: str, loc_key: str, feature_hash: str) -> str:
+    """Стабильный ID: один и тот же ввод в один и тот же снимок → один и тот же ID."""
+    key = f"{snapshot_generated_at}|{loc_key}|{feature_hash}".encode("utf-8")
+    return hashlib.sha256(key).hexdigest()[:32]
+
+
 def geocode_address_simple(
     query: str,
     cache: dict,
@@ -811,6 +884,12 @@ def main() -> None:
         last,
     )
 
+    # AI Act Art 12: зафиксировать версии до записи строк, чтобы каждая
+    # запись несла стабильные prediction_id / model_version / feature_hash.
+    snapshot_generated_at = pd.Timestamp.now("UTC").isoformat()
+    git_sha = _git_sha()
+    model_version = _model_version(args.map_only, git_sha)
+
     cache = load_geocode_cache()
     coord_overrides = load_coordinate_overrides()
     resolve_cache = (
@@ -1039,6 +1118,8 @@ def main() -> None:
             sid = str(row["sample_id"]).strip() or None
         loc_key_val = row.get("_loc_key", "")
         sample_history = _history_index.get(str(loc_key_val), [])
+        feat_hash = _feature_hash(row)
+        pred_id = _prediction_id(snapshot_generated_at, str(loc_key_val), feat_hash)
         row_out = {
             "location": loc_name,
             "domain": domain,
@@ -1053,6 +1134,10 @@ def main() -> None:
             "lat": lat,
             "lon": lon,
             "coord_source": coord_source,
+            "prediction_id": pred_id,
+            "feature_hash": feat_hash,
+            "model_version": model_version,
+            "created_at": snapshot_generated_at,
         }
         if geocode_matched:
             row_out["geocode_matched_address"] = geocode_matched
@@ -1142,9 +1227,12 @@ def main() -> None:
             available_models.append("lgbm")
 
     snapshot = {
-        "generated_at": pd.Timestamp.now("UTC").isoformat(),
+        "generated_at": snapshot_generated_at,
         "data_fetched_at": data_fetched_at,
         "model_trained_at": model_trained_at,
+        "model_version": model_version,
+        "git_sha": git_sha,
+        "feature_hash_columns": list(_FEATURE_HASH_COLS),
         "has_model_predictions": not args.map_only,
         "available_models": available_models,
         "model_labels": {

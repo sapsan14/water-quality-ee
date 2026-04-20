@@ -143,12 +143,42 @@ jobs:
         run: |
           python citizen-service/scripts/export_frontend_snapshot.py
 
+      # AI Act Art 15: drift monitor. Warns on distribution shift between
+      # training window (2021–2024) and the freshest year; logs PSI/KL and
+      # annotates the workflow run. Does not block publication — maintainers
+      # review WARN/ALERT runs manually per docs/human_oversight.md §3.
+      - name: Drift monitor (AI Act Art 15 observability)
+        if: steps.wf.outputs.mode == 'full'
+        continue-on-error: true
+        run: |
+          mkdir -p data/audit
+          python scripts/drift_monitor.py \
+            --json-out "data/audit/drift_$(date -u +%Y-%m-%dT%H%M%S).json" \
+            --fail-on never
+
+      # AI Act Art 12: signed .aep evidence package. Primary: Aletheia backend
+      # (ALETHEIA_BACKEND_URL). Fallback: local RSA-4096 signer (dev). See
+      # docs/key_management.md for key lifecycle, docs/ai_act_self_assessment.md §7.
+      - name: Install signer dependencies
+        run: pip install 'cryptography>=42' 'requests>=2.31'
+
+      - name: Sign snapshot → .aep
+        env:
+          ALETHEIA_BACKEND_URL: ${{ secrets.ALETHEIA_BACKEND_URL }}
+          ALETHEIA_API_KEY: ${{ secrets.ALETHEIA_API_KEY }}
+        run: |
+          python scripts/sign_snapshot.py \
+            --input citizen-service/artifacts/snapshot.json \
+            --output-dir citizen-service/artifacts \
+            --mode auto
+
       - name: Commit and push refreshed snapshot + model + geocode caches
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f \
             citizen-service/artifacts/snapshot.json \
+            citizen-service/artifacts/snapshot.aep \
             citizen-service/artifacts/citizen_model.joblib \
             citizen-service/data/coordinate_resolve_cache.json \
             citizen-service/data/geocode_cache.json \
@@ -169,5 +199,6 @@ jobs:
           name: citizen-snapshot-${{ steps.wf.outputs.mode }}
           path: |
             citizen-service/artifacts/snapshot.json
+            citizen-service/artifacts/snapshot.aep
             frontend/public/data/snapshot.frontend.json
             frontend/public/data/snapshot.history.json
