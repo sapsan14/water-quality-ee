@@ -27,9 +27,19 @@ import requests
 
 _county_log = logging.getLogger(__name__)
 
-DATA_ROOT = Path(__file__).resolve().parent.parent / "data"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA_ROOT = REPO_ROOT / "data"
 OVERRIDES_CSV = DATA_ROOT / "reference" / "location_county_overrides.csv"
 GEOCODE_CACHE_PATH = DATA_ROOT / "processed" / "county_geocode_cache.json"
+
+# Локальные источники для затравки (seed) кэша уездов без HTTP.
+SNAPSHOT_JSON = REPO_ROOT / "citizen-service" / "artifacts" / "snapshot.json"
+COORD_OVERRIDES_JSON = REPO_ROOT / "citizen-service" / "data" / "coordinate_overrides.json"
+COORD_RESOLVE_CACHE_JSON = REPO_ROOT / "citizen-service" / "data" / "coordinate_resolve_cache.json"
+GEOCODE_CACHE_SIMPLE_JSON = REPO_ROOT / "citizen-service" / "data" / "geocode_cache.json"
+COUNTIES_GEOJSON = REPO_ROOT / "frontend" / "public" / "data" / "estonia_counties_simplified.geojson"
+
+_POLYGONS_CACHE: Optional[list] = None
 
 OPENCAGE_GEOCODE_URL = "https://api.opencagedata.com/geocode/v1/json"
 GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
@@ -227,6 +237,266 @@ def _geocode_one_google(location_display: str, api_key: str) -> Tuple[Optional[s
     return _normalize_county_name(county), query
 
 
+_CANONICAL_COUNTIES = (
+    "Harju maakond",
+    "Hiiu maakond",
+    "Ida-Viru maakond",
+    "Järva maakond",
+    "Jõgeva maakond",
+    "Lääne maakond",
+    "Lääne-Viru maakond",
+    "Pärnu maakond",
+    "Põlva maakond",
+    "Rapla maakond",
+    "Saare maakond",
+    "Tartu maakond",
+    "Valga maakond",
+    "Viljandi maakond",
+    "Võru maakond",
+)
+_CANONICAL_COUNTY_BY_LOWER = {c.lower(): c for c in _CANONICAL_COUNTIES}
+
+
+def _canonicalize_county(raw: Optional[str]) -> Optional[str]:
+    """Привести название уезда к каноничной форме MNIMI ('Tartu maakond').
+
+    Принимает 'Tartu Maakond', 'IDA-VIRU MAAKOND', 'lääne-viru maakond',
+    английские 'Tartu county' и т.п.
+    """
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    s = unicodedata.normalize("NFC", s)
+    key = re.sub(r"\s+", " ", s.lower())
+    canon = _CANONICAL_COUNTY_BY_LOWER.get(key)
+    if canon:
+        return canon
+    return _normalize_county_name(s)
+
+
+def _load_counties_polygons() -> list:
+    """[(county_name, [ring_of_(lon,lat), ...]), ...] — lazy-loaded from geojson."""
+    global _POLYGONS_CACHE
+    if _POLYGONS_CACHE is not None:
+        return _POLYGONS_CACHE
+    if not COUNTIES_GEOJSON.is_file():
+        _POLYGONS_CACHE = []
+        return _POLYGONS_CACHE
+    try:
+        with open(COUNTIES_GEOJSON, "r", encoding="utf-8") as f:
+            gj = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        _county_log.warning("counties geojson не читается: %s", e)
+        _POLYGONS_CACHE = []
+        return _POLYGONS_CACHE
+
+    polys: list = []
+    for feat in gj.get("features", []) or []:
+        props = feat.get("properties") or {}
+        name = _canonicalize_county(props.get("MNIMI"))
+        if not name:
+            continue
+        geom = feat.get("geometry") or {}
+        gtype = geom.get("type")
+        coords = geom.get("coordinates") or []
+        if gtype == "Polygon":
+            # coordinates: [ [ [lon, lat], ... ], ... ]  (первый ring — внешний)
+            for ring in coords:
+                polys.append((name, [(float(pt[0]), float(pt[1])) for pt in ring]))
+        elif gtype == "MultiPolygon":
+            for poly in coords:
+                for ring in poly:
+                    polys.append((name, [(float(pt[0]), float(pt[1])) for pt in ring]))
+    _POLYGONS_CACHE = polys
+    return _POLYGONS_CACHE
+
+
+def _point_in_ring(lon: float, lat: float, ring: list) -> bool:
+    """Ray-casting: точка (lon, lat) внутри замкнутого ring'а [(lon, lat), ...]."""
+    inside = False
+    n = len(ring)
+    if n < 3:
+        return False
+    j = n - 1
+    for i in range(n):
+        xi, yi = ring[i]
+        xj, yj = ring[j]
+        if ((yi > lat) != (yj > lat)) and (lon < (xj - xi) * (lat - yi) / (yj - yi + 1e-18) + xi):
+            inside = not inside
+        j = i
+    return inside
+
+
+def _point_in_county(lon: float, lat: float, polygons: list) -> Optional[str]:
+    """Вернуть каноничное имя уезда для точки (lon, lat) или None."""
+    for name, ring in polygons:
+        if _point_in_ring(lon, lat, ring):
+            return name
+    return None
+
+
+def _seed_put(
+    cache: Dict[str, Any],
+    nk: str,
+    county: Optional[str],
+    display: str,
+    provider: str,
+) -> bool:
+    """Записать seed-значение в cache, если ключа ещё нет или он не имеет county.
+
+    Первый источник выигрывает: запись с truthy 'county' никогда не перезаписывается.
+    Seed-источники вызываются в порядке убывания доверия (snapshot → overrides → PIP).
+    """
+    if not nk or not county:
+        return False
+    existing = cache.get(nk)
+    if isinstance(existing, dict) and existing.get("county"):
+        return False
+    cache[nk] = {"county": county, "query": display, "provider": provider}
+    return True
+
+
+def _seed_from_snapshot(cache: Dict[str, Any]) -> int:
+    """Затравить cache из citizen-service/artifacts/snapshot.json."""
+    if not SNAPSHOT_JSON.is_file():
+        return 0
+    try:
+        with open(SNAPSHOT_JSON, "r", encoding="utf-8") as f:
+            snap = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        _county_log.debug("snapshot.json не читается: %s", e)
+        return 0
+    places = snap.get("places") if isinstance(snap, dict) else None
+    if not isinstance(places, list):
+        return 0
+    added = 0
+    for place in places:
+        if not isinstance(place, dict):
+            continue
+        loc = place.get("location")
+        cty = _canonicalize_county(place.get("county"))
+        if not loc or not cty:
+            continue
+        nk = normalize_location(loc)
+        if _seed_put(cache, nk, cty, str(loc), "seed_snapshot"):
+            added += 1
+    return added
+
+
+def _strip_estonia_suffix(query: str) -> str:
+    """'Ulge talu veevärk, Estonia' -> 'Ulge talu veevärk'."""
+    s = str(query).strip()
+    return re.sub(r",\s*Estonia\s*$", "", s, flags=re.IGNORECASE).strip()
+
+
+def _seed_from_coords(cache: Dict[str, Any]) -> int:
+    """Затравить cache через координатные кэши + point-in-polygon."""
+    polygons = _load_counties_polygons()
+    if not polygons:
+        return 0
+    added = 0
+
+    # 1) coordinate_overrides.json — {'version': ..., 'items': [ {location, lat, lon, ...}, ... ]}
+    if COORD_OVERRIDES_JSON.is_file():
+        try:
+            with open(COORD_OVERRIDES_JSON, "r", encoding="utf-8") as f:
+                ovr = json.load(f)
+            items = ovr.get("items") if isinstance(ovr, dict) else None
+            if isinstance(items, list):
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    loc = item.get("location")
+                    lat = item.get("lat")
+                    lon = item.get("lon")
+                    if not loc or lat is None or lon is None:
+                        continue
+                    try:
+                        cty = _point_in_county(float(lon), float(lat), polygons)
+                    except (TypeError, ValueError):
+                        continue
+                    nk = normalize_location(loc)
+                    if _seed_put(cache, nk, cty, str(loc), "seed_overrides"):
+                        added += 1
+        except (json.JSONDecodeError, OSError) as e:
+            _county_log.debug("coordinate_overrides.json не читается: %s", e)
+
+    # 2) coordinate_resolve_cache.json — {'provider|address': {lat, lon, ...}}
+    if COORD_RESOLVE_CACHE_JSON.is_file():
+        try:
+            with open(COORD_RESOLVE_CACHE_JSON, "r", encoding="utf-8") as f:
+                res = json.load(f)
+            if isinstance(res, dict):
+                for key, val in res.items():
+                    if not isinstance(val, dict):
+                        continue
+                    lat = val.get("lat")
+                    lon = val.get("lon")
+                    if lat is None or lon is None:
+                        continue
+                    addr = str(key).split("|", 1)[-1] if "|" in str(key) else str(key)
+                    # удалить вероятный ", <region>, eesti" хвост для display — берём первую часть
+                    display = addr.split(",", 1)[0].strip() or addr
+                    try:
+                        cty = _point_in_county(float(lon), float(lat), polygons)
+                    except (TypeError, ValueError):
+                        continue
+                    nk = normalize_location(display)
+                    if _seed_put(cache, nk, cty, display, "seed_coord_cache"):
+                        added += 1
+        except (json.JSONDecodeError, OSError) as e:
+            _county_log.debug("coordinate_resolve_cache.json не читается: %s", e)
+
+    # 3) geocode_cache.json — {'<address>, Estonia': {lat, lon, miss?}}
+    if GEOCODE_CACHE_SIMPLE_JSON.is_file():
+        try:
+            with open(GEOCODE_CACHE_SIMPLE_JSON, "r", encoding="utf-8") as f:
+                gc = json.load(f)
+            if isinstance(gc, dict):
+                for key, val in gc.items():
+                    if not isinstance(val, dict):
+                        continue
+                    if val.get("miss"):
+                        continue
+                    lat = val.get("lat")
+                    lon = val.get("lon")
+                    if lat is None or lon is None:
+                        continue
+                    display = _strip_estonia_suffix(str(key))
+                    try:
+                        cty = _point_in_county(float(lon), float(lat), polygons)
+                    except (TypeError, ValueError):
+                        continue
+                    nk = normalize_location(display)
+                    if _seed_put(cache, nk, cty, display, "seed_geocode_cache"):
+                        added += 1
+        except (json.JSONDecodeError, OSError) as e:
+            _county_log.debug("geocode_cache.json не читается: %s", e)
+
+    return added
+
+
+def _seed_cache_from_local_sources(cache: Dict[str, Any], *, verbose: bool) -> bool:
+    """Затравить cache из snapshot.json + координатных кэшей + county polygons.
+
+    Порядок: snapshot (авторитетно) → координатные файлы через PIP.
+    Не перезаписывает реальные HTTP-хиты (provider без префикса 'seed_').
+    """
+    n_snap = _seed_from_snapshot(cache)
+    n_coord = _seed_from_coords(cache)
+    total = n_snap + n_coord
+    if verbose and total:
+        _county_log.info(
+            "Seeded county cache from local sources: %s entries (snapshot=%s, coord_pip=%s)",
+            total,
+            n_snap,
+            n_coord,
+        )
+    return total > 0
+
+
 def enrich_county_column(
     df: pd.DataFrame,
     *,
@@ -272,6 +542,8 @@ def enrich_county_column(
     overrides = load_overrides()
     cache = load_geocode_cache()
     modified_cache = False
+    if _seed_cache_from_local_sources(cache, verbose=verbose):
+        modified_cache = True
 
     # Источник для уже заполненного из XML
     src = []
