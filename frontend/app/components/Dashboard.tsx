@@ -3201,8 +3201,25 @@ export default function Dashboard({ snapshot }: Props) {
                 )}
               </div>
               <div className="pointCardRow">
-                <span className="pointCardLabel">{lruet(lang, "Модель", "Mudel", "Model")}</span>
-                <span>{selectedPlace.model_violation_prob !== null ? selectedPlace.model_violation_prob.toFixed(2) : "n/a"}</span>
+                <span className="pointCardLabel">
+                  {lruet(lang, "Модель", "Mudel", "Model")}
+                  {snapshot.canonical_model ? (
+                    <span className="pointCardModelName"> · {snapshot.canonical_model}</span>
+                  ) : null}
+                </span>
+                <span
+                  className={
+                    selectedPlace.model_violation_prob !== null
+                      ? selectedPlace.risk_level === "high"
+                        ? "pointCardProb pointCardProbBad"
+                        : selectedPlace.risk_level === "medium"
+                          ? "pointCardProb pointCardProbWarn"
+                          : "pointCardProb pointCardProbGood"
+                      : "pointCardProb"
+                  }
+                >
+                  {selectedPlace.model_violation_prob !== null ? selectedPlace.model_violation_prob.toFixed(2) : "n/a"}
+                </span>
               </div>
               <div className="pointCardModels">
                 {([
@@ -3210,11 +3227,37 @@ export default function Dashboard({ snapshot }: Props) {
                   ["RF", selectedPlace.rf_violation_prob, lruet(lang, "Random Forest — ансамбль деревьев", "Random Forest — puuansambel", "Random Forest — ensemble of decision trees")],
                   ["GB", selectedPlace.gb_violation_prob, lruet(lang, "Gradient Boosting — деревья последовательно исправляют ошибки", "Gradient Boosting — puud parandavad järjest vigu", "Gradient Boosting — trees sequentially correct errors")],
                   ["LGBM", selectedPlace.lgbm_violation_prob, lruet(lang, "LightGBM — быстрый boosting на деревьях", "LightGBM — kiire puupõhine boosting", "LightGBM — fast histogram-based gradient boosting")],
-                ] as [string, number | null, string][]).map(([abbr, prob, tip]) => (
-                  <span key={abbr} className="modelChip" data-tooltip={tip}>
-                    {abbr} <b>{typeof prob === "number" ? prob.toFixed(2) : "–"}</b>
-                  </span>
-                ))}
+                ] as [string, number | null, string][]).map(([abbr, prob, tip]) => {
+                  // Match a compact "LightGBM" / "Random Forest" etc
+                  // against the abbreviation so the canonical chip gets
+                  // a visible outline. The snapshot stores the full
+                  // name; we map the abbreviation forward rather than
+                  // back-parsing to keep the logic obvious.
+                  const fullName =
+                    abbr === "LR" ? "Logistic Regression"
+                    : abbr === "RF" ? "Random Forest"
+                    : abbr === "GB" ? "Gradient Boosting"
+                    : "LightGBM";
+                  const isCanonical =
+                    snapshot.canonical_model === fullName;
+                  // Color the chip by probability band so a user
+                  // glancing at the row can see at-a-glance whether a
+                  // given model considers this sample high-risk.
+                  const band =
+                    typeof prob === "number"
+                      ? prob >= 0.7 ? "bad" : prob >= 0.4 ? "warn" : "good"
+                      : null;
+                  const chipCls = [
+                    "modelChip",
+                    band ? `modelChip${band.charAt(0).toUpperCase()}${band.slice(1)}` : "",
+                    isCanonical ? "modelChipCanonical" : "",
+                  ].filter(Boolean).join(" ");
+                  return (
+                    <span key={abbr} className={chipCls} data-tooltip={tip}>
+                      {abbr} <b>{typeof prob === "number" ? prob.toFixed(2) : "–"}</b>
+                    </span>
+                  );
+                })}
               </div>
               <span className="pointCardId">ID {selectedPlace.id}</span>
             </div>

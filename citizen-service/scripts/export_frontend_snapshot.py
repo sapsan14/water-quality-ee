@@ -161,10 +161,22 @@ def main() -> None:
         rf_prob = _num_or_none(p.get("rf_violation_prob"))
         gb_prob = _num_or_none(p.get("gb_violation_prob"))
         lgbm_prob = _num_or_none(p.get("lgbm_violation_prob"))
+        # Canonical "map risk" probability: LightGBM when available —
+        # historically we exported RF here ("backward compatibility"
+        # comment in build_citizen_snapshot.py), but LGBM has the best
+        # validation metrics of the four models, so the map layer now
+        # reflects LGBM's prediction by default. Fall back to the
+        # legacy `model_violation_prob` field, then RF, then the first
+        # available prob.
+        lgbm_first = [lgbm_prob, rf_prob, gb_prob, lr_prob]
+        canonical_prob = next((v for v in lgbm_first if v is not None), None)
         model_prob = _num_or_none(p.get("model_violation_prob"))
-        if model_prob is None:
-            # fallback: prefer RF for generic map layer
-            model_prob = rf_prob
+        if canonical_prob is not None:
+            model_prob = canonical_prob
+        elif model_prob is None:
+            # very old snapshot with no per-model columns — keep whatever
+            # model_violation_prob already held (usually None).
+            pass
         location = str(p.get("location") or "").strip()
         county = p.get("county")
         domain = str(p.get("domain") or "other")
@@ -244,6 +256,26 @@ def main() -> None:
     model_covered = sum(1 for x in out_places if x.get("has_model_prob"))
     model_coverage_share = (model_covered / len(out_places)) if out_places else 0.0
 
+    # Which model's probability was used to derive `risk_level` and the
+    # map's color coding? The frontend labels the canonical model next
+    # to the risk chip so users aren't left guessing ("I thought LGBM
+    # was the best model?!"). This is derived from which per-model
+    # column actually populated the first non-null `model_prob` — with
+    # LGBM preferred, then RF, then GB, then LR.
+    canonical_model = None
+    for place_idx, raw in enumerate(places[: len(out_places)]):
+        if out_places[place_idx].get("model_violation_prob") is None:
+            continue
+        if _num_or_none(raw.get("lgbm_violation_prob")) is not None:
+            canonical_model = "LightGBM"
+        elif _num_or_none(raw.get("rf_violation_prob")) is not None:
+            canonical_model = "Random Forest"
+        elif _num_or_none(raw.get("gb_violation_prob")) is not None:
+            canonical_model = "Gradient Boosting"
+        elif _num_or_none(raw.get("lr_violation_prob")) is not None:
+            canonical_model = "Logistic Regression"
+        break
+
     out_payload = {
         "generated_at": payload.get("generated_at"),
         "data_fetched_at": payload.get("data_fetched_at"),
@@ -251,6 +283,7 @@ def main() -> None:
         "has_model_predictions": bool(payload.get("has_model_predictions")),
         "available_models": payload.get("available_models") or [],
         "model_labels": payload.get("model_labels") or {},
+        "canonical_model": canonical_model,
         "data_catalog_url": payload.get("data_catalog_url"),
         "disclaimer": payload.get("disclaimer"),
         "places_count": len(out_places),

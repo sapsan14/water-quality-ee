@@ -173,7 +173,11 @@ a {
 
 .dashboardSidebar > .topBar,
 .dashboardSidebarCollapsed > .topBar {
-  grid-column: 2;
+  /* Edge-to-edge heading bar spanning both sidebar and main content.
+     Previously lived only in column 2, which left a noticeable gap to
+     the left of "H2O Atlas" above the filter drawer. */
+  grid-column: 1 / -1;
+  grid-row: 1;
   margin-right: 0;
 }
 
@@ -292,10 +296,13 @@ a {
 /* ── Desktop sidebar (always-visible, embedded in grid) ──── */
 .sidebar {
   grid-column: 1;
-  grid-row: 1 / 99;
+  /* Start on grid row 2 so the filter drawer aligns with the stats
+     row / map / selected-point content to its right — the heading
+     bar above (row 1) spans the full page width. */
+  grid-row: 2 / 99;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: calc(var(--topbar-h) + 0.5rem);
+  height: calc(100vh - var(--topbar-h) - 0.5rem);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -1424,6 +1431,75 @@ html[data-theme="dark"] .langDropdownItem:hover {
   font-weight: 600;
 }
 
+/* Colored bands mirror the map risk colors so the user can see at a
+   glance whether each model considers this specific sample high-risk. */
+.modelChipGood {
+  background: rgba(34, 197, 94, 0.12);
+  color: #166534;
+}
+.modelChipGood b { color: #14532d; }
+
+.modelChipWarn {
+  background: rgba(245, 158, 11, 0.16);
+  color: #8a5700;
+}
+.modelChipWarn b { color: #6b3e00; }
+
+.modelChipBad {
+  background: rgba(239, 68, 68, 0.16);
+  color: #9b1c1c;
+}
+.modelChipBad b { color: #7a1313; font-weight: 700; }
+
+/* Canonical model chip — a thin outline + weight bump so the user
+   knows which of the four drives the map's risk coloring. */
+.modelChipCanonical {
+  outline: 2px solid rgba(37, 99, 235, 0.5);
+  outline-offset: -2px;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .modelChipGood {
+  background: rgba(34, 197, 94, 0.18);
+  color: #a7f3d0;
+}
+html[data-theme="dark"] .modelChipGood b { color: #d1fae5; }
+html[data-theme="dark"] .modelChipWarn {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fcd34d;
+}
+html[data-theme="dark"] .modelChipWarn b { color: #fde68a; }
+html[data-theme="dark"] .modelChipBad {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+}
+html[data-theme="dark"] .modelChipBad b { color: #fecaca; }
+html[data-theme="dark"] .modelChipCanonical {
+  outline-color: rgba(99, 164, 255, 0.6);
+}
+
+/* Canonical model name shown next to "Model" label, e.g. "· LightGBM" */
+.pointCardModelName {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.7rem;
+  margin-left: 0.15rem;
+}
+
+/* Color the canonical-model probability text to match the map risk
+   band — a user asked for "high risk values to be highlighted red". */
+.pointCardProb {
+  font-weight: 600;
+  color: var(--text);
+}
+.pointCardProbGood { color: #14532d; }
+.pointCardProbWarn { color: #8a5700; }
+.pointCardProbBad  { color: #9b1c1c; font-weight: 700; }
+
+html[data-theme="dark"] .pointCardProbGood { color: #86efac; }
+html[data-theme="dark"] .pointCardProbWarn { color: #fde68a; }
+html[data-theme="dark"] .pointCardProbBad  { color: #fca5a5; }
+
 .modelChip::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -2090,17 +2166,75 @@ html[data-theme="dark"] .mapChipDivider {
   }
 
   .mapWithDetail > .selectedPointDesktop {
+    /* Match the exact height of the map so the two columns align and
+       the panel never extends past the map's bottom. Uses the same
+       clamp() as `.mapShell` — any change there propagates here. */
+    height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
+    /* Sticky so it stays beside the map as the user scrolls the page. */
     position: sticky;
-    top: calc(var(--topbar-h) + 0.6rem);
-    max-height: calc(100vh - var(--topbar-h) - 1.2rem);
-    overflow-y: auto;
+    top: calc(var(--topbar-h) + 0.5rem);
     margin: 0;
+    /* No outer scrollbars — the INNER content region handles its own
+       overflow below. Clipping horizontally also kills the vestigial
+       horizontal bar that appeared when an inner table was wider than
+       the 380px column. */
+    overflow: hidden;
+    /* Column layout: fixed header row + scrolling body row. */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* The header ("Selected point" + star btn) stays pinned at the top. */
+  .mapWithDetail > .selectedPointDesktop > .selectedPointHeader {
+    flex: 0 0 auto;
+  }
+
+  /* The body (pointGrid / clusterPickList / hint) scrolls vertically
+     within the fixed-height panel. `min-height: 0` lets the flex child
+     shrink below its intrinsic height so overflow actually clips. */
+  .mapWithDetail > .selectedPointDesktop > .pointGrid,
+  .mapWithDetail > .selectedPointDesktop > .clusterPickList {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+  }
+
+  /* Noselection hint occupies the body slot too. */
+  .mapWithDetail > .selectedPointDesktop > .hint {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   /* Inside the side panel the history / measurements sub-panels look
      cramped in a 2-column grid at 380px. Stack them instead. */
   .mapWithDetail > .selectedPointDesktop .pointGrid {
     grid-template-columns: 1fr;
+  }
+
+  /* Belt-and-suspenders against horizontal scroll: any nested card
+     must stay within the 380px column, long location strings break. */
+  .mapWithDetail > .selectedPointDesktop .reportPanel,
+  .mapWithDetail > .selectedPointDesktop .pointCardRow,
+  .mapWithDetail > .selectedPointDesktop .pointCardModels {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mapWithDetail > .selectedPointDesktop .reportPanel h4 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* History table: confine horizontal scroll to the .tableWrap so the
+     panel itself never gets a scrollbar. */
+  .mapWithDetail > .selectedPointDesktop .tableWrap {
+    overflow-x: auto;
+    max-width: 100%;
   }
 }
 
