@@ -2,6 +2,14 @@
 # Data and font files are immutable; snapshot must be cache-busted via a query
 # string (see Dashboard.tsx snapshot fetch) or by renaming when contents change.
 
+# The signed evidence package is rewritten every scheduled build and the
+# /verify page fetches it with `cache: "no-store"`. Serve it with `no-store`
+# so intermediate caches (Cloudflare edge, proxies) don't return a stale
+# signature after the Monday rebuild.
+/data/snapshot.aep
+  Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+
 /data/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *

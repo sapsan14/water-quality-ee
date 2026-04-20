@@ -172,6 +172,15 @@ jobs:
             --output-dir citizen-service/artifacts \
             --mode auto
 
+      # Publish the .aep alongside the public snapshot so the /verify page
+      # can fetch `/data/snapshot.aep` for the "Verify the current snapshot"
+      # button. The file changes every run and is fetched with `cache: "no-store"`
+      # from the frontend, so no cache-bust query string is needed.
+      - name: Publish .aep to frontend/public/data/
+        run: |
+          mkdir -p frontend/public/data
+          cp citizen-service/artifacts/snapshot.aep frontend/public/data/snapshot.aep
+
       - name: Commit and push refreshed snapshot + model + geocode caches
         run: |
           git config user.name  "github-actions[bot]"
@@ -184,7 +193,8 @@ jobs:
             citizen-service/data/geocode_cache.json \
             citizen-service/data/paged_address_cache.json \
             frontend/public/data/snapshot.frontend.json \
-            frontend/public/data/snapshot.history.json
+            frontend/public/data/snapshot.history.json \
+            frontend/public/data/snapshot.aep
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
@@ -200,5 +210,6 @@ jobs:
           path: |
             citizen-service/artifacts/snapshot.json
             citizen-service/artifacts/snapshot.aep
+            frontend/public/data/snapshot.aep
             frontend/public/data/snapshot.frontend.json
             frontend/public/data/snapshot.history.json
