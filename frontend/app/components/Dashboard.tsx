@@ -1531,7 +1531,8 @@ export default function Dashboard({ snapshot }: Props) {
     };
     const handle = idle(() => {
       if (!alive) return;
-      fetch("/data/estonia_counties_simplified.geojson", { cache: "force-cache" })
+      const geoUrl = `/data/estonia_counties_simplified.geojson?v=${process.env.NEXT_PUBLIC_SNAPSHOT_VERSION || "dev"}`;
+      fetch(geoUrl, { cache: "force-cache" })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => { if (alive) setCountyGeoJson(d); })
         .catch(() => { if (alive) setCountyGeoJson(null); });
@@ -1733,9 +1734,11 @@ export default function Dashboard({ snapshot }: Props) {
     if (historyLoaded && historyCache.current[selectedPlaceBase.id] === undefined) {
       // already tried loading
     }
-    // Lazy-load entire history file once, then cache
+    // Lazy-load entire history file once, then cache. Same immutable cache as
+    // the main snapshot — we cache-bust on the build stamp (see snapshot-client.ts).
     if (Object.keys(historyCache.current).length === 0) {
-      fetch("/data/snapshot.history.json")
+      const historyUrl = `/data/snapshot.history.json?v=${process.env.NEXT_PUBLIC_SNAPSHOT_VERSION || "dev"}`;
+      fetch(historyUrl, { cache: "force-cache" })
         .then((r) => r.ok ? r.json() : {})
         .then((all: Record<string, FrontendPlace["sample_history"]>) => {
           historyCache.current = all;
