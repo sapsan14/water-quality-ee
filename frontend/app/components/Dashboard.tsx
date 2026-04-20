@@ -3991,6 +3991,7 @@ export default function Dashboard({ snapshot }: Props) {
                   <span
                     className="iconTooltip"
                     data-tip={lruet(lang, "Домен / тип воды", "Domeen / vee tüüp", "Domain / water type")}
+                    title={lruet(lang, "Домен / тип воды", "Domeen / vee tüüp", "Domain / water type")}
                   >
                     <span className="cellIcon" style={{ color: "var(--brand)" }}>
                       <Icon name="drop" />
@@ -4002,6 +4003,8 @@ export default function Dashboard({ snapshot }: Props) {
                     className="linkBtn iconTooltip"
                     style={{ padding: 0 }}
                     data-tip={lruet(lang, "Официальный статус", "Ametlik staatus", "Official status")}
+                    title={lruet(lang, "Официальный статус", "Ametlik staatus", "Official status")}
+                    aria-label={lruet(lang, "Официальный статус", "Ametlik staatus", "Official status")}
                     onClick={() =>
                       openInfo(
                         lruet(lang, "Официальный статус", "Ametlik staatus", "Official status"),
@@ -4022,6 +4025,8 @@ export default function Dashboard({ snapshot }: Props) {
                     className="linkBtn iconTooltip"
                     style={{ padding: 0 }}
                     data-tip={lruet(lang, "Риск модели (ML)", "Mudeli risk (ML)", "Model risk (ML)")}
+                    title={lruet(lang, "Риск модели (ML)", "Mudeli risk (ML)", "Model risk (ML)")}
+                    aria-label={lruet(lang, "Риск модели (ML)", "Mudeli risk (ML)", "Model risk (ML)")}
                     onClick={() =>
                       openInfo(
                         lruet(lang, "Риск модели", "Mudeli risk", "Model risk"),
