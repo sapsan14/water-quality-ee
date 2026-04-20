@@ -2,6 +2,8 @@
 data/raw/
 data/processed/
 data/audit/
+# AI Act Phase 3: локальные приватные ключи signer'а (never commit)
+data/keys/
 
 # Python
 __pycache__/

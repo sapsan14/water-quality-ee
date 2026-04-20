@@ -191,31 +191,35 @@ def main() -> None:
         if not isinstance(measurements, dict):
             measurements = {}
 
-        out_places.append(
-            {
-                "id": str(p.get("sample_id") or f"place-{idx}"),
-                "location": location,
-                "domain": domain,
-                "place_kind": place_kind,
-                "county": county,
-                "sample_date": p.get("sample_date"),
-                "official_compliant": p.get("official_compliant"),
-                "coord_source": p.get("coord_source"),
-                "lat": float(lat),
-                "lon": float(lon),
-                "model_violation_prob": model_prob,
-                "lr_violation_prob": lr_prob,
-                "rf_violation_prob": rf_prob,
-                "gb_violation_prob": gb_prob,
-                "lgbm_violation_prob": lgbm_prob,
-                "risk_level": risk_from_prob(model_prob),
-                "has_model_prob": model_prob is not None,
-                "search_text": search_text,
-                "measurements_count": len(measurements),
-                "measurements": measurements,
-                "sample_history": sample_history[:12],
-            }
-        )
+        place_out = {
+            "id": str(p.get("sample_id") or f"place-{idx}"),
+            "location": location,
+            "domain": domain,
+            "place_kind": place_kind,
+            "county": county,
+            "sample_date": p.get("sample_date"),
+            "official_compliant": p.get("official_compliant"),
+            "coord_source": p.get("coord_source"),
+            "lat": float(lat),
+            "lon": float(lon),
+            "model_violation_prob": model_prob,
+            "lr_violation_prob": lr_prob,
+            "rf_violation_prob": rf_prob,
+            "gb_violation_prob": gb_prob,
+            "lgbm_violation_prob": lgbm_prob,
+            "risk_level": risk_from_prob(model_prob),
+            "has_model_prob": model_prob is not None,
+            "search_text": search_text,
+            "measurements_count": len(measurements),
+            "measurements": measurements,
+            "sample_history": sample_history[:12],
+        }
+        # AI Act Art 12 per-place provenance (optional; absent on older snapshots).
+        for provenance_key in ("prediction_id", "feature_hash", "model_version", "created_at"):
+            v = p.get(provenance_key)
+            if v:
+                place_out[provenance_key] = v
+        out_places.append(place_out)
 
     official_known = [x for x in out_places if isinstance(x.get("official_compliant"), int)]
     official_compliant_share = None
@@ -260,6 +264,11 @@ def main() -> None:
         },
         "places": out_places,
     }
+    # AI Act Art 12 snapshot-level provenance (optional; absent on older snapshots).
+    for provenance_key in ("model_version", "git_sha", "feature_hash_columns"):
+        v = payload.get(provenance_key)
+        if v is not None:
+            out_payload[provenance_key] = v
 
     # Split sample_history into a separate lazy-loaded file (saves ~3 MB from initial load)
     history_map: dict[str, list] = {}

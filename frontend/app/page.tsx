@@ -1,4 +1,5 @@
 import DashboardLoader from "./components/DashboardLoader";
+import DataGapNotice from "./components/DataGapNotice";
 import WebVitalsReporter from "./components/WebVitalsReporter";
 
 // The ~7 MB snapshot is now fetched client-side (see DashboardLoader +
@@ -10,6 +11,7 @@ export default function HomePage() {
   return (
     <main className="page">
       <WebVitalsReporter />
+      <DataGapNotice />
       <DashboardLoader />
       <footer className="footerNote">
         <p>
