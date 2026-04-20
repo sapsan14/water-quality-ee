@@ -422,11 +422,6 @@ export default function Dashboard({ snapshot }: Props) {
     return saved === "dark" ? "dark" : "light";
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [filtersPinned, setFiltersPinned] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    const saved = window.localStorage.getItem("water.ui.filters-pinned.v1");
-    return saved !== "false"; // default to pinned (true)
-  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("water.ui.sidebar-collapsed.v1") === "true";
@@ -1685,13 +1680,6 @@ export default function Dashboard({ snapshot }: Props) {
     return Math.round((officialPassShare * 0.6 + modelSafety * 0.4) * 100);
   }, [filtered, avgProb]);
 
-  const prognosis = lruet(
-    lang,
-    healthIndex >= 80 ? "Отлично" : healthIndex >= 65 ? "Стабильно" : healthIndex >= 45 ? "Нужен контроль" : "Критично",
-    healthIndex >= 80 ? "Väga hea" : healthIndex >= 65 ? "Stabiilne" : healthIndex >= 45 ? "Vajab jälgimist" : "Kriitiline",
-    healthIndex >= 80 ? "Excellent" : healthIndex >= 65 ? "Stable" : healthIndex >= 45 ? "Watch closely" : "Critical focus"
-  );
-
   const domainStats = useMemo(() => {
     const counts: Record<string, { total: number; violations: number; highRisk: number }> = {};
     filtered.forEach((p) => {
@@ -1756,6 +1744,11 @@ export default function Dashboard({ snapshot }: Props) {
       selectedPlaceBase.sample_history = historyCache.current[selectedPlaceBase.id];
     }
     return selectedPlaceBase;
+    // historyLoaded is a toggle that intentionally re-runs this memo after
+    // the lazy history fetch resolves, so the freshly-populated cache gets
+    // attached. Its value isn't read in the body, so reactive-deps flags
+    // it — removing would skip the attach on first render after load.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlaceBase, historyLoaded]);
 
   // Resolved places for a tapped co-located cluster (bottom-sheet list).
