@@ -335,10 +335,17 @@ function MarkerClusterLayer({
         //                  (~100px tall, ~66px wide)
         // Extra top padding also keeps the popup tip (popupAnchor -58)
         // from being cropped at the top edge.
+        // Popup content can reach ~320px tall (measurements + violation
+        // reason sections). With popupAnchor -58, the top of the popup
+        // sits ~380px above the pin. On non-fullscreen desktop the map
+        // is ~560–820px tall, so we need generous top padding to ensure
+        // autoPan slides the map far enough to reveal the whole bubble
+        // — otherwise the header wraps ("...по модели") get clipped
+        // against the chip bar / map top edge.
         marker.bindPopup(popupHtml(place, locale), {
           maxWidth: 360,
           autoPan: true,
-          autoPanPaddingTopLeft: L.point(20, 90),
+          autoPanPaddingTopLeft: L.point(20, 220),
           autoPanPaddingBottomRight: L.point(90, 110)
         });
 
@@ -781,6 +788,16 @@ function MapClient({
   const zoomIn = () => mapRef.current?.zoomIn();
   const zoomOut = () => mapRef.current?.zoomOut();
 
+  const countySampleCount = useMemo(() => {
+    const acc = new Map<string, number>();
+    for (const p of places) {
+      const county = countyDisplay((p.county || "").trim());
+      if (!county || p.model_violation_prob === null) continue;
+      acc.set(county, (acc.get(county) || 0) + 1);
+    }
+    return acc;
+  }, [places]);
+
   const countyStyle = useCallback((feature?: GeoJSON.Feature) => {
     const countyName = countyFeatureName(feature);
     const avg = countyRisk.get(countyName);
@@ -801,11 +818,61 @@ function MapClient({
 
   const onEachCounty = useCallback((feature: GeoJSON.Feature, layer: L.Layer) => {
     const countyName = countyFeatureName(feature);
+    // Bind a sticky tooltip so users can see WHY a county is gray vs.
+    // colored — the map legend explains the bands; the tooltip answers
+    // the per-county "which bucket am I?" question without a click.
+    const avg = countyRisk.get(countyName);
+    const nSamples = countySampleCount.get(countyName) ?? 0;
+    const bandLabel =
+      typeof avg !== "number"
+        ? locale === "ru"
+          ? "нет данных модели"
+          : locale === "et"
+            ? "mudeli andmeid pole"
+            : "no model data"
+        : avg >= 0.7
+          ? locale === "ru"
+            ? "высокий"
+            : locale === "et"
+              ? "kõrge"
+              : "high"
+          : avg >= 0.4
+            ? locale === "ru"
+              ? "средний"
+              : locale === "et"
+                ? "keskmine"
+                : "medium"
+            : locale === "ru"
+              ? "низкий"
+              : locale === "et"
+                ? "madal"
+                : "low";
+    const riskLine =
+      typeof avg === "number"
+        ? `${(avg * 100).toFixed(0)}% — ${bandLabel}`
+        : bandLabel;
+    const samplesLabelText =
+      locale === "ru" ? "проб с моделью" : locale === "et" ? "mudeliga proove" : "samples with model";
+    const riskLabelText =
+      locale === "ru" ? "Средний риск" : locale === "et" ? "Keskmine risk" : "Avg risk";
+    const tooltipHtml = `
+      <div style="font-size:12px;line-height:1.35">
+        <div style="font-weight:700;margin-bottom:2px">${countyName}</div>
+        <div style="color:#475569">${riskLabelText}: <b>${riskLine}</b></div>
+        <div style="color:#64748b">${nSamples} ${samplesLabelText}</div>
+      </div>
+    `;
+    layer.bindTooltip(tooltipHtml, {
+      sticky: true,
+      direction: "top",
+      opacity: 0.96,
+      className: "countyRiskTooltip"
+    });
     layer.on("click", () => {
       if (!countyName) return;
       onSelectCounty?.(countyName);
     });
-  }, [onSelectCounty]);
+  }, [countyRisk, countySampleCount, locale, onSelectCounty]);
 
   return (
     <div ref={mapShellRef} className={`mapShell ${isFullscreen ? "isFullscreen" : ""}`}>
@@ -883,6 +950,29 @@ function MapClient({
         {showCountyOverlay && countyGeoJson ? <GeoJSON data={countyGeoJson} style={countyStyle} onEachFeature={onEachCounty} /> : null}
       <MarkerClusterLayer places={visiblePlaces} locale={locale} onSelectPoint={onSelectPoint} onSelectCluster={onSelectCluster} disableHoverPopups={disableHoverPopups} />
       </MapContainer>
+      {showCountyOverlay ? (
+        <div className="countyLegend" role="note" aria-label={
+          locale === "ru"
+            ? "Легенда цветов уездов"
+            : locale === "et"
+              ? "Maakondade värvilegend"
+              : "County color legend"
+        }>
+          <div className="countyLegendTitle">
+            {locale === "ru"
+              ? "Уезды: средний риск по модели"
+              : locale === "et"
+                ? "Maakonnad: keskmine mudeli risk"
+                : "Counties: avg model risk"}
+          </div>
+          <ul className="countyLegendList">
+            <li><span className="countyLegendSwatch" style={{ background: "#22c55e" }} />{locale === "ru" ? "низкий < 40%" : locale === "et" ? "madal < 40%" : "low < 40%"}</li>
+            <li><span className="countyLegendSwatch" style={{ background: "#f59e0b" }} />{locale === "ru" ? "средний 40–70%" : locale === "et" ? "keskmine 40–70%" : "medium 40–70%"}</li>
+            <li><span className="countyLegendSwatch" style={{ background: "#ef4444" }} />{locale === "ru" ? "высокий ≥ 70%" : locale === "et" ? "kõrge ≥ 70%" : "high ≥ 70%"}</li>
+            <li><span className="countyLegendSwatch countyLegendSwatchMuted" />{locale === "ru" ? "нет данных модели" : locale === "et" ? "mudeli andmeid pole" : "no model data"}</li>
+          </ul>
+        </div>
+      ) : null}
       {children}
     </div>
   );
