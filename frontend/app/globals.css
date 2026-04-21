@@ -4398,6 +4398,38 @@ html[data-theme="dark"] .dateRangeSep {
   line-height: 1;
 }
 
+.langDialogWelcome {
+  margin: 2.2rem 0 0 0;
+  padding: 0 1.25rem;
+  text-align: center;
+}
+
+.langDialogBrand {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #38a3f1 0%, #7c5cf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.langDialogGreeting {
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin: 0.35rem 0 0 0;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 900px) {
+  .langDialogWelcome + .langDialogTitle {
+    margin-top: 1.1rem;
+  }
+}
+
 .langDialogTitle {
   font-size: 1.3rem;
   font-weight: 800;

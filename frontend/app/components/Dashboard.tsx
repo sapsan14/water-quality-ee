@@ -2223,6 +2223,10 @@ export default function Dashboard({ snapshot }: Props) {
             <div className="langDialogAccent" aria-hidden="true">
               <span className="langDialogIcon">💧</span>
             </div>
+            <div className="langDialogWelcome mobileOnly">
+              <p className="langDialogBrand">H2O Atlas</p>
+              <p className="langDialogGreeting">Tere tulemast · Добро пожаловать · Welcome</p>
+            </div>
             <p className="langDialogTitle">Choose language</p>
             <p className="langDialogSubtitle">Выберите язык</p>
             <p className="langDialogHint">Keel / Language / Язык</p>
