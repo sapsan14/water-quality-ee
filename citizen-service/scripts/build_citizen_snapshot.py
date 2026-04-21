@@ -5,14 +5,14 @@
 
 Координаты в файлах *_veeproovid_YYYY.xml нет; при load_all/load_domain подтягиваются
 официальные L-EST97→WGS84 из справочников opendata (supluskohad.xml и др.) → official_lat/lon.
-Если их нет — простой режим или --resolve-coordinates: Google → Geoapify;
+Если их нет — простой режим или --resolve-coordinates: Google Geocoding;
 кэш coordinate_resolve_cache.json. In-ADS и Nominatim не используются.
 --geocode-limit — лимит HTTP-запросов на всю сборку.
 
 Запуск из корня репозитория:
   python citizen-service/scripts/build_citizen_snapshot.py
   python citizen-service/scripts/build_citizen_snapshot.py --resolve-coordinates --geocode-limit 8000 --infer-county
-  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: Google→Geoapify
+  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: Google
   python citizen-service/scripts/build_citizen_snapshot.py --map-only
   python citizen-service/scripts/build_citizen_snapshot.py --infer-county
   python citizen-service/scripts/build_citizen_snapshot.py --log-level DEBUG  # подробный лог геокода/кэша
@@ -497,12 +497,11 @@ def geocode_address_simple(
     cache: dict,
     session: requests.Session,
     *,
-    geoapify_key: str | None,
     google_key: str | None,
     http_budget: int,
 ) -> tuple[float | None, float | None, str | None, int]:
     """
-    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе Google→Geoapify.
+    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе Google.
     Возвращает (lat, lon, coord_source, число_HTTP); lat/lon None при промахе.
     """
     clip = query[:88] + ("…" if len(query) > 88 else "")
@@ -523,8 +522,8 @@ def geocode_address_simple(
     used = 0
     if http_budget <= 0:
         return None, None, None, 0
-    if not geoapify_key and not google_key:
-        LOG.warning("coords simple: нет GEOAPIFY/GOOGLE key — пропуск query=%s", clip)
+    if not google_key:
+        LOG.warning("coords simple: нет GOOGLE_MAPS_GEOCODING_API_KEY — пропуск query=%s", clip)
         cache[query] = {"lat": None, "lon": None, "miss": True}
         return None, None, None, 0
 
@@ -552,33 +551,8 @@ def geocode_address_simple(
             )
             return float(res["lat"]), float(res["lon"]), "google", used
 
-    if geoapify_key and used < http_budget:
-        LOG.info("coords HTTP geoapify(simple) query=%s", clip)
-        time.sleep(0.25)
-        used += 1
-        try:
-            res = _geocode_resolve.geocode_geoapify(query, geoapify_key, session)
-        except (requests.RequestException, ValueError, KeyError) as e:
-            LOG.warning("coords geoapify(simple) error: %s", e)
-            res = None
-        if res:
-            cache[query] = {
-                "lat": res["lat"],
-                "lon": res["lon"],
-                "coord_source": "geoapify",
-                "matched_address": res.get("matched_address"),
-                "confidence": res.get("confidence"),
-            }
-            LOG.info(
-                "coords update-cache geoapify(simple) lat=%.5f lon=%.5f query=%s",
-                float(res["lat"]),
-                float(res["lon"]),
-                clip,
-            )
-            return float(res["lat"]), float(res["lon"]), "geoapify", used
-
     cache[query] = {"lat": None, "lon": None, "miss": True}
-    LOG.info("coords miss simple (google/geoapify) query=%s", clip)
+    LOG.info("coords miss simple (google) query=%s", clip)
     return None, None, None, used
 
 
@@ -614,7 +588,7 @@ def main() -> None:
     ap.add_argument(
         "--resolve-coordinates",
         action="store_true",
-        help="Google→Geoapify по вариантам адреса; --geocode-limit = лимит HTTP",
+        help="Google Geocoding по вариантам адреса; --geocode-limit = лимит HTTP",
     )
     ap.add_argument(
         "--log-level",
@@ -864,7 +838,6 @@ def main() -> None:
     )
     paged_addr_index = build_paged_address_index(session, use_cache=not args.no_cache_xml)
     LOG.info("Индекс адресов paged U/JV: %s записей", len(paged_addr_index))
-    geoapify_key = ((os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None)
     google_key = ((os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None)
     budget_remain = [max(0, int(args.geocode_limit))]
     api_calls = 0
@@ -873,11 +846,10 @@ def main() -> None:
     overridden_rows = 0
     n_map = len(latest)
     LOG.info(
-        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; Geoapify=%s; Google=%s",
+        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; Google=%s",
         n_map,
         args.resolve_coordinates,
         args.geocode_limit,
-        "да" if geoapify_key else "нет",
         "да" if google_key else "нет",
     )
     progress_every = max(1, int(args.progress_every))
@@ -926,7 +898,6 @@ def main() -> None:
                     [f"{paged_addr}, Eesti", f"{loc_name}, {paged_addr}, Eesti"],
                     resolve_cache=resolve_cache,
                     session=session,
-                    geoapify_api_key=geoapify_key,
                     google_api_key=google_key,
                     budget_remaining=budget_remain,
                     log=LOG,
@@ -943,7 +914,6 @@ def main() -> None:
                     queries,
                     resolve_cache=resolve_cache,
                     session=session,
-                    geoapify_api_key=geoapify_key,
                     google_api_key=google_key,
                     budget_remaining=budget_remain,
                     log=LOG,
@@ -960,7 +930,6 @@ def main() -> None:
                     q_addr,
                     cache,
                     session,
-                    geoapify_key=geoapify_key,
                     google_key=google_key,
                     http_budget=rem_addr,
                 )
@@ -990,7 +959,6 @@ def main() -> None:
                         query,
                         cache,
                         session,
-                        geoapify_key=geoapify_key,
                         google_key=google_key,
                         http_budget=rem,
                     )
@@ -1117,7 +1085,7 @@ def main() -> None:
 
     _timer_print(
         f"7) цикл координат по {len(latest)} точкам "
-        f"({'resolve: Google→Geoapify' if args.resolve_coordinates else 'Google→Geoapify (simple)'}; "
+        f"({'resolve: Google' if args.resolve_coordinates else 'Google (simple)'}; "
         f"HTTP остаток лимита: {budget_remain[0] if args.resolve_coordinates else '—'})",
         t_run,
         last,
@@ -1162,8 +1130,8 @@ def main() -> None:
     base_disclaimer = (
         "Официальный статус — по полю vastavus в данных Terviseamet. "
         "Координаты: при наличии — из справочников opendata Terviseamet (EPSG:3301→WGS84), см. coord_source terviseamet_*; "
-        "иначе при --resolve-coordinates или простом режиме с лимитом — Google→Geoapify. "
-        "coord_source=google|geoapify|geocode_cache (в старых снимках возможны opencage) — привязка к найденному адресу (см. geocode_matched_address в точке); "
+        "иначе при --resolve-coordinates или простом режиме с лимитом — Google Geocoding. "
+        "coord_source=google|geocode_cache (в старых снимках возможны geoapify/opencage) — привязка к найденному адресу (см. geocode_matched_address в точке); "
         "county_centroid — центроид уезда; approximate_ee — только визуальный разброс по bbox Эстонии, не место объекта."
     )
     model_note = (

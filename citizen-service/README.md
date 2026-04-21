@@ -34,12 +34,12 @@ python citizen-service/scripts/export_frontend_snapshot.py
 python citizen-service/scripts/build_citizen_snapshot.py
 # опционально: попробовать добавить домен mineraalvesi (если доступен в источнике)
 python citizen-service/scripts/build_citizen_snapshot.py --include-mineraalvesi
-# автоматически: геокод координат и уезда (GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY в .env)
+# автоматически: геокод координат и уезда (GOOGLE_MAPS_GEOCODING_API_KEY в .env)
 ./scripts/refresh_citizen_geo.sh --map-only
 ```
 
 Полностью без ручных флагов геокодирования: **GitHub Actions → Citizen snapshot** (cron или ручной запуск) уже собирает снимок с `--resolve-coordinates` и коммитит кэши.
-Секреты: **GOOGLE_MAPS_GEOCODING_API_KEY** (основной провайдер) и **GEOAPIFY_API_KEY** (fallback).
+Секрет: **GOOGLE_MAPS_GEOCODING_API_KEY**.
 
 Артефакты:
 

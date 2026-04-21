@@ -3,8 +3,8 @@
 Targeted geocoding for approximate_ee places in snapshot.json.
 
 Loads snapshot.json, finds all places with coord_source=approximate_ee,
-geocodes them via Google → Geoapify cascade, and patches
-the snapshot back. Falls back to county_centroid if geocoding fails.
+geocodes them via Google Geocoding, and patches the snapshot back.
+Falls back to county_centroid if geocoding fails.
 """
 import json
 import logging
@@ -106,15 +106,12 @@ def main():
     _load_dotenv()
     _prefer_certifi()
 
-    geoapify_key = (os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None
     google_key = (os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None
 
-    LOG.info("API keys: Google=%s Geoapify=%s",
-             "yes" if google_key else "NO",
-             "yes" if geoapify_key else "NO")
+    LOG.info("API keys: Google=%s", "yes" if google_key else "NO")
 
-    if not (google_key or geoapify_key):
-        LOG.error("No geocoding API keys found in environment. Aborting.")
+    if not google_key:
+        LOG.error("No GOOGLE_MAPS_GEOCODING_API_KEY found in environment. Aborting.")
         sys.exit(1)
 
     with open(SNAPSHOT_PATH, encoding="utf-8") as f:
@@ -155,7 +152,6 @@ def main():
             queries,
             resolve_cache=resolve_cache,
             session=session,
-            geoapify_api_key=geoapify_key,
             google_api_key=google_key,
             budget_remaining=budget,
             log=LOG,
