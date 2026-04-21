@@ -4224,7 +4224,7 @@ html[data-theme="dark"] .dateRangeSep {
      (🧭 ◎) at bottom-right. Both sit above the collapsed bottom sheet. */
   .leaflet-top.leaflet-left {
     top: auto !important;
-    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(84px + 0.8rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .leaflet-control-zoom {
@@ -4857,8 +4857,9 @@ html[data-theme="dark"] .freshnessDiag {
   .mapFloatingControls {
     gap: 0.32rem;
     right: calc(0.5rem + env(safe-area-inset-right, 0px));
-    /* Keep above the collapsed bottom sheet (62px) */
-    bottom: calc(62px + 0.8rem + env(safe-area-inset-bottom, 0px));
+    /* Keep above the collapsed bottom sheet (peeks 84px above the
+       viewport bottom, see .mobileBottomSheet.collapsed). */
+    bottom: calc(84px + 0.8rem + env(safe-area-inset-bottom, 0px));
   }
 
   .mapZoomControls {
