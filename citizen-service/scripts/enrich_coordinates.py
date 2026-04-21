@@ -7,7 +7,7 @@
 
   1. EEA Bathing Water FeatureServer (supluskoha — официальные GPS купальных мест ЕС)
   2. veevargid.xml  (vtiav.sm.ee — список объектов водопровода с L-EST97 координатами)
-  3. OpenCage Geocoding (все домены; ключ OPENCAGE_API_KEY)
+  3. Google → Geoapify Geocoding (все домены; ключи GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY)
 
 Результат:
   - обновлённый  citizen-service/artifacts/snapshot.json
@@ -19,7 +19,8 @@
   python citizen-service/scripts/enrich_coordinates.py --dry-run   # только статистика
 
 Переменные окружения:
-  OPENCAGE_API_KEY — ключ OpenCage (https://opencagedata.com). Без ключа — только EEA + veevargid.
+  GOOGLE_MAPS_GEOCODING_API_KEY — ключ Google Geocoding (основной внешний провайдер).
+  GEOAPIFY_API_KEY — ключ Geoapify (fallback). Без обоих — только EEA + veevargid.
 
 Этот скрипт НЕЗАВИСИМ от обучения моделей. snapshot.json содержит предсказания
 с прошлой полной сборки; обогащение меняет только поля lat/lon/coord_source.
@@ -315,24 +316,28 @@ def enrich(
     skip_veevargid: bool = False,
     dry_run: bool = False,
     verbose: bool = True,
-    opencage_api_key: Optional[str] = None,
+    google_api_key: Optional[str] = None,
+    geoapify_api_key: Optional[str] = None,
 ) -> dict:
     """
     Обогатить координаты в snapshot.json.
 
     Args:
-        limit:           максимум HTTP-запросов OpenCage на этот запуск.
-        domain_filter:   только этот домен (None = все).
-        skip_eea:        не запрашивать EEA (не нужен интернет для supluskoha).
-        skip_veevargid:  не пробовать veevargid.xml.
-        dry_run:         только статистика, не сохранять файлы.
-        opencage_api_key: ключ OpenCage (по умолчанию из OPENCAGE_API_KEY env).
+        limit:              максимум HTTP-запросов Geocoding на этот запуск.
+        domain_filter:      только этот домен (None = все).
+        skip_eea:           не запрашивать EEA (не нужен интернет для supluskoha).
+        skip_veevargid:     не пробовать veevargid.xml.
+        dry_run:            только статистика, не сохранять файлы.
+        google_api_key:     ключ Google Geocoding (по умолчанию из GOOGLE_MAPS_GEOCODING_API_KEY env).
+        geoapify_api_key:   ключ Geoapify (по умолчанию из GEOAPIFY_API_KEY env).
 
     Returns:
         Словарь со статистикой (source → count).
     """
-    if opencage_api_key is None:
-        opencage_api_key = os.environ.get("OPENCAGE_API_KEY") or None
+    if google_api_key is None:
+        google_api_key = (os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None
+    if geoapify_api_key is None:
+        geoapify_api_key = (os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None
 
     if not SNAPSHOT_PATH.exists():
         print(f"[enrich] snapshot.json не найден: {SNAPSHOT_PATH}")
@@ -363,7 +368,7 @@ def enrich(
     budget = [max(0, limit)]
     stats: dict[str, int] = {
         "already_ok": 0, "eea_bathing": 0, "veevargid": 0,
-        "opencage": 0, "unchanged": 0,
+        "google": 0, "geoapify": 0, "unchanged": 0,
     }
 
     for place in places:
@@ -379,14 +384,14 @@ def enrich(
         lat = lon = None
         new_src = None
 
-        # ── EEA для supluskoha (приоритет над OpenCage — официальные EU coords) ─
+        # ── EEA для supluskoha (приоритет — официальные EU coords) ─
         if domain == "supluskoha" and eea_data and src != "eea_bathing":
             m = _match_eea(loc, eea_data)
             if m:
                 lat, lon = m
                 new_src = "eea_bathing"
 
-        # ── veevargid для veevark (L-EST97 точнее OpenCage для водопровода) ────
+        # ── veevargid для veevark (L-EST97 точнее для водопровода) ────
         if lat is None and domain == "veevark" and vvg_data and src != "veevargid":
             m = vvg_data.get(_norm_name(loc))
             if m:
@@ -398,8 +403,8 @@ def enrich(
             stats["already_ok"] += 1
             continue
 
-        # ── OpenCage каскад ───────────────────────────────────────────────────
-        if lat is None and (opencage_api_key or budget[0] > 0):
+        # ── Google → Geoapify каскад ────────────────────────────────────────
+        if lat is None and (google_api_key or geoapify_api_key) and budget[0] > 0:
             fac = str(place.get("geocode_facility") or loc).strip()
             site = str(place.get("geocode_site") or "").strip()
             queries = _geo.build_geocode_queries(domain, loc, site, fac, county)
@@ -407,7 +412,8 @@ def enrich(
                 queries,
                 resolve_cache=resolve_cache,
                 session=session,
-                opencage_api_key=opencage_api_key,
+                google_api_key=google_api_key,
+                geoapify_api_key=geoapify_api_key,
                 budget_remaining=budget,
             )
             if got:
@@ -436,11 +442,11 @@ def enrich(
     print(f"[enrich] ИТОГО: {total} точек обработано")
     print(f"  уже с координатами: {stats['already_ok']}")
     print(f"  обогащено:          {resolved}")
-    for src in ("eea_bathing", "veevargid", "opencage"):
+    for src in ("eea_bathing", "veevargid", "google", "geoapify"):
         if stats.get(src, 0):
             print(f"    └─ {src}: {stats[src]}")
     print(f"  без координат:      {stats['unchanged']}")
-    print(f"  OpenCage бюджет остаток: {budget[0]} из {limit}")
+    print(f"  Geocoding бюджет остаток: {budget[0]} из {limit}")
     if not dry_run:
         print(f"  кэш:      {COORD_CACHE}")
         print(f"  snapshot: {SNAPSHOT_PATH}")
@@ -457,7 +463,7 @@ def main() -> None:
     )
     ap.add_argument(
         "--limit", type=int, default=200,
-        help="максимум HTTP-запросов OpenCage (по умолчанию 200)",
+        help="максимум HTTP-запросов Geocoding (по умолчанию 200)",
     )
     ap.add_argument(
         "--domain",

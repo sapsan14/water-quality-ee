@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Дозаполнить data/processed/county_geocode_cache.json через OpenCage (env OPENCAGE_API_KEY).
+Дозаполнить data/processed/county_geocode_cache.json через Google Geocoding (env GOOGLE_MAPS_GEOCODING_API_KEY).
 
 Запуск из корня репозитория (нужен интернет и ключи):
   pip install -r requirements.txt

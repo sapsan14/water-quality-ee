@@ -9,7 +9,7 @@
   - citizen-service/artifacts/coordinate_review_summary.json
 
 По умолчанию в очередь попадают точки с coord_source:
-  approximate_ee, county_centroid, opencage, geocode_cache, google
+  approximate_ee, county_centroid, geocode_cache, google, geoapify
 """
 
 from __future__ import annotations
@@ -34,9 +34,9 @@ OVERRIDES_TEMPLATE_JSON = ROOT / "citizen-service" / "data" / "coordinate_overri
 DEFAULT_REVIEW_SOURCES = {
     "approximate_ee",
     "county_centroid",
-    "opencage",
     "geocode_cache",
     "google",
+    "geoapify",
 }
 
 

@@ -18,7 +18,7 @@ The project is structured as a sequence of self-contained phases, each leaving b
 | 4 | **Baseline models** | LogReg / RandomForest / GradientBoosting / `GridSearchCV` in `notebooks/04_models.ipynb`, persisted as `trained_models.joblib`. |
 | 5 | **Evaluation** | `src/evaluate.py` (`temporal_cv_metrics`, `best_threshold_max_recall_at_precision`), confusion / ROC / feature-importance plots, `notebooks/05_evaluation.ipynb`, `docs/report.md` skeleton. |
 | 6 | **Advanced modelling** | LightGBM + temporal split + calibration + SHAP + decision threshold in `notebooks/06_advanced_models.ipynb`, `best_model.joblib`. |
-| 7 | **Citizen service v0** | `citizen-service/` data pipeline + `build_citizen_snapshot.py` + 4-domain geocoding cascade (In-ADS, Google, Nominatim, OpenCage). |
+| 7 | **Citizen service v0** | `citizen-service/` data pipeline + `build_citizen_snapshot.py` + geocoding cascade (Google → Geoapify). |
 | 8 | **Frontend** | Next.js public site with map, mobile/desktop UX, model-overview tooltips, info dialogs, accessibility polish (~40 merged PRs, #22–#69). |
 | 9 | **Audit infrastructure** | `src/audit/label_vs_norms.py` deterministic checker, `tests/test_label_vs_norms.py` (26 tests), `scripts/audit_xml_field_coverage.py` parser-parity tool, `notebooks/07_data_gaps_audit.ipynb`, `docs/data_gaps.md`, `docs/terviseamet_inquiry.md` **DRAFT**. |
 
