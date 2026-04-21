@@ -277,28 +277,13 @@ html[data-theme="dark"] .dashboardSidebarToggleStats:focus-visible {
   background: #ffffff;
 }
 
-.dashboardSidebar > .mapStatsRow,
-.dashboardSidebarCollapsed > .mapStatsRow {
-  grid-column: 2;
-  padding: 0.2rem 0.75rem;
-  font-size: 0.68rem;
-  gap: 0.25rem;
-  border-bottom: 1px solid #e4ecf5;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.dashboardSidebar > .mapStatsRow::-webkit-scrollbar,
-.dashboardSidebarCollapsed > .mapStatsRow::-webkit-scrollbar {
-  display: none;
-}
-
-.dashboardSidebar > .mapStatsRow .mapStat,
-.dashboardSidebarCollapsed > .mapStatsRow .mapStat {
-  min-height: 24px;
-  padding: 0.15rem 0.45rem;
-}
+/* Legacy `grid-column: 2` / font-size / flex-nowrap rules for the
+   stats row were REMOVED here — they came from when the row lived
+   inside .mainContent and kept overriding the newer `grid-area: stats`
+   full-width placement, which is why clicking the sidebar burger
+   collapsed the layout into two mis-sized columns. The canonical
+   stats-row styling now lives exclusively in the earlier
+   `.dashboardSidebar > .mapStatsRow` block (see ~line 195). */
 
 /* Toasts/bubbles/dialogs should span full width above sidebar */
 .dashboardSidebar > .toastBanner,
@@ -2460,10 +2445,17 @@ html[data-theme="dark"] .mapChipDivider {
     overflow-wrap: anywhere;
   }
 
-  /* History table: confine horizontal scroll to the .tableWrap so the
-     panel itself never gets a scrollbar. */
-  .mapWithDetail > .selectedPointDesktop .tableWrap {
+  /* Inside the side panel, drop the table wrap's own vertical
+     scrollbar — the outer `.pointGrid` already provides hidden
+     wheel/touch scroll, so having a nested `max-height: 220px;
+     overflow: auto` on `.tableWrap.compact` surfaced a redundant
+     visible scrollbar exactly where the user complained. Let the
+     tables flow naturally; the pane scrolls as a unit. */
+  .mapWithDetail > .selectedPointDesktop .tableWrap,
+  .mapWithDetail > .selectedPointDesktop .tableWrap.compact {
+    max-height: none;
     overflow-x: auto;
+    overflow-y: visible;
     max-width: 100%;
   }
 }
