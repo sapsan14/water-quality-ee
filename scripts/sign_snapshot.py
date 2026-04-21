@@ -65,30 +65,108 @@ def sha256_hex(blob: bytes) -> str:
 
 # ── HTTP backend client ───────────────────────────────────────────────────────
 
+# Aletheia backend contract (POST /api/sign). Confirmed against the live
+# backend on 2026-04-21 — see commit history of scripts/sign_snapshot.py and
+# docs/key_management.md for the session notes. Request / response shape is
+# defined by SignController in the aletheia-ai repo. The backend canonicalises,
+# hashes, signs (RSA-PSS-4096/SHA-256), optionally timestamps via RFC 3161,
+# and stores the record. It does NOT return a self-contained `.aep` bundle —
+# it returns JSON metadata. We package the JSON into our own `.aep` ZIP so
+# the verifier UI and the on-disk format stay uniform across backend and
+# local-dev signing modes.
+
 
 def sign_via_backend(payload: dict, backend_url: str, api_key: str | None, timeout: float = 30.0) -> bytes:
     import requests
 
+    canonical = canonicalize(payload)
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
+
+    commit_sha = os.environ.get("GITHUB_SHA", "")[:12] or "unknown"
+    # /api/sign's `response` field is "the text to sign" — we send the
+    # canonicalised snapshot JSON as a string. `modelId` identifies the
+    # signing-side grouping; we reuse the git SHA so every deploy is its own
+    # logical model version in Aletheia's records.
     body = {
-        "payload": payload,
-        "metadata": {
-            "artifact": "water-quality-ee/snapshot.json",
-            "commit": os.environ.get("GITHUB_SHA", "")[:12] or None,
-            "workflow_run": os.environ.get("GITHUB_RUN_ID") or None,
-        },
+        "response": canonical.decode("utf-8"),
+        "modelId": f"water-quality-ee/{commit_sha}",
+        "prompt": "citizen-snapshot refresh (AI Act Art 12 evidence)",
     }
     resp = requests.post(
-        backend_url.rstrip("/") + "/api/evidence/sign",
+        backend_url.rstrip("/") + "/api/sign",
         headers=headers,
         data=json.dumps(body, ensure_ascii=False, separators=(",", ":")),
         timeout=timeout,
     )
     resp.raise_for_status()
-    # Backend returns the .aep package as binary content.
-    return resp.content
+
+    # Backend returns:
+    #   { id, uuid, responseHash, signature, tsaToken, model, policyVersion, createdAt }
+    # We wrap that response (plus the original payload) into the same `.aep`
+    # ZIP shape used by local-dev signing so downstream consumers don't
+    # special-case the mode.
+    backend_resp = resp.json()
+    return _bundle_from_backend_response(canonical, backend_resp)
+
+
+def _bundle_from_backend_response(canonical_payload: bytes, backend_resp: dict) -> bytes:
+    """
+    Build a `.aep` ZIP from the backend's /api/sign JSON response.
+
+    Layout:
+      - payload.json        — the canonicalised snapshot bytes we sent
+      - manifest.json       — `{algorithm, mode=backend, payload_digest_sha256,
+                                signed_at, signer, aletheia_uuid, aletheia_id,
+                                policy_version}`
+      - signature.b64       — `backend_resp["signature"]` (base64 already)
+      - backend_response.json — the full backend JSON for auditability / the
+                                Aletheia console to look up the full record.
+    Backend mode does NOT bundle cert.pem or pubkey_spki.der — the trust
+    anchor for backend signatures is the Aletheia public key, distributed
+    out-of-band via `frontend/public/trust/aletheia-pubkey.pem`. See
+    docs/key_management.md §7.
+    """
+    digest = sha256_hex(canonical_payload)
+
+    # Sanity check: if the backend returned a hash, compare against ours.
+    backend_hash = str(backend_resp.get("responseHash") or "").lower()
+    if backend_hash and backend_hash != digest:
+        # Prefer the backend's hash in the manifest (that's the one the
+        # signature was computed over) but log the divergence — it means
+        # the backend canonicalises differently than we do.
+        manifest_digest = backend_hash
+        hash_note = f"local_hash_mismatch(local={digest}, backend={backend_hash})"
+    else:
+        manifest_digest = digest
+        hash_note = None
+
+    manifest = {
+        "algorithm": "aletheia-backend/RSA-PSS-SHA-256",
+        "payload_digest_sha256": manifest_digest,
+        "signed_at": backend_resp.get("createdAt"),
+        "mode": "backend",
+        "aep_format_version": "0.1",
+        "signer": str(backend_resp.get("model") or "aletheia"),
+        "aletheia_id": backend_resp.get("id"),
+        "aletheia_uuid": backend_resp.get("uuid"),
+        "policy_version": backend_resp.get("policyVersion"),
+        "tsa_token_included": bool(backend_resp.get("tsaToken")),
+    }
+    if hash_note:
+        manifest["hash_note"] = hash_note
+
+    signature_b64 = str(backend_resp.get("signature") or "")
+
+    import io
+    mem = io.BytesIO()
+    with zipfile.ZipFile(mem, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("payload.json", canonical_payload)
+        zf.writestr("manifest.json", canonicalize(manifest))
+        zf.writestr("signature.b64", signature_b64)
+        zf.writestr("backend_response.json", canonicalize(backend_resp))
+    return mem.getvalue()
 
 
 # ── Local signer (fallback + dev) ─────────────────────────────────────────────
@@ -210,7 +288,7 @@ def verify_local(aep_bytes: bytes) -> tuple[bool, str]:
     """Round-trip verification for local_dev mode. Returns (ok, reason)."""
     import io
 
-    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.asymmetric import padding
     from cryptography import x509
     from cryptography.exceptions import InvalidSignature
@@ -299,7 +377,7 @@ def main() -> int:
             if not ok:
                 return 1
         else:
-            print("[sign_snapshot] verify: backend mode — use /api/evidence/verify or the Phase 3.5 UI page")
+            print("[sign_snapshot] verify: backend mode — look up aletheia_uuid in the Aletheia console; online-verify path not yet wired")
     return 0
 
 
