@@ -166,7 +166,20 @@ a {
 }
 
 .dashboardSidebarCollapsed {
-  grid-template-columns: 44px 1fr;
+  /* When collapsed, the sidebar column is reclaimed entirely — the
+     filter drawer hides and the stats-row burger is the single point
+     of control for expand/collapse. Previously kept a 44px stub with
+     a duplicate burger icon inside the sidebar, which the user
+     rightly called out as redundant. */
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "header"
+    "stats"
+    "main";
+}
+
+.dashboardSidebarCollapsed > .sidebar {
+  display: none;
 }
 
 .mainContent {
@@ -2370,11 +2383,13 @@ html[data-theme="dark"] .mapChipDivider {
   }
 
   .mapWithDetail > .selectedPointDesktop {
-    /* Cap the panel at the map's height so it never extends past
-       the map's bottom, but let it shrink to its content when the
-       user collapses a sub-panel — leaving a blank strip below
-       the cards felt wasteful. */
-    max-height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
+    /* Match the map's height exactly, full stop. If content is
+       shorter the bottom of the card is empty (same as the map's
+       bottom edge); if content is longer, it scrolls internally
+       via the inner `.pointGrid` below — but the scrollbar is
+       hidden visually so the panel reads as a single clean card
+       aligned with the map. */
+    height: clamp(560px, calc(100vh - var(--topbar-h) - 140px), 820px);
     /* Sticky so it stays beside the map as the user scrolls the page. */
     position: sticky;
     top: calc(var(--topbar-h) + 0.5rem);
@@ -2404,7 +2419,17 @@ html[data-theme="dark"] .mapChipDivider {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 2px;
+    /* Hide the scrollbar chrome so the panel reads as flush with
+       the map's edge — wheel/touch scroll still works. */
+    scrollbar-width: none;
+    padding-right: 0;
+  }
+
+  .mapWithDetail > .selectedPointDesktop > .pointGrid::-webkit-scrollbar,
+  .mapWithDetail > .selectedPointDesktop > .clusterPickList::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   /* Noselection hint occupies the body slot too. */

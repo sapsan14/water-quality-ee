@@ -2607,32 +2607,12 @@ export default function Dashboard({ snapshot }: Props) {
           ? `drawer panel ${drawerOpen ? "open" : ""}`
           : `sidebar ${sidebarCollapsed ? "sidebarCollapsed" : ""}`
       }>
-        {/* Desktop sidebar header: title + collapse toggle */}
+        {/* Desktop sidebar header: just the title. The collapse toggle
+            used to live here too, but now lives in the stats row above
+            (`.dashboardSidebarToggleStats`), so we don't double it up. */}
         {!isMobile ? (
           <div className="sidebarHeader">
-            {!sidebarCollapsed ? (
-              <span className="sidebarTitle">{t.filters}</span>
-            ) : null}
-            <button
-              className="sidebarToggleBtn"
-              onClick={() => {
-                const next = !sidebarCollapsed;
-                if (typeof window !== "undefined") window.localStorage.setItem("water.ui.sidebar-collapsed.v1", String(next));
-                setSidebarCollapsed(next);
-              }}
-              aria-label={sidebarCollapsed
-                ? lruet(lang, "Показать фильтры", "Näita filtreid", "Show filters")
-                : lruet(lang, "Скрыть фильтры", "Peida filtrid", "Hide filters")}
-              title={sidebarCollapsed
-                ? lruet(lang, "Показать фильтры", "Näita filtreid", "Show filters")
-                : lruet(lang, "Скрыть фильтры", "Peida filtrid", "Hide filters")}
-            >
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {sidebarCollapsed
-                  ? <><line x1="3" y1="6" x2="17" y2="6"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="14" x2="17" y2="14"/></>
-                  : <polyline points="11,4 5,10 11,16"/>}
-              </svg>
-            </button>
+            <span className="sidebarTitle">{t.filters}</span>
           </div>
         ) : (
           /* Mobile drawer header (existing) */
