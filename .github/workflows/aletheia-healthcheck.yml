@@ -1,0 +1,94 @@
+# Aletheia backend healthcheck — forces --mode backend so a missing or
+# unreachable backend fails loudly instead of silently falling back to the
+# local self-signed signer (which is what the weekly citizen-snapshot workflow
+# does via --mode auto).
+#
+# Use case: after rotating ALETHEIA_BACKEND_URL / ALETHEIA_API_KEY, or when
+# we want to confirm the backend is up without rebuilding the full snapshot.
+#
+# The workflow is workflow_dispatch-only (no cron, no push trigger) and makes
+# no commits: the .aep is produced in a tmp dir, inspected, and discarded.
+
+name: Aletheia healthcheck
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sign-and-inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install signer dependencies
+        run: pip install 'cryptography>=42' 'requests>=2.31'
+
+      - name: Check that secrets are populated
+        env:
+          ALETHEIA_BACKEND_URL: ${{ secrets.ALETHEIA_BACKEND_URL }}
+          ALETHEIA_API_KEY: ${{ secrets.ALETHEIA_API_KEY }}
+        run: |
+          if [ -z "${ALETHEIA_BACKEND_URL}" ]; then
+            echo "::error::ALETHEIA_BACKEND_URL secret is empty. Set it under Settings → Secrets → Actions."
+            exit 2
+          fi
+          echo "ALETHEIA_BACKEND_URL is set (value masked)."
+          if [ -z "${ALETHEIA_API_KEY}" ]; then
+            echo "::warning::ALETHEIA_API_KEY is empty — signing will proceed without a bearer token."
+          else
+            echo "ALETHEIA_API_KEY is set (value masked)."
+          fi
+
+      - name: Sign current snapshot via backend (forced)
+        env:
+          ALETHEIA_BACKEND_URL: ${{ secrets.ALETHEIA_BACKEND_URL }}
+          ALETHEIA_API_KEY: ${{ secrets.ALETHEIA_API_KEY }}
+        run: |
+          mkdir -p /tmp/aletheia-healthcheck
+          python scripts/sign_snapshot.py \
+            --input citizen-service/artifacts/snapshot.json \
+            --output-dir /tmp/aletheia-healthcheck \
+            --mode backend
+
+      - name: Inspect returned .aep bundle
+        run: |
+          AEP=/tmp/aletheia-healthcheck/snapshot.aep
+          if [ ! -f "${AEP}" ]; then
+            echo "::error::Backend did not produce ${AEP}."
+            exit 1
+          fi
+          SIZE=$(stat -c %s "${AEP}")
+          echo "Bundle size: ${SIZE} bytes"
+          if [ "${SIZE}" -lt 1024 ]; then
+            echo "::error::Bundle suspiciously small (< 1KB); likely an error page."
+            exit 1
+          fi
+          python - <<'PY'
+          import json, zipfile
+          path = "/tmp/aletheia-healthcheck/snapshot.aep"
+          with zipfile.ZipFile(path) as zf:
+              names = zf.namelist()
+              print("Entries:", names)
+              if "manifest.json" not in names:
+                  raise SystemExit("manifest.json missing — not a valid .aep bundle")
+              manifest = json.loads(zf.read("manifest.json"))
+          mode = manifest.get("mode")
+          print("manifest.mode      =", mode)
+          print("manifest.algorithm =", manifest.get("algorithm"))
+          print("manifest.signed_at =", manifest.get("signed_at"))
+          print("manifest.signer    =", manifest.get("signer"))
+          if mode == "local_dev":
+              raise SystemExit(
+                  "Backend signing fell back to local_dev — this means the "
+                  "backend responded but the script's backend path was not taken. "
+                  "This should not happen with --mode backend."
+              )
+          print("HEALTHCHECK OK — backend produced a non-local_dev signature.")
+          PY
