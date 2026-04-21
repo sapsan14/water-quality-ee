@@ -7,7 +7,6 @@ data_loader.py — Загрузка и парсинг данных о качес
 
 from __future__ import annotations
 
-import os
 import re
 from datetime import datetime
 from pathlib import Path
