@@ -100,6 +100,14 @@ def sign_via_backend(payload: dict, backend_url: str, api_key: str | None, timeo
         data=json.dumps(body, ensure_ascii=False, separators=(",", ":")),
         timeout=timeout,
     )
+    if not resp.ok:
+        # Surface the backend's error body before raising. Without this we only
+        # see "503 Server Error: ..." and have to round-trip with the backend
+        # team to learn whether the request was malformed, the key was invalid,
+        # the backend panicked, or something else. Truncated to 2 KiB so an
+        # accidental HTML error page doesn't flood the Actions log.
+        body_preview = (resp.text or "")[:2048]
+        print(f"[sign_snapshot] backend returned {resp.status_code}: {body_preview}", file=sys.stderr)
     resp.raise_for_status()
 
     # Backend returns:
