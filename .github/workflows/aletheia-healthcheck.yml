@@ -71,7 +71,7 @@ jobs:
             exit 1
           fi
           python - <<'PY'
-          import json, zipfile
+          import hashlib, json, zipfile
           path = "/tmp/aletheia-healthcheck/snapshot.aep"
           with zipfile.ZipFile(path) as zf:
               names = zf.namelist()
@@ -80,6 +80,10 @@ jobs:
                   raise SystemExit("manifest.json missing — not a valid .aep bundle")
               manifest = json.loads(zf.read("manifest.json"))
               sig = zf.read("signature.b64").decode("ascii", errors="replace").strip() if "signature.b64" in names else ""
+              payload_bytes = zf.read("payload.json") if "payload.json" in names else b""
+              signed_manifest_bytes = (
+                  zf.read("signed_manifest.json") if "signed_manifest.json" in names else None
+              )
           mode = manifest.get("mode")
           print("manifest.mode          =", mode)
           print("manifest.algorithm     =", manifest.get("algorithm"))
@@ -100,5 +104,29 @@ jobs:
               raise SystemExit("signature.b64 is empty — backend did not return a signature.")
           if not manifest.get("aletheia_uuid"):
               raise SystemExit("aletheia_uuid missing — backend response was malformed.")
+          if signed_manifest_bytes is None:
+              raise SystemExit(
+                  "signed_manifest.json missing — expected in aep_format_version >= 0.2. "
+                  "Backend signs the attestation (not the full payload) to fit the 512 KiB cap."
+              )
+          signed_manifest = json.loads(signed_manifest_bytes)
+          print("signed_manifest.dataset        =", signed_manifest.get("dataset"))
+          print("signed_manifest.snapshot_sha256=", signed_manifest.get("snapshot_sha256"))
+          print("signed_manifest.bytes          =", signed_manifest.get("bytes"))
+          print("signed_manifest.places_count   =", signed_manifest.get("places_count"))
+          # Integrity chain: payload.json bytes must match signed_manifest.snapshot_sha256.
+          actual_payload_hash = hashlib.sha256(payload_bytes).hexdigest()
+          expected_payload_hash = str(signed_manifest.get("snapshot_sha256") or "")
+          if actual_payload_hash != expected_payload_hash:
+              raise SystemExit(
+                  f"payload.json sha256={actual_payload_hash} != signed_manifest.snapshot_sha256={expected_payload_hash}"
+              )
+          # Integrity chain: signed_manifest.json bytes must match manifest.signed_manifest_sha256.
+          actual_manifest_hash = hashlib.sha256(signed_manifest_bytes).hexdigest()
+          expected_manifest_hash = str(manifest.get("signed_manifest_sha256") or "")
+          if expected_manifest_hash and actual_manifest_hash != expected_manifest_hash:
+              raise SystemExit(
+                  f"signed_manifest.json sha256={actual_manifest_hash} != manifest.signed_manifest_sha256={expected_manifest_hash}"
+              )
           print("HEALTHCHECK OK — backend signed snapshot; mode=" + str(mode))
           PY

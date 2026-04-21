@@ -76,23 +76,45 @@ def sha256_hex(blob: bytes) -> str:
 # local-dev signing modes.
 
 
+def _build_attestation(payload: dict, canonical_payload: bytes) -> dict:
+    """
+    Tiny object actually sent to /api/sign (the signed artefact). The full
+    snapshot JSON is too large for the backend's 512 KiB input cap — per the
+    backend team's guidance we sign an attestation containing the snapshot's
+    sha256 plus a few integrity-relevant fields. The full snapshot bytes are
+    still stored in the `.aep` ZIP; the verifier checks `sha256(payload.json)
+    == attestation.snapshot_sha256` to chain integrity from the signature to
+    the data.
+    """
+    commit_sha = os.environ.get("GITHUB_SHA", "")[:12] or "unknown"
+    places = payload.get("places") or []
+    return {
+        "dataset": "water-quality-ee",
+        "snapshot_sha256": sha256_hex(canonical_payload),
+        "bytes": len(canonical_payload),
+        "places_count": int(payload.get("places_count") or len(places)),
+        "generated_at": payload.get("generated_at"),
+        "model_version": payload.get("model_version"),
+        "git_sha": payload.get("git_sha") or commit_sha,
+    }
+
+
 def sign_via_backend(payload: dict, backend_url: str, api_key: str | None, timeout: float = 30.0) -> bytes:
     import requests
 
-    canonical = canonicalize(payload)
+    canonical_payload = canonicalize(payload)
+    attestation = _build_attestation(payload, canonical_payload)
+    canonical_attestation = canonicalize(attestation)
+
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
     commit_sha = os.environ.get("GITHUB_SHA", "")[:12] or "unknown"
-    # /api/sign's `response` field is "the text to sign" — we send the
-    # canonicalised snapshot JSON as a string. `modelId` identifies the
-    # signing-side grouping; we reuse the git SHA so every deploy is its own
-    # logical model version in Aletheia's records.
     body = {
-        "response": canonical.decode("utf-8"),
+        "response": canonical_attestation.decode("utf-8"),
         "modelId": f"water-quality-ee/{commit_sha}",
-        "prompt": "citizen-snapshot refresh (AI Act Art 12 evidence)",
+        "prompt": "water-quality snapshot attestation (AI Act Art 12 evidence)",
     }
     resp = requests.post(
         backend_url.rstrip("/") + "/api/sign",
@@ -100,54 +122,74 @@ def sign_via_backend(payload: dict, backend_url: str, api_key: str | None, timeo
         data=json.dumps(body, ensure_ascii=False, separators=(",", ":")),
         timeout=timeout,
     )
+    if not resp.ok:
+        # Surface the backend's error body before raising. Without this we only
+        # see "503 Server Error: ... for url ..." and have to round-trip with
+        # the backend team to learn whether the key is invalid, the payload
+        # shape is wrong, the backend panicked, etc. Truncated to 2 KiB so an
+        # accidental HTML error page doesn't flood the Actions log.
+        body_preview = (resp.text or "")[:2048]
+        print(
+            f"[sign_snapshot] backend returned {resp.status_code}: {body_preview}",
+            file=sys.stderr,
+        )
     resp.raise_for_status()
 
     # Backend returns:
     #   { id, uuid, responseHash, signature, tsaToken, model, policyVersion, createdAt }
-    # We wrap that response (plus the original payload) into the same `.aep`
-    # ZIP shape used by local-dev signing so downstream consumers don't
-    # special-case the mode.
     backend_resp = resp.json()
-    return _bundle_from_backend_response(canonical, backend_resp)
+    return _bundle_from_backend_response(canonical_payload, canonical_attestation, backend_resp)
 
 
-def _bundle_from_backend_response(canonical_payload: bytes, backend_resp: dict) -> bytes:
+def _bundle_from_backend_response(
+    canonical_payload: bytes,
+    canonical_attestation: bytes,
+    backend_resp: dict,
+) -> bytes:
     """
     Build a `.aep` ZIP from the backend's /api/sign JSON response.
 
     Layout:
-      - payload.json        — the canonicalised snapshot bytes we sent
-      - manifest.json       — `{algorithm, mode=backend, payload_digest_sha256,
-                                signed_at, signer, aletheia_uuid, aletheia_id,
-                                policy_version}`
-      - signature.b64       — `backend_resp["signature"]` (base64 already)
-      - backend_response.json — the full backend JSON for auditability / the
-                                Aletheia console to look up the full record.
-    Backend mode does NOT bundle cert.pem or pubkey_spki.der — the trust
-    anchor for backend signatures is the Aletheia public key, distributed
-    out-of-band via `frontend/public/trust/aletheia-pubkey.pem`. See
-    docs/key_management.md §7.
-    """
-    digest = sha256_hex(canonical_payload)
+      - payload.json          — the canonicalised snapshot bytes
+      - signed_manifest.json  — the tiny attestation that was actually sent
+                                to /api/sign and signed by Aletheia; contains
+                                `snapshot_sha256` which pins payload.json by
+                                hash.
+      - manifest.json         — `.aep`-format metadata (algorithm, mode,
+                                signed_at, signer, aletheia_uuid/id,
+                                policy_version, signature_target).
+      - signature.b64         — `backend_resp["signature"]` over the canonical
+                                bytes of signed_manifest.json.
+      - backend_response.json — the full backend JSON for auditability.
 
-    # Sanity check: if the backend returned a hash, compare against ours.
+    Integrity chain the verifier checks:
+      1. sha256(payload.json) == signed_manifest.snapshot_sha256  → data not
+         tampered with.
+      2. Aletheia signature of signed_manifest.json is valid (requires the
+         Aletheia public key; currently looked up via aletheia_uuid in the
+         Aletheia console — see docs/key_management.md §7).
+    """
+    payload_digest = sha256_hex(canonical_payload)
+    attestation_digest = sha256_hex(canonical_attestation)
+
+    # Sanity check: the backend signs the `response` text, so its responseHash
+    # must match our attestation digest (not the payload digest).
     backend_hash = str(backend_resp.get("responseHash") or "").lower()
-    if backend_hash and backend_hash != digest:
-        # Prefer the backend's hash in the manifest (that's the one the
-        # signature was computed over) but log the divergence — it means
-        # the backend canonicalises differently than we do.
-        manifest_digest = backend_hash
-        hash_note = f"local_hash_mismatch(local={digest}, backend={backend_hash})"
-    else:
-        manifest_digest = digest
-        hash_note = None
+    hash_note: str | None = None
+    if backend_hash and backend_hash != attestation_digest:
+        hash_note = (
+            f"attestation_hash_mismatch("
+            f"local={attestation_digest}, backend={backend_hash})"
+        )
 
     manifest = {
         "algorithm": "aletheia-backend/RSA-PSS-SHA-256",
-        "payload_digest_sha256": manifest_digest,
-        "signed_at": backend_resp.get("createdAt"),
         "mode": "backend",
-        "aep_format_version": "0.1",
+        "aep_format_version": "0.2",
+        "signature_target": "signed_manifest.json",
+        "signed_manifest_sha256": attestation_digest,
+        "payload_sha256": payload_digest,
+        "signed_at": backend_resp.get("createdAt"),
         "signer": str(backend_resp.get("model") or "aletheia"),
         "aletheia_id": backend_resp.get("id"),
         "aletheia_uuid": backend_resp.get("uuid"),
@@ -163,6 +205,7 @@ def _bundle_from_backend_response(canonical_payload: bytes, backend_resp: dict) 
     mem = io.BytesIO()
     with zipfile.ZipFile(mem, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("payload.json", canonical_payload)
+        zf.writestr("signed_manifest.json", canonical_attestation)
         zf.writestr("manifest.json", canonicalize(manifest))
         zf.writestr("signature.b64", signature_b64)
         zf.writestr("backend_response.json", canonicalize(backend_resp))
