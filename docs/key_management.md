@@ -30,7 +30,7 @@ The project deliberately does **not** own the root trust anchor. The backend own
 | Secret name | Content | Used by |
 |---|---|---|
 | `ALETHEIA_BACKEND_URL` | `https://aletheia.example.ee` (no trailing slash) | `scripts/sign_snapshot.py` in the citizen-snapshot workflow |
-| `ALETHEIA_API_KEY` | Bearer token for the `/api/evidence/sign` endpoint | same |
+| `ALETHEIA_API_KEY` | Bearer token for the `POST /api/sign` endpoint | same |
 | `ALETHEIA_LOCAL_KEY` | PEM-encoded RSA private key (only for fallback runs) | written to a tmpfile by the workflow; deleted at step end |
 | `ALETHEIA_LOCAL_CERT` | Matching X.509 cert PEM | same |
 
@@ -91,7 +91,7 @@ Do **not** publish retroactive "back-signed" snapshots; the point of the evidenc
 The `/verify` page uses two paths:
 
 - **Offline path.** Fetches `frontend/public/trust/aletheia-pubkey.pem` plus `previous-pubkeys.json`, verifies the signature via Web Crypto API. No backend call.
-- **Online path.** Sends the `.aep` to `ALETHEIA_BACKEND_URL/api/evidence/verify`, which returns a structured `{ok, signer, chain, timestamp}` response. Useful for RFC 3161 timestamp verification.
+- **Online path.** The Aletheia backend exposes signing at `POST /api/sign`; a matching verification endpoint is not yet wired into the `/verify` UI. For now the UI verifies only local_dev-signed bundles offline. Backend-signed bundles carry the `aletheia_uuid` + `aletheia_id` fields in the manifest — an auditor can look up the full record in the Aletheia console by UUID until we ship the online-verify path.
 
 A sanity-check rule for users: if both paths disagree, trust the **offline** result (the committed public key is the source of truth for this repository's users).
 

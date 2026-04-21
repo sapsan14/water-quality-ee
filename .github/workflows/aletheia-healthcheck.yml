@@ -79,16 +79,26 @@ jobs:
               if "manifest.json" not in names:
                   raise SystemExit("manifest.json missing — not a valid .aep bundle")
               manifest = json.loads(zf.read("manifest.json"))
+              sig = zf.read("signature.b64").decode("ascii", errors="replace").strip() if "signature.b64" in names else ""
           mode = manifest.get("mode")
-          print("manifest.mode      =", mode)
-          print("manifest.algorithm =", manifest.get("algorithm"))
-          print("manifest.signed_at =", manifest.get("signed_at"))
-          print("manifest.signer    =", manifest.get("signer"))
+          print("manifest.mode          =", mode)
+          print("manifest.algorithm     =", manifest.get("algorithm"))
+          print("manifest.signed_at     =", manifest.get("signed_at"))
+          print("manifest.signer        =", manifest.get("signer"))
+          print("manifest.aletheia_id   =", manifest.get("aletheia_id"))
+          print("manifest.aletheia_uuid =", manifest.get("aletheia_uuid"))
+          print("manifest.policy_ver    =", manifest.get("policy_version"))
+          print("manifest.tsa_included  =", manifest.get("tsa_token_included"))
+          print("signature.b64 length   =", len(sig), "chars")
           if mode == "local_dev":
               raise SystemExit(
                   "Backend signing fell back to local_dev — this means the "
                   "backend responded but the script's backend path was not taken. "
                   "This should not happen with --mode backend."
               )
-          print("HEALTHCHECK OK — backend produced a non-local_dev signature.")
+          if not sig:
+              raise SystemExit("signature.b64 is empty — backend did not return a signature.")
+          if not manifest.get("aletheia_uuid"):
+              raise SystemExit("aletheia_uuid missing — backend response was malformed.")
+          print("HEALTHCHECK OK — backend signed snapshot; mode=" + str(mode))
           PY

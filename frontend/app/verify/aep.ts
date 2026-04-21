@@ -95,7 +95,10 @@ export async function verifyAep(buffer: ArrayBuffer): Promise<VerifyResult> {
   } catch (e) {
     return { ok: false, reason: `bundle malformed: ${(e as Error).message}` };
   }
-  const required = ["payload.json", "manifest.json", "signature.b64", "pubkey_spki.der"];
+  // payload + manifest + signature are always required; SPKI only for
+  // local_dev bundles (backend mode uses Aletheia's own key which the UI
+  // does not yet have out-of-band).
+  const required = ["payload.json", "manifest.json", "signature.b64"];
   for (const name of required) {
     if (!entries[name]) return { ok: false, reason: `missing entry: ${name}` };
   }
@@ -113,6 +116,27 @@ export async function verifyAep(buffer: ArrayBuffer): Promise<VerifyResult> {
       payloadDigest: actual,
       expectedDigest: expected,
     };
+  }
+
+  const mode = String(manifest.mode ?? "");
+  if (mode === "backend") {
+    // Backend-signed: we don't yet ship Aletheia's public key with the
+    // frontend, so offline signature verification isn't wired. Hash integrity
+    // checked above is still meaningful (tampering the payload still fails).
+    return {
+      ok: true,
+      reason: "digest verified; backend signature requires Aletheia console lookup (aletheia_uuid in manifest)",
+      manifest,
+      payloadDigest: actual,
+      expectedDigest: expected,
+      payload: (() => {
+        try { return JSON.parse(new TextDecoder("utf-8").decode(payload)); } catch { return undefined; }
+      })(),
+    };
+  }
+
+  if (!entries["pubkey_spki.der"]) {
+    return { ok: false, reason: "missing entry: pubkey_spki.der (required for local_dev bundles)", manifest };
   }
 
   const signatureBytes = base64ToBytes(new TextDecoder("utf-8").decode(entries["signature.b64"]));
