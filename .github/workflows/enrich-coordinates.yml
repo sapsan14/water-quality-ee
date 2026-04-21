@@ -46,7 +46,6 @@ jobs:
       - name: Enrich coordinates (EEA bathing water → veevargid.xml)
         run: |
           python citizen-service/scripts/enrich_coordinates.py \
-            --skip-opencage \
             --limit 0 \
             --quiet
 

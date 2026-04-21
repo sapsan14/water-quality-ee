@@ -124,7 +124,7 @@ Not applicable: public-sector opendata, no human subjects.
 - Numeric parsing: Estonian comma → decimal point in `src/data_loader.py::_parse_number`.
 - Date parsing: `sample_date` from XML `proovi_kuupaev` tag, dtype `datetime64[ns]`.
 - Location normalisation: `src/data_loader.py::normalize_location` strips suffixes, lowercases, collapses whitespace → `location_key`.
-- County inference: `src/county_infer.py::infer_county` (lookup + optional OpenCage geocoding; see `citizen-service/GEO_SECRETS.md`).
+- County inference: `src/county_infer.py::infer_county` (lookup + optional Google Geocoding via `GOOGLE_MAPS_GEOCODING_API_KEY`).
 - Label derivation: deterministic from `hinnang` (see §2 above).
 - Ratio features: each measurement divided by the corresponding norm in `features.NORMS` (or `features.NORMS_POOL` for basseinid). pool-specific pH range handled separately.
 - Missing indicators: `f"{col}_missing"` binary flags for all 15+ numeric parameters.

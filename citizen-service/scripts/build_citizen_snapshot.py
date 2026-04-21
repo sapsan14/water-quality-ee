@@ -5,14 +5,14 @@
 
 Координаты в файлах *_veeproovid_YYYY.xml нет; при load_all/load_domain подтягиваются
 официальные L-EST97→WGS84 из справочников opendata (supluskohad.xml и др.) → official_lat/lon.
-Если их нет — простой режим или --resolve-coordinates: Google → Geoapify → OpenCage;
-кэш coordinate_resolve_cache.json. Google / In-ADS / Nominatim не используются.
+Если их нет — простой режим или --resolve-coordinates: Google → Geoapify;
+кэш coordinate_resolve_cache.json. In-ADS и Nominatim не используются.
 --geocode-limit — лимит HTTP-запросов на всю сборку.
 
 Запуск из корня репозитория:
   python citizen-service/scripts/build_citizen_snapshot.py
   python citizen-service/scripts/build_citizen_snapshot.py --resolve-coordinates --geocode-limit 8000 --infer-county
-  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: Google→Geoapify→OpenCage
+  python citizen-service/scripts/build_citizen_snapshot.py --geocode-limit 300   # простой режим: Google→Geoapify
   python citizen-service/scripts/build_citizen_snapshot.py --map-only
   python citizen-service/scripts/build_citizen_snapshot.py --infer-county
   python citizen-service/scripts/build_citizen_snapshot.py --log-level DEBUG  # подробный лог геокода/кэша
@@ -75,17 +75,6 @@ COORD_OVERRIDES_PATH = ROOT / "citizen-service" / "data" / "coordinate_overrides
 PAGED_ADDR_CACHE_PATH = ROOT / "citizen-service" / "data" / "paged_address_cache.json"
 
 LOG = logging.getLogger("citizen.snapshot")
-
-
-def _opencage_inter_request_delay_sec() -> float:
-    """Пауза между запросами OpenCage (см. county_infer / OPENCAGE_MIN_DELAY_SEC)."""
-    raw = (os.environ.get("OPENCAGE_MIN_DELAY_SEC") or "").strip()
-    if raw:
-        try:
-            return max(0.15, float(raw))
-        except ValueError:
-            pass
-    return 0.55
 
 
 def _load_repo_dotenv() -> None:
@@ -509,48 +498,39 @@ def geocode_address_simple(
     session: requests.Session,
     *,
     geoapify_key: str | None,
-    opencage_key: str | None,
     google_key: str | None,
     http_budget: int,
 ) -> tuple[float | None, float | None, str | None, int]:
     """
-    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе Google→Geoapify→OpenCage.
+    Простой режим (без --resolve-coordinates): кэш geocode_cache.json, иначе Google→Geoapify.
     Возвращает (lat, lon, coord_source, число_HTTP); lat/lon None при промахе.
     """
     clip = query[:88] + ("…" if len(query) > 88 else "")
     if query in cache:
         c = cache[query]
         if c.get("lat") is not None and c.get("lon") is not None:
-            if not _geocode_resolve.geocode_cache_entry_is_precise_enough(c):
-                LOG.info(
-                    "coords simple-cache-ignore imprecise query=%s match=%s",
-                    clip,
-                    (str(c.get("matched_address") or ""))[:88],
-                )
-                del cache[query]
-            else:
-                src = str(c.get("coord_source") or "geocode_cache")
-                LOG.debug(
-                    "coords verified simple-cache lat=%.5f lon=%.5f source=%s query=%s",
-                    float(c["lat"]),
-                    float(c["lon"]),
-                    src,
-                    clip,
-                )
-                return float(c["lat"]), float(c["lon"]), src, 0
+            src = str(c.get("coord_source") or "geocode_cache")
+            LOG.debug(
+                "coords verified simple-cache lat=%.5f lon=%.5f source=%s query=%s",
+                float(c["lat"]),
+                float(c["lon"]),
+                src,
+                clip,
+            )
+            return float(c["lat"]), float(c["lon"]), src, 0
         elif c.get("miss"):
             return None, None, None, 0
     used = 0
     if http_budget <= 0:
         return None, None, None, 0
-    if not geoapify_key and not opencage_key and not google_key:
-        LOG.warning("coords simple: нет GEOAPIFY/OPENCAGE/GOOGLE key — пропуск query=%s", clip)
+    if not geoapify_key and not google_key:
+        LOG.warning("coords simple: нет GEOAPIFY/GOOGLE key — пропуск query=%s", clip)
         cache[query] = {"lat": None, "lon": None, "miss": True}
         return None, None, None, 0
 
     if google_key and used < http_budget:
         LOG.info("coords HTTP google(simple) query=%s", clip)
-        time.sleep(max(0.12, _opencage_inter_request_delay_sec() * 0.35))
+        time.sleep(0.15)
         used += 1
         try:
             res = _geocode_resolve.geocode_google(query, google_key, session)
@@ -574,7 +554,7 @@ def geocode_address_simple(
 
     if geoapify_key and used < http_budget:
         LOG.info("coords HTTP geoapify(simple) query=%s", clip)
-        time.sleep(max(0.15, _opencage_inter_request_delay_sec() * 0.5))
+        time.sleep(0.25)
         used += 1
         try:
             res = _geocode_resolve.geocode_geoapify(query, geoapify_key, session)
@@ -597,34 +577,8 @@ def geocode_address_simple(
             )
             return float(res["lat"]), float(res["lon"]), "geoapify", used
 
-    if opencage_key and used < http_budget:
-        LOG.info("coords HTTP opencage(simple) query=%s", clip)
-        time.sleep(_opencage_inter_request_delay_sec())
-        used += 1
-        try:
-            res = _geocode_resolve.geocode_opencage(query, opencage_key, session)
-        except (requests.RequestException, ValueError, KeyError) as e:
-            LOG.warning("coords opencage(simple) error: %s", e)
-            res = None
-        if res:
-            cache[query] = {
-                "lat": res["lat"],
-                "lon": res["lon"],
-                "coord_source": "opencage",
-                "matched_address": res.get("matched_address"),
-                "confidence": res.get("confidence"),
-                "oc_type": res.get("oc_type"),
-            }
-            LOG.info(
-                "coords update-cache opencage(simple) lat=%.5f lon=%.5f query=%s",
-                float(res["lat"]),
-                float(res["lon"]),
-                clip,
-            )
-            return float(res["lat"]), float(res["lon"]), "opencage", used
-
     cache[query] = {"lat": None, "lon": None, "miss": True}
-    LOG.info("coords miss simple (google/geoapify/opencage) query=%s", clip)
+    LOG.info("coords miss simple (google/geoapify) query=%s", clip)
     return None, None, None, used
 
 
@@ -655,12 +609,12 @@ def main() -> None:
     ap.add_argument(
         "--infer-county",
         action="store_true",
-        help="дозаполнить county через county_infer (кэш + Google→OpenCage; медленнее, точнее карта)",
+        help="дозаполнить county через county_infer (кэш + Google Geocoding; медленнее, точнее карта)",
     )
     ap.add_argument(
         "--resolve-coordinates",
         action="store_true",
-        help="Google→Geoapify→OpenCage по вариантам адреса; --geocode-limit = лимит HTTP",
+        help="Google→Geoapify по вариантам адреса; --geocode-limit = лимит HTTP",
     )
     ap.add_argument(
         "--log-level",
@@ -739,7 +693,7 @@ def main() -> None:
             "mineraalvesi был запрошен (--include-mineraalvesi), но не загружен: источник не отдаёт данные или вернул 0 строк"
         )
     if args.infer_county:
-        LOG.info("load_all: --infer-county — Google→OpenCage для локаций без county в кэше (лимит HTTP снят)")
+        LOG.info("load_all: --infer-county — Google Geocoding для локаций без county в кэше (лимит HTTP снят)")
     _timer_print("1) load_all — загрузка и парсинг XML → DataFrame", t_run, last)
     data_fetched_at = pd.Timestamp.now("UTC").isoformat()
 
@@ -912,7 +866,6 @@ def main() -> None:
     LOG.info("Индекс адресов paged U/JV: %s записей", len(paged_addr_index))
     geoapify_key = ((os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None)
     google_key = ((os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None)
-    opencage_key = ((os.environ.get("OPENCAGE_API_KEY") or "").strip() or None)
     budget_remain = [max(0, int(args.geocode_limit))]
     api_calls = 0
     rows_out = []
@@ -920,12 +873,11 @@ def main() -> None:
     overridden_rows = 0
     n_map = len(latest)
     LOG.info(
-        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; Geoapify=%s; OpenCage=%s; Google=%s",
+        "Координаты: мест на карте после дедупа=%s; resolve=%s; HTTP-бюджет=%s; Geoapify=%s; Google=%s",
         n_map,
         args.resolve_coordinates,
         args.geocode_limit,
         "да" if geoapify_key else "нет",
-        "да" if opencage_key else "нет",
         "да" if google_key else "нет",
     )
     progress_every = max(1, int(args.progress_every))
@@ -976,7 +928,6 @@ def main() -> None:
                     session=session,
                     geoapify_api_key=geoapify_key,
                     google_api_key=google_key,
-                    opencage_api_key=opencage_key,
                     budget_remaining=budget_remain,
                     log=LOG,
                 )
@@ -994,7 +945,6 @@ def main() -> None:
                     session=session,
                     geoapify_api_key=geoapify_key,
                     google_api_key=google_key,
-                    opencage_api_key=opencage_key,
                     budget_remaining=budget_remain,
                     log=LOG,
                 )
@@ -1011,7 +961,6 @@ def main() -> None:
                     cache,
                     session,
                     geoapify_key=geoapify_key,
-                    opencage_key=opencage_key,
                     google_key=google_key,
                     http_budget=rem_addr,
                 )
@@ -1042,7 +991,6 @@ def main() -> None:
                         cache,
                         session,
                         geoapify_key=geoapify_key,
-                        opencage_key=opencage_key,
                         google_key=google_key,
                         http_budget=rem,
                     )
@@ -1169,7 +1117,7 @@ def main() -> None:
 
     _timer_print(
         f"7) цикл координат по {len(latest)} точкам "
-        f"({'resolve: Google→Geoapify→OpenCage' if args.resolve_coordinates else 'Google→Geoapify→OpenCage (simple)'}; "
+        f"({'resolve: Google→Geoapify' if args.resolve_coordinates else 'Google→Geoapify (simple)'}; "
         f"HTTP остаток лимита: {budget_remain[0] if args.resolve_coordinates else '—'})",
         t_run,
         last,
@@ -1214,8 +1162,8 @@ def main() -> None:
     base_disclaimer = (
         "Официальный статус — по полю vastavus в данных Terviseamet. "
         "Координаты: при наличии — из справочников opendata Terviseamet (EPSG:3301→WGS84), см. coord_source terviseamet_*; "
-        "иначе при --resolve-coordinates или простом режиме с лимитом — Google→Geoapify→OpenCage. "
-        "coord_source=opencage|geocode_cache (в старых снимках возможны google) — привязка к найденному адресу (см. geocode_matched_address в точке); "
+        "иначе при --resolve-coordinates или простом режиме с лимитом — Google→Geoapify. "
+        "coord_source=google|geoapify|geocode_cache (в старых снимках возможны opencage) — привязка к найденному адресу (см. geocode_matched_address в точке); "
         "county_centroid — центроид уезда; approximate_ee — только визуальный разброс по bbox Эстонии, не место объекта."
     )
     model_note = (

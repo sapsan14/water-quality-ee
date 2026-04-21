@@ -10,11 +10,6 @@
 "lon": null,
 "miss": true
 },
-"opencage|nr 1 .puurkaevu kraan, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|nr 1 .puurkaevu kraan, eesti": {
 "lat": null,
 "lon": null,
@@ -55,11 +50,6 @@
 "lon": null,
 "miss": true
 },
-"opencage|jõulumäe uus puurkaev (66616), eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|jõulumäe uus puurkaev (66616), eesti": {
 "lat": null,
 "lon": null,
@@ -94,22 +84,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|piiri tn 2, 48307 jõgeva linn, jõgeva vald, jõgeva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|piiri tn 2, 48307 jõgeva linn, jõgeva vald, jõgeva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|jõgeva haigla taastusravi vesivõimlemise bassein, piiri tn 2, 48307 jõgeva linn, jõgeva vald, jõgeva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|jõgeva haigla taastusravi vesivõimlemise bassein, piiri tn 2, 48307 jõgeva linn, jõgeva vald, jõgeva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -124,22 +104,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|hariduse tn 15b, 20303 narva linn, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|hariduse tn 15b, 20303 narva linn, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|realida saunakeskuse bassein, hariduse tn 15b, 20303 narva linn, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|realida saunakeskuse bassein, hariduse tn 15b, 20303 narva linn, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -160,22 +130,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|proovivõtukraan, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|proovivõtukraan, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|unimäe puurkaev nr. 3, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|unimäe puurkaev nr. 3, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -190,22 +150,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|unimäe puurkaev nr. 3 — proovivõtukraan, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|unimäe puurkaev nr. 3 — proovivõtukraan, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|unimäe puurkaev nr. 3 — proovivõtukraan, estonia": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|unimäe puurkaev nr. 3 — proovivõtukraan, estonia": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -226,22 +176,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|vilja tn 34/4-10, võru linn, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|vilja tn 34/4-10, võru linn, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|võru lasteaed punamütsike bassein, vilja tn 34/4-10, võru linn, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|võru lasteaed punamütsike bassein, vilja tn 34/4-10, võru linn, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -268,11 +208,6 @@
 "lon": null,
 "miss": true
 },
-"opencage|ülemiste järv, vpj sissevool, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|ülemiste järv, vpj sissevool, eesti": {
 "lat": null,
 "lon": null,
@@ -295,22 +230,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|suislepa küla, viljandi vald, viljandi maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|suislepa küla, viljandi vald, viljandi maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|suislepa küla veevärk, suislepa küla, viljandi vald, viljandi maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|suislepa küla veevärk, suislepa küla, viljandi vald, viljandi maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -355,22 +280,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|koolimaja, lipa küla, rapla vald, rapla maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|koolimaja, lipa küla, rapla vald, rapla maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|lipa koolimaja, koolimaja, lipa küla, rapla vald, rapla maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|lipa koolimaja, koolimaja, lipa küla, rapla vald, rapla maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -397,22 +312,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|mihkli/1, 63504 karaski küla, kanepi vald, põlva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|mihkli/1, 63504 karaski küla, kanepi vald, põlva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|karaski pansionaadi ühisveevärk, mihkli/1, 63504 karaski küla, kanepi vald, põlva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|karaski pansionaadi ühisveevärk, mihkli/1, 63504 karaski küla, kanepi vald, põlva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -487,22 +392,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|ropka järve supluskoht, tartu maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|ropka järve supluskoht, tartu maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|ropka järve supluskoht, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|ropka järve supluskoht, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -565,11 +460,6 @@
 "lon": null,
 "miss": true
 },
-"opencage|rebala küla, jõelähtme vald, harju maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|rebala küla, jõelähtme vald, harju maakond, eesti": {
 "lat": null,
 "lon": null,
@@ -604,22 +494,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|veski, 46705 lavi küla, vinni vald, lääne-viru maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|veski, 46705 lavi küla, vinni vald, lääne-viru maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|lavi vesi oü allika veevärk, veski, 46705 lavi küla, vinni vald, lääne-viru maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|lavi vesi oü allika veevärk, veski, 46705 lavi küla, vinni vald, lääne-viru maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -646,22 +526,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|ruusamäe, ruusmäe küla, rõuge vald, võru maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|ruusamäe, ruusmäe küla, rõuge vald, võru maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|ruusmäe küla ühisveevärk, ruusamäe, ruusmäe küla, rõuge vald, võru maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|ruusmäe küla ühisveevärk, ruusamäe, ruusmäe küla, rõuge vald, võru maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
@@ -838,22 +708,12 @@
 "lon": null,
 "miss": true
 },
-"opencage|sika kaev, andre küla, põlva vald, põlva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
 "google|sika kaev, andre küla, põlva vald, põlva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true
 },
 "geoapify|andre küla veevärk, sika kaev, andre küla, põlva vald, põlva maakond, eesti": {
-"lat": null,
-"lon": null,
-"miss": true
-},
-"opencage|andre küla veevärk, sika kaev, andre küla, põlva vald, põlva maakond, eesti": {
 "lat": null,
 "lon": null,
 "miss": true

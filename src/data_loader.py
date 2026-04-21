@@ -802,8 +802,8 @@ def load_domain(
         domain_key: supluskoha | veevark | basseinid | joogivesi | mineraalvesi
         use_cache: читать data/raw/{domain}_{year}.xml
         years: список лет (по умолчанию текущий и 5 предыдущих)
-        infer_county: заполнить пустой maakond из overrides + кэша (+ опционально OpenCage)
-        geocode_county: HTTP к OpenCage (медленно; см. geocode_limit; ключ OPENCAGE_API_KEY из env)
+        infer_county: заполнить пустой maakond из overrides + кэша (+ опционально Google Geocoding)
+        geocode_county: HTTP к Google Geocoding (медленно; см. geocode_limit; ключ GOOGLE_MAPS_GEOCODING_API_KEY из env)
         geocode_limit: макс. новых геозапросов за вызов (None по умолчанию = все отсутствующие в кэше; для лимита укажите число)
     """
     if domain_key not in PARSERS:
@@ -844,11 +844,6 @@ def load_domain(
             df,
             geocode=geocode_county,
             geocode_limit=geocode_limit,
-            opencage_api_key=(
-                (os.environ.get("OPENCAGE_API_KEY") or "").strip() or None
-                if geocode_county
-                else None
-            ),
         )
     return df
 
@@ -864,7 +859,7 @@ def load_all(
     Загрузить несколько доменов и объединить в один DataFrame.
 
     infer_county выполняется один раз по объединённой таблице. При geocode_county=True и
-    geocode_limit=None (по умолчанию) к OpenCage идут все уникальные локации без county в кэше.
+    geocode_limit=None (по умолчанию) к Google Geocoding идут все уникальные локации без county в кэше.
     """
     if domains is None:
         domains = ["supluskoha", "veevark", "basseinid", "joogivesi"]
@@ -893,11 +888,6 @@ def load_all(
             combined,
             geocode=geocode_county,
             geocode_limit=geocode_limit,
-            opencage_api_key=(
-                (os.environ.get("OPENCAGE_API_KEY") or "").strip() or None
-                if geocode_county
-                else None
-            ),
         )
     return combined
 

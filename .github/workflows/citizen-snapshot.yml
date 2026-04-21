@@ -9,9 +9,9 @@
 # Координаты (каскад):
 #   1. EEA Bathing Water FeatureServer — официальные GPS купальных мест ЕС (supluskoha, без ключа)
 #   2. veevargid.xml — координаты объектов водопровода из vtiav.sm.ee (veevark, без ключа)
-#   3. Google Maps Geocoding → Geoapify → OpenCage — полный каскад для всех доменов.
+#   3. Google Maps Geocoding → Geoapify — полный каскад для всех доменов.
 #   4. patch_geocode_approximate.py — дополнительный проход для approximate_ee точек.
-# Секреты: OPENCAGE_API_KEY, GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY.
+# Секреты: GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY.
 # Лимит HTTP: dispatch → из inputs; cron → 4000. Кэши и артефакты коммитятся в репо.
 
 name: Citizen snapshot
@@ -31,7 +31,7 @@ on:
           - full
           - map-only
       geocode_limit:
-        description: "Лимит HTTP на каскад координат за этот запуск (OpenCage)."
+        description: "Лимит HTTP на каскад координат за этот запуск (Google/Geoapify)."
         type: string
         required: false
         default: "1200"
@@ -99,7 +99,6 @@ jobs:
       - name: Build snapshot — map-only (данные + координаты, без модели)
         if: steps.wf.outputs.mode != 'full'
         env:
-          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
           GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
           GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
@@ -113,7 +112,6 @@ jobs:
       - name: Build snapshot — full (данные + 4 модели + координаты)
         if: steps.wf.outputs.mode == 'full'
         env:
-          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
           GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
           GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
@@ -123,17 +121,17 @@ jobs:
             --geocode-limit "${{ steps.wf.outputs.geocode }}" \
             --log-level INFO
 
-      - name: Enrich coordinates (EEA bathing water → veevargid.xml → OpenCage cache)
+      - name: Enrich coordinates (EEA bathing water → veevargid.xml → Google/Geoapify cache)
         env:
-          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
+          GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
           python citizen-service/scripts/enrich_coordinates.py \
             --limit 0 \
             --quiet
 
-      - name: Geocode approximate_ee points (Google → Geoapify → OpenCage cascade)
+      - name: Geocode approximate_ee points (Google → Geoapify cascade)
         env:
-          OPENCAGE_API_KEY: ${{ secrets.OPENCAGE_API_KEY }}
           GOOGLE_MAPS_GEOCODING_API_KEY: ${{ secrets.GOOGLE_MAPS_GEOCODING_API_KEY }}
           GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
         run: |
