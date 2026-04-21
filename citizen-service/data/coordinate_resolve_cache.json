@@ -1569,5 +1569,15 @@
 "lat": 59.13393840000001,
 "lon": 24.9310304,
 "matched_address": "Järlepa, Rapla maakond, Eesti"
+},
+"google|nr 1 .puurkaevu kraan, põlva maakond, eesti": {
+"lat": 58.11606219999999,
+"lon": 27.2066395,
+"matched_address": "Põlva maakond, Eesti"
+},
+"google|jõulumäe uus puurkaev (66616), pärnu maakond, eesti": {
+"lat": 58.6209527,
+"lon": 25.0977548,
+"matched_address": "Uus, Suurejõe, 87602 Pärnu maakond, Eesti"
 }
 }
