@@ -106,6 +106,61 @@ export async function verifyAep(buffer: ArrayBuffer): Promise<VerifyResult> {
   const payload = entries["payload.json"];
   const manifestText = new TextDecoder("utf-8").decode(entries["manifest.json"]);
   const manifest = JSON.parse(manifestText) as Record<string, unknown>;
+  const mode = String(manifest.mode ?? "");
+
+  if (mode === "backend") {
+    // Backend mode (aep_format_version >= 0.2): Aletheia's signature is over
+    // signed_manifest.json (a small attestation, not the multi-MB snapshot).
+    // Integrity chain we verify here:
+    //   (1) sha256(payload.json)         == signed_manifest.snapshot_sha256
+    //   (2) sha256(signed_manifest.json) == manifest.signed_manifest_sha256
+    // The actual RSA signature of signed_manifest.json is verifiable only
+    // with Aletheia's public key, which the UI doesn't ship yet — auditors
+    // use aletheia_uuid to look up the record in the Aletheia console.
+    if (!entries["signed_manifest.json"]) {
+      return { ok: false, reason: "missing entry: signed_manifest.json (required for backend mode)", manifest };
+    }
+    const signedManifestBytes = entries["signed_manifest.json"];
+    const signedManifest = JSON.parse(new TextDecoder("utf-8").decode(signedManifestBytes)) as Record<string, unknown>;
+
+    const payloadDigest = await sha256Hex(payload);
+    const expectedPayloadDigest = String(signedManifest.snapshot_sha256 ?? "");
+    if (payloadDigest !== expectedPayloadDigest) {
+      return {
+        ok: false,
+        reason: "digest mismatch (tampered payload vs signed attestation)",
+        manifest,
+        payloadDigest,
+        expectedDigest: expectedPayloadDigest,
+      };
+    }
+
+    const signedManifestDigest = await sha256Hex(signedManifestBytes);
+    const expectedSignedManifestDigest = String(manifest.signed_manifest_sha256 ?? "");
+    if (expectedSignedManifestDigest && signedManifestDigest !== expectedSignedManifestDigest) {
+      return {
+        ok: false,
+        reason: "signed_manifest.json digest mismatch (tampered attestation)",
+        manifest,
+        payloadDigest: signedManifestDigest,
+        expectedDigest: expectedSignedManifestDigest,
+      };
+    }
+
+    return {
+      ok: true,
+      reason: "integrity chain verified; backend RSA signature requires Aletheia console lookup (aletheia_uuid in manifest)",
+      manifest,
+      payloadDigest,
+      expectedDigest: expectedPayloadDigest,
+      payload: (() => {
+        try { return JSON.parse(new TextDecoder("utf-8").decode(payload)); } catch { return undefined; }
+      })(),
+    };
+  }
+
+  // local_dev mode: signature is over payload.json, verified against the
+  // SPKI bundled with the .aep. Verifier shape unchanged from aep_format 0.1.
   const expected = String(manifest.payload_digest_sha256 ?? "");
   const actual = await sha256Hex(payload);
   if (expected !== actual) {
@@ -115,23 +170,6 @@ export async function verifyAep(buffer: ArrayBuffer): Promise<VerifyResult> {
       manifest,
       payloadDigest: actual,
       expectedDigest: expected,
-    };
-  }
-
-  const mode = String(manifest.mode ?? "");
-  if (mode === "backend") {
-    // Backend-signed: we don't yet ship Aletheia's public key with the
-    // frontend, so offline signature verification isn't wired. Hash integrity
-    // checked above is still meaningful (tampering the payload still fails).
-    return {
-      ok: true,
-      reason: "digest verified; backend signature requires Aletheia console lookup (aletheia_uuid in manifest)",
-      manifest,
-      payloadDigest: actual,
-      expectedDigest: expected,
-      payload: (() => {
-        try { return JSON.parse(new TextDecoder("utf-8").decode(payload)); } catch { return undefined; }
-      })(),
     };
   }
 
