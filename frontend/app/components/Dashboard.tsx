@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocalizedSubtitle from "./LocalizedSubtitle";
+import SignedBadge from "./SignedBadge";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 import { pointInFeature } from "../lib/geo";
@@ -3129,6 +3130,7 @@ export default function Dashboard({ snapshot }: Props) {
                 <span className="mapFreshnessValue">{modelTrainedLabel}</span>
               </div>
             ) : null}
+            <SignedBadge lang={lang} />
           </div>
         </MapClient>
       </section>

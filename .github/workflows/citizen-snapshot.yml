@@ -174,10 +174,11 @@ jobs:
       # can fetch `/data/snapshot.aep` for the "Verify the current snapshot"
       # button. The file changes every run and is fetched with `cache: "no-store"`
       # from the frontend, so no cache-bust query string is needed.
-      - name: Publish .aep to frontend/public/data/
+      - name: Publish .aep + .sig.json to frontend/public/data/
         run: |
           mkdir -p frontend/public/data
           cp citizen-service/artifacts/snapshot.aep frontend/public/data/snapshot.aep
+          cp citizen-service/artifacts/snapshot.sig.json frontend/public/data/snapshot.sig.json
 
       - name: Commit and push refreshed snapshot + model + geocode caches
         run: |
@@ -186,13 +187,15 @@ jobs:
           git add -f \
             citizen-service/artifacts/snapshot.json \
             citizen-service/artifacts/snapshot.aep \
+            citizen-service/artifacts/snapshot.sig.json \
             citizen-service/artifacts/citizen_model.joblib \
             citizen-service/data/coordinate_resolve_cache.json \
             citizen-service/data/geocode_cache.json \
             citizen-service/data/paged_address_cache.json \
             frontend/public/data/snapshot.frontend.json \
             frontend/public/data/snapshot.history.json \
-            frontend/public/data/snapshot.aep
+            frontend/public/data/snapshot.aep \
+            frontend/public/data/snapshot.sig.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
@@ -208,6 +211,8 @@ jobs:
           path: |
             citizen-service/artifacts/snapshot.json
             citizen-service/artifacts/snapshot.aep
+            citizen-service/artifacts/snapshot.sig.json
             frontend/public/data/snapshot.aep
+            frontend/public/data/snapshot.sig.json
             frontend/public/data/snapshot.frontend.json
             frontend/public/data/snapshot.history.json

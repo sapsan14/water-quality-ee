@@ -1,0 +1,11 @@
+{
+  "aletheia_id": 70,
+  "aletheia_uuid": "cedfb5fa-79b1-495b-a981-4bd01c606c52",
+  "algorithm": "aletheia-backend/RSA-PSS-SHA-256",
+  "bundle_filename": "snapshot.aep",
+  "mode": "backend",
+  "signed_at": "2026-04-21T16:41:38.242504551Z",
+  "signed_manifest_sha256": "286435d59d6442559e4146716c201b4c34de2fe85f68fd039ceb91bf96589cee",
+  "signer": "water-quality-ee/f3117fa86491",
+  "tsa_token_included": true
+}
