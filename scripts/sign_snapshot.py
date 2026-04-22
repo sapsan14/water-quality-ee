@@ -413,6 +413,25 @@ def main() -> int:
     out_path.write_bytes(aep_bytes)
     print(f"[sign_snapshot] mode={used_mode} wrote {out_path} ({len(aep_bytes)} bytes)")
 
+    sidecar_path = args.output_dir / (args.input.stem + ".sig.json")
+    with zipfile.ZipFile(out_path) as zf:
+        manifest = json.loads(zf.read("manifest.json"))
+    sidecar = {
+        "mode": manifest.get("mode"),
+        "signed_at": manifest.get("signed_at"),
+        "signer": manifest.get("signer"),
+        "algorithm": manifest.get("algorithm"),
+        "aletheia_uuid": manifest.get("aletheia_uuid"),
+        "aletheia_id": manifest.get("aletheia_id"),
+        "tsa_token_included": manifest.get("tsa_token_included"),
+        "signed_manifest_sha256": manifest.get("signed_manifest_sha256"),
+        "payload_digest_sha256": manifest.get("payload_digest_sha256"),
+        "bundle_filename": out_path.name,
+    }
+    sidecar = {k: v for k, v in sidecar.items() if v is not None}
+    sidecar_path.write_text(json.dumps(sidecar, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"[sign_snapshot] wrote {sidecar_path} ({sidecar_path.stat().st_size} bytes)")
+
     if args.verify:
         if used_mode == "local_dev":
             ok, reason = verify_local(aep_bytes)

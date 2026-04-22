@@ -1050,6 +1050,35 @@ html[data-theme="dark"] .langDropdownItem:hover {
 .mapFreshnessValue {
   font-weight: 500;
 }
+.signedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  pointer-events: auto;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.signedBadge:hover {
+  background: rgba(16, 185, 129, 0.2);
+  text-decoration: none;
+}
+.signedBadgeIcon {
+  font-size: 0.72rem;
+}
+html[data-theme="dark"] .signedBadge {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
 
 /* ── County color legend (desktop only) ──────────────────
    Explains the risk bands used to color the county overlay so
