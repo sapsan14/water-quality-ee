@@ -7,7 +7,7 @@
 
   1. EEA Bathing Water FeatureServer (supluskoha — официальные GPS купальных мест ЕС)
   2. veevargid.xml  (vtiav.sm.ee — список объектов водопровода с L-EST97 координатами)
-  3. Google → Geoapify Geocoding (все домены; ключи GOOGLE_MAPS_GEOCODING_API_KEY, GEOAPIFY_API_KEY)
+  3. Google Geocoding (все домены; ключ GOOGLE_MAPS_GEOCODING_API_KEY)
 
 Результат:
   - обновлённый  citizen-service/artifacts/snapshot.json
@@ -20,7 +20,7 @@
 
 Переменные окружения:
   GOOGLE_MAPS_GEOCODING_API_KEY — ключ Google Geocoding (основной внешний провайдер).
-  GEOAPIFY_API_KEY — ключ Geoapify (fallback). Без обоих — только EEA + veevargid.
+  Без ключа — только EEA + veevargid.
 
 Этот скрипт НЕЗАВИСИМ от обучения моделей. snapshot.json содержит предсказания
 с прошлой полной сборки; обогащение меняет только поля lat/lon/coord_source.
@@ -317,7 +317,6 @@ def enrich(
     dry_run: bool = False,
     verbose: bool = True,
     google_api_key: Optional[str] = None,
-    geoapify_api_key: Optional[str] = None,
 ) -> dict:
     """
     Обогатить координаты в snapshot.json.
@@ -329,15 +328,12 @@ def enrich(
         skip_veevargid:     не пробовать veevargid.xml.
         dry_run:            только статистика, не сохранять файлы.
         google_api_key:     ключ Google Geocoding (по умолчанию из GOOGLE_MAPS_GEOCODING_API_KEY env).
-        geoapify_api_key:   ключ Geoapify (по умолчанию из GEOAPIFY_API_KEY env).
 
     Returns:
         Словарь со статистикой (source → count).
     """
     if google_api_key is None:
         google_api_key = (os.environ.get("GOOGLE_MAPS_GEOCODING_API_KEY") or "").strip() or None
-    if geoapify_api_key is None:
-        geoapify_api_key = (os.environ.get("GEOAPIFY_API_KEY") or "").strip() or None
 
     if not SNAPSHOT_PATH.exists():
         print(f"[enrich] snapshot.json не найден: {SNAPSHOT_PATH}")
@@ -368,7 +364,7 @@ def enrich(
     budget = [max(0, limit)]
     stats: dict[str, int] = {
         "already_ok": 0, "eea_bathing": 0, "veevargid": 0,
-        "google": 0, "geoapify": 0, "unchanged": 0,
+        "google": 0, "unchanged": 0,
     }
 
     for place in places:
@@ -403,8 +399,8 @@ def enrich(
             stats["already_ok"] += 1
             continue
 
-        # ── Google → Geoapify каскад ────────────────────────────────────────
-        if lat is None and (google_api_key or geoapify_api_key) and budget[0] > 0:
+        # ── Google Geocoding ─────────────────────────────────────────────────
+        if lat is None and google_api_key and budget[0] > 0:
             fac = str(place.get("geocode_facility") or loc).strip()
             site = str(place.get("geocode_site") or "").strip()
             queries = _geo.build_geocode_queries(domain, loc, site, fac, county)
@@ -413,7 +409,6 @@ def enrich(
                 resolve_cache=resolve_cache,
                 session=session,
                 google_api_key=google_api_key,
-                geoapify_api_key=geoapify_api_key,
                 budget_remaining=budget,
             )
             if got:
@@ -442,7 +437,7 @@ def enrich(
     print(f"[enrich] ИТОГО: {total} точек обработано")
     print(f"  уже с координатами: {stats['already_ok']}")
     print(f"  обогащено:          {resolved}")
-    for src in ("eea_bathing", "veevargid", "google", "geoapify"):
+    for src in ("eea_bathing", "veevargid", "google"):
         if stats.get(src, 0):
             print(f"    └─ {src}: {stats[src]}")
     print(f"  без координат:      {stats['unchanged']}")

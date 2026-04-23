@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Пересборка citizen snapshot: координаты через каскад Google -> Geoapify.
+# Пересборка citizen snapshot: координаты через Google Geocoding.
 #
 # Примеры:
 #   ./scripts/refresh_citizen_geo.sh --map-only

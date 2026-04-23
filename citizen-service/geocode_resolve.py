@@ -2,13 +2,12 @@
 Каскадное получение координат (WGS84) для точек Terviseamet без lat/lon в XML.
 
 Порядок (для каждого варианта запроса из build_geocode_queries):
-  1) **Google Geocoding** — основной внешний провайдер при GOOGLE_MAPS_GEOCODING_API_KEY.
-  2) **Geoapify Geocoding** — fallback при GEOAPIFY_API_KEY (https://www.geoapify.com/).
+  1) **Google Geocoding** — единственный внешний провайдер при GOOGLE_MAPS_GEOCODING_API_KEY.
 
 In-ADS и публичный Nominatim не используются.
 
 Кэш JSON: citizen-service/data/coordinate_resolve_cache.json
-Ключи: "google|…" и "geoapify|…" (нормализованная строка запроса).
+Ключ: "google|…" (нормализованная строка запроса).
 """
 
 from __future__ import annotations
@@ -30,7 +29,6 @@ def _clip_q(q: str, n: int = 88) -> str:
     s = " ".join(str(q).split())
     return s if len(s) <= n else s[: n - 3] + "..."
 
-GEOAPIFY_GEOCODE_URL = "https://api.geoapify.com/v1/geocode/search"
 GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 USER_AGENT = "water-quality-ee-citizen/1.0 (research; contact: repo water-quality-ee)"
 
@@ -92,54 +90,6 @@ def _in_estonia_bbox(lat: float, lon: float) -> bool:
     return EE_LAT[0] < lat < EE_LAT[1] and EE_LON[0] < lon < EE_LON[1]
 
 
-def geocode_geoapify(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
-    r = session.get(
-        GEOAPIFY_GEOCODE_URL,
-        params={
-            "text": address,
-            "filter": "countrycode:ee",
-            "limit": 1,
-            "lang": "et",
-            "format": "json",
-            "apiKey": api_key,
-        },
-        headers={"User-Agent": USER_AGENT},
-        timeout=45,
-    )
-    r.raise_for_status()
-    data = r.json()
-    feats = data.get("results") or []
-    if not feats:
-        return None
-    first = feats[0]
-    try:
-        lat = float(first["lat"])
-        lon = float(first["lon"])
-    except (KeyError, TypeError, ValueError):
-        return None
-    if not _in_estonia_bbox(lat, lon):
-        return None
-    matched = str(first.get("formatted") or "").strip()
-    if matched.lower() in ("eesti", "estonia"):
-        return None
-    # Geoapify rank.confidence обычно [0..1].
-    rank = first.get("rank") if isinstance(first.get("rank"), dict) else {}
-    conf = rank.get("confidence")
-    try:
-        conf_f = float(conf) if conf is not None else None
-    except (TypeError, ValueError):
-        conf_f = None
-    if conf_f is not None and conf_f < 0.35:
-        return None
-    return {
-        "lat": lat,
-        "lon": lon,
-        "matched_address": matched,
-        "confidence": conf_f,
-        "provider_rank": rank,
-    }
-
-
 def geocode_google(address: str, api_key: str, session: requests.Session) -> Optional[dict]:
     r = session.get(
         GOOGLE_GEOCODE_URL,
@@ -198,9 +148,7 @@ def resolve_coordinates_cascade(
     *,
     resolve_cache: dict[str, Any],
     session: requests.Session,
-    geoapify_api_key: Optional[str] = None,
     google_api_key: Optional[str] = None,
-    delay_geoapify: float = 0.25,
     delay_google: float = 0.15,
     budget_remaining: list[int],
     log: Optional[logging.Logger] = None,
@@ -213,7 +161,6 @@ def resolve_coordinates_cascade(
     for raw_q in queries:
         nq = normalize_query_key(raw_q)
 
-        # 1) Google Geocoding — основной внешний провайдер.
         gg = f"google|{nq}"
         if google_api_key:
             if gg in resolve_cache:
@@ -249,43 +196,5 @@ def resolve_coordinates_cascade(
                     return ("google", res_gg["lat"], res_gg["lon"], res_gg.get("matched_address"))
                 resolve_cache[gg] = {"lat": None, "lon": None, "miss": True}
                 lg.info("coords miss google (cached) query=%s", _clip_q(raw_q))
-
-        # 2) Geoapify — fallback.
-        gk = f"geoapify|{nq}"
-        if geoapify_api_key:
-            if gk in resolve_cache:
-                ent = resolve_cache[gk]
-                if ent.get("miss"):
-                    lg.debug("coords cache-hit miss geoapify query=%s", _clip_q(raw_q))
-                elif ent.get("lat") is not None and ent.get("lon") is not None:
-                    return ("geoapify", float(ent["lat"]), float(ent["lon"]), ent.get("matched_address"))
-            elif budget_remaining[0] > 0:
-                budget_remaining[0] -= 1
-                lg.info(
-                    "coords HTTP geoapify budget_left=%s query=%s",
-                    budget_remaining[0],
-                    _clip_q(raw_q),
-                )
-                time.sleep(delay_geoapify)
-                try:
-                    res_g = geocode_geoapify(raw_q, geoapify_api_key, session)
-                except (requests.RequestException, ValueError, json.JSONDecodeError, KeyError):
-                    res_g = None
-                if res_g:
-                    resolve_cache[gk] = {
-                        "lat": res_g["lat"],
-                        "lon": res_g["lon"],
-                        "matched_address": res_g.get("matched_address"),
-                        "confidence": res_g.get("confidence"),
-                    }
-                    lg.info(
-                        "coords update-cache geoapify lat=%.5f lon=%.5f match=%s",
-                        float(res_g["lat"]),
-                        float(res_g["lon"]),
-                        _clip_q(str(res_g.get("matched_address") or "")),
-                    )
-                    return ("geoapify", res_g["lat"], res_g["lon"], res_g.get("matched_address"))
-                resolve_cache[gk] = {"lat": None, "lon": None, "miss": True}
-                lg.info("coords miss geoapify (cached) query=%s", _clip_q(raw_q))
 
     return None

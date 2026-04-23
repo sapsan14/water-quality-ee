@@ -9,7 +9,7 @@
   - citizen-service/artifacts/coordinate_review_summary.json
 
 По умолчанию в очередь попадают точки с coord_source:
-  approximate_ee, county_centroid, geocode_cache, google, geoapify
+  approximate_ee, county_centroid, geocode_cache, google
 """
 
 from __future__ import annotations
@@ -36,7 +36,6 @@ DEFAULT_REVIEW_SOURCES = {
     "county_centroid",
     "geocode_cache",
     "google",
-    "geoapify",
 }
 
 
