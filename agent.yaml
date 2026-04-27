@@ -1,0 +1,43 @@
+# water-quality-ee — declarative manifest (Aletheia / EATF RFC #72).
+#
+# This is the source of truth for the dataset-publisher agent that emits
+# signed snapshots from this repository. Every Monday at 05:00 UTC the
+# `Citizen snapshot` workflow rebuilds the model and publishes a `.aep`
+# evidence package; the agent identity makes those events attributable
+# in the Aletheia ledger.
+#
+# To register or update the agent (idempotent):
+#
+#   EATF_API_KEY=alth_live_... \
+#       npx -y @eatf/cli@latest agents sync agent.yaml
+#
+# The first call creates the agent on the API key's tenant; subsequent
+# calls patch mutable fields in place. Store the resulting URN as the
+# GitHub repository secret `ALETHEIA_AGENT_ID` so `scripts/sign_snapshot.py`
+# can attach each signed snapshot to it (see SignRequest.agentId in
+# sapsan14/aletheia-ai PR #82).
+#
+# Why DATASET_PUBLISHER (not CONVERSATIONAL/ANALYTICAL/ROBOTIC)?
+#   This agent does not take autonomous actions — it emits signed snapshots
+#   on a schedule. Aletheia treats this as low-action-risk; no human-in-
+#   the-loop approval workflow is required for each publish.
+
+agentId: urn:uuid:5b5b81f0-7c6f-44b1-a0a8-2c8fefcaf9a5
+displayName: h2oatlas snapshot publisher
+description: |
+  Probabilistic risk classifier for Estonian water-quality compliance.
+  Publishes a weekly signed snapshot (model + per-location predictions +
+  feature hashes) under EU AI Act Article 12 traceability requirements.
+  Live at https://h2oatlas.ee/.
+
+agentType: DATASET_PUBLISHER
+riskClassification: limited
+eidasLevel: advanced
+signatureAlgorithm: HYBRID
+primaryJurisdiction: EE
+
+capabilities:
+  - periodic_snapshot
+  - ml_pipeline
+  - evidence_package
+  - regulatory_traceability

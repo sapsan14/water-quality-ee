@@ -116,6 +116,14 @@ def sign_via_backend(payload: dict, backend_url: str, api_key: str | None, timeo
         "modelId": f"water-quality-ee/{commit_sha}",
         "prompt": "water-quality snapshot attestation (AI Act Art 12 evidence)",
     }
+    # Optional: when ALETHEIA_AGENT_ID is set (one-off registration via @eatf/cli
+    # `agents sync agent.yaml`, then stored as a GitHub secret), the backend
+    # attaches the resulting audit event to the registered DATASET_PUBLISHER
+    # agent. Without it the sign still works — the event is just unattributed,
+    # like every previous Monday until now.
+    agent_id = os.environ.get("ALETHEIA_AGENT_ID", "").strip()
+    if agent_id:
+        body["agentId"] = agent_id
     resp = requests.post(
         backend_url.rstrip("/") + "/api/sign",
         headers=headers,
@@ -182,10 +190,26 @@ def _bundle_from_backend_response(
             f"local={attestation_digest}, backend={backend_hash})"
         )
 
+    # Algorithm comes from the backend (sapsan14/aletheia-ai PR #82) — partner
+    # code no longer hard-codes a string. Fallback preserves the legacy label
+    # for backends not yet on PR #82 (which sign with PKCS#1 v1.5, not PSS).
+    primary_algorithm = (
+        str(backend_resp.get("signatureAlgorithm") or "").strip()
+        or "RSASSA-PKCS1-v1_5-SHA256"
+    )
+    pqc_algorithm = backend_resp.get("pqcAlgorithm")  # "ML-DSA-65" or None
+    signature_pqc_b64 = backend_resp.get("signaturePqc")  # str or None
+    pqc_public_key_pem = backend_resp.get("pqcPublicKey")  # str or None
+    rsa_legacy_b64 = (
+        backend_resp.get("signatureRsaLegacy")
+        or backend_resp.get("signature")
+        or ""
+    )
+
     manifest = {
-        "algorithm": "aletheia-backend/RSA-PSS-SHA-256",
+        "algorithm": primary_algorithm,
         "mode": "backend",
-        "aep_format_version": "0.2",
+        "aep_format_version": "0.3",
         "signature_target": "signed_manifest.json",
         "signed_manifest_sha256": attestation_digest,
         "payload_sha256": payload_digest,
@@ -195,11 +219,15 @@ def _bundle_from_backend_response(
         "aletheia_uuid": backend_resp.get("uuid"),
         "policy_version": backend_resp.get("policyVersion"),
         "tsa_token_included": bool(backend_resp.get("tsaToken")),
+        "pqc_algorithm": pqc_algorithm,
+        "pqc_signature_included": bool(signature_pqc_b64),
+        "rsa_legacy_signature_included": bool(rsa_legacy_b64),
+        "agent_id": os.environ.get("ALETHEIA_AGENT_ID", "").strip() or None,
     }
     if hash_note:
         manifest["hash_note"] = hash_note
 
-    signature_b64 = str(backend_resp.get("signature") or "")
+    signature_b64 = str(rsa_legacy_b64 or "")
 
     import io
     mem = io.BytesIO()
@@ -207,7 +235,13 @@ def _bundle_from_backend_response(
         zf.writestr("payload.json", canonical_payload)
         zf.writestr("signed_manifest.json", canonical_attestation)
         zf.writestr("manifest.json", canonicalize(manifest))
+        # signature.b64 stays the legacy RSA leg for backward-compat with any
+        # verifier that pre-dates v0.3 (manifest.json -> rsa_legacy_signature_included).
         zf.writestr("signature.b64", signature_b64)
+        if signature_pqc_b64:
+            zf.writestr("signature_pqc.b64", str(signature_pqc_b64))
+        if pqc_public_key_pem:
+            zf.writestr("pqc_public_key.pem", str(pqc_public_key_pem))
         zf.writestr("backend_response.json", canonicalize(backend_resp))
     return mem.getvalue()
 
