@@ -160,10 +160,32 @@ jobs:
       - name: Install signer dependencies
         run: pip install 'cryptography>=42' 'requests>=2.31'
 
+      # Idempotently register / refresh this repo's DATASET_PUBLISHER agent in
+      # Aletheia (RFC #72 manifest pattern). On the first run the URN in
+      # agent.yaml is created on the API key's tenant; on subsequent runs it
+      # patches mutable fields in place. continue-on-error so forks / PRs
+      # without ALETHEIA_API_KEY don't break the build — the sign step's
+      # local-dev fallback handles those.
+      - name: Sync agent.yaml to Aletheia (idempotent)
+        continue-on-error: true
+        env:
+          EATF_API_KEY: ${{ secrets.ALETHEIA_API_KEY }}
+          EATF_BASE_URL: ${{ secrets.ALETHEIA_BACKEND_URL }}
+        run: |
+          if [ -z "$EATF_API_KEY" ]; then
+            echo "ALETHEIA_API_KEY not set; skipping agent sync (local-dev fallback)."
+            exit 0
+          fi
+          npx -y @eatf/cli@latest agents sync agent.yaml
+
       - name: Sign snapshot → .aep
         env:
           ALETHEIA_BACKEND_URL: ${{ secrets.ALETHEIA_BACKEND_URL }}
           ALETHEIA_API_KEY: ${{ secrets.ALETHEIA_API_KEY }}
+          # URN copied from agent.yaml; the same constant value lives in
+          # both places so the workflow does not need to introspect YAML.
+          # Stored as a secret so it stays opaque in PR diffs.
+          ALETHEIA_AGENT_ID: ${{ secrets.ALETHEIA_AGENT_ID }}
         run: |
           python scripts/sign_snapshot.py \
             --input citizen-service/artifacts/snapshot.json \

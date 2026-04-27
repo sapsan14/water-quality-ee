@@ -20,6 +20,12 @@ const copy: Record<UiLang, {
   more: string;
   noFile: string;
   useFile: string;
+  postQuantum: string;
+  postQuantumIncluded: string;
+  postQuantumNotIncluded: string;
+  rsaLegacy: string;
+  agent: string;
+  aletheiaUuid: string;
 }> = {
   ru: {
     title: "Проверка снимка",
@@ -30,7 +36,7 @@ const copy: Record<UiLang, {
     verifyLive: "Проверить текущий снимок",
     waiting: "Проверяем…",
     signedAt: "Подписано",
-    algorithm: "Алгоритм",
+    algorithm: "Основной алгоритм",
     digest: "SHA-256 payload",
     mode: "Режим подписания",
     okBadge: "Подпись действительна",
@@ -38,6 +44,12 @@ const copy: Record<UiLang, {
     more: "Подробнее о процессе",
     noFile: "Файл не выбран.",
     useFile: "Выбран файл",
+    postQuantum: "Постквантовая подпись",
+    postQuantumIncluded: "ML-DSA-65 ✓",
+    postQuantumNotIncluded: "не включена",
+    rsaLegacy: "Легаси RSA",
+    agent: "Агент",
+    aletheiaUuid: "Aletheia UUID",
   },
   et: {
     title: "Snapshot'i verifikaator",
@@ -48,7 +60,7 @@ const copy: Record<UiLang, {
     verifyLive: "Kontrolli praegust snapshot'i",
     waiting: "Kontrollin…",
     signedAt: "Allkirjastatud",
-    algorithm: "Algoritm",
+    algorithm: "Põhialgoritm",
     digest: "SHA-256 payload",
     mode: "Allkirjastamise režiim",
     okBadge: "Allkiri kehtiv",
@@ -56,6 +68,12 @@ const copy: Record<UiLang, {
     more: "Rohkem protsessi kohta",
     noFile: "Faili pole valitud.",
     useFile: "Valitud fail",
+    postQuantum: "Kvantijärgne allkiri",
+    postQuantumIncluded: "ML-DSA-65 ✓",
+    postQuantumNotIncluded: "puudub",
+    rsaLegacy: "Vana RSA",
+    agent: "Agent",
+    aletheiaUuid: "Aletheia UUID",
   },
   en: {
     title: "Snapshot verifier",
@@ -66,7 +84,7 @@ const copy: Record<UiLang, {
     verifyLive: "Verify the current snapshot",
     waiting: "Verifying…",
     signedAt: "Signed at",
-    algorithm: "Algorithm",
+    algorithm: "Primary algorithm",
     digest: "SHA-256 payload",
     mode: "Signing mode",
     okBadge: "Signature valid",
@@ -74,6 +92,12 @@ const copy: Record<UiLang, {
     more: "More about the process",
     noFile: "No file chosen.",
     useFile: "Chosen file",
+    postQuantum: "Post-quantum signature",
+    postQuantumIncluded: "ML-DSA-65 ✓",
+    postQuantumNotIncluded: "not included",
+    rsaLegacy: "Legacy RSA",
+    agent: "Agent",
+    aletheiaUuid: "Aletheia UUID",
   },
 };
 
@@ -207,8 +231,68 @@ export default function VerifyPage() {
                 <dd>{String(result.manifest.signed_at ?? "")}</dd>
                 <dt>{t.algorithm}</dt>
                 <dd>{String(result.manifest.algorithm ?? "")}</dd>
+                {/* Post-quantum row: highlighted green when ML-DSA-65 is present.
+                    Hidden when there's no PQC info at all in the manifest (older
+                    bundles); shown as "not included" when the field is explicitly
+                    false so users can tell pre-PQC from PQC-disabled. */}
+                {(result.manifest.pqc_signature_included !== undefined ||
+                  Boolean(result.manifest.pqc_algorithm)) && (
+                  <>
+                    <dt>{t.postQuantum}</dt>
+                    <dd
+                      style={{
+                        color: result.manifest.pqc_signature_included
+                          ? "rgb(20, 110, 40)"
+                          : "var(--water-muted, #555)",
+                        fontWeight: result.manifest.pqc_signature_included
+                          ? 600
+                          : 400,
+                      }}
+                    >
+                      {result.manifest.pqc_signature_included
+                        ? t.postQuantumIncluded
+                        : t.postQuantumNotIncluded}
+                    </dd>
+                  </>
+                )}
+                {result.manifest.rsa_legacy_signature_included !== undefined && (
+                  <>
+                    <dt>{t.rsaLegacy}</dt>
+                    <dd style={{ color: "var(--water-muted, #555)" }}>
+                      {result.manifest.rsa_legacy_signature_included
+                        ? "✓"
+                        : "—"}
+                    </dd>
+                  </>
+                )}
                 <dt>{t.mode}</dt>
                 <dd>{String(result.manifest.mode ?? "")}</dd>
+                {Boolean(result.manifest.agent_id) && (
+                  <>
+                    <dt>{t.agent}</dt>
+                    <dd
+                      style={{
+                        wordBreak: "break-all",
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                      }}
+                    >
+                      {String(result.manifest.agent_id)}
+                    </dd>
+                  </>
+                )}
+                {Boolean(result.manifest.aletheia_uuid) && (
+                  <>
+                    <dt>{t.aletheiaUuid}</dt>
+                    <dd
+                      style={{
+                        wordBreak: "break-all",
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                      }}
+                    >
+                      {String(result.manifest.aletheia_uuid)}
+                    </dd>
+                  </>
+                )}
                 {result.payloadDigest && (
                   <>
                     <dt>{t.digest}</dt>
