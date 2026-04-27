@@ -1,11 +1,11 @@
 {
-  "aletheia_id": 122,
-  "aletheia_uuid": "a089a02c-2b58-4937-928a-50d69a1e5b99",
+  "aletheia_id": 123,
+  "aletheia_uuid": "bff8ce61-42f7-475c-a71d-e684a8b0193a",
   "algorithm": "ML-DSA-65",
   "bundle_filename": "snapshot.aep",
   "mode": "backend",
-  "signed_at": "2026-04-27T15:54:00.926447956Z",
-  "signed_manifest_sha256": "aaa0ceb385003225b8b0e986ccb55142d4a2b62603b01ce8bc4a5bac696b900f",
-  "signer": "water-quality-ee/39a5a9310024",
+  "signed_at": "2026-04-27T16:09:35.505614263Z",
+  "signed_manifest_sha256": "e488df9cf52dbf9b84fbcf70b6d6927cb3c8ce4ca983502ad30c70869f7e0dc5",
+  "signer": "water-quality-ee/76026779efd9",
   "tsa_token_included": true
 }
