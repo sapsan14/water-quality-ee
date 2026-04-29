@@ -1,0 +1,114 @@
+name: Social digest
+
+# Runs after the weekly Citizen snapshot completes successfully. Picks the
+# top-N most interesting places and posts about them to Facebook + LinkedIn.
+# Manually triggerable for testing — supports a dry-run mode that prints
+# the post bodies without calling any social API.
+
+on:
+  workflow_run:
+    workflows: ["Citizen snapshot"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Skip API calls (preview-only)"
+        type: boolean
+        default: true
+      lang:
+        description: "Post language"
+        type: choice
+        default: en
+        options: [en, ru]
+      limit:
+        description: "Max places to post per platform"
+        type: string
+        default: "3"
+
+jobs:
+  digest:
+    # Only post if (a) manually triggered, or (b) the upstream snapshot run
+    # actually succeeded — never post off a failed snapshot.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to push the updated state/social-last-post.json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          # Use the workflow_run event's HEAD SHA so we read the same
+          # snapshot the upstream workflow produced.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Compute flags
+        id: flags
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          LANG="${{ github.event.inputs.lang }}"
+          LIMIT="${{ github.event.inputs.limit }}"
+          echo "dry_run=${DRY_RUN:-false}" >> "$GITHUB_OUTPUT"
+          echo "lang=${LANG:-en}" >> "$GITHUB_OUTPUT"
+          echo "limit=${LIMIT:-3}" >> "$GITHUB_OUTPUT"
+
+      - name: Select candidates
+        id: select
+        run: |
+          node scripts/social/select-top.mjs --limit "${{ steps.flags.outputs.limit }}" > /tmp/candidates.json
+          cat /tmp/candidates.json
+          # Skip the rest of the job if there's nothing worth posting.
+          if [ "$(jq 'length' /tmp/candidates.json)" -eq 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post to Facebook
+        if: ${{ steps.select.outputs.skip != 'true' }}
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+        run: |
+          DRY_FLAG=""
+          if [ "${{ steps.flags.outputs.dry_run }}" = "true" ]; then DRY_FLAG="--dry-run"; fi
+          node scripts/social/post-fb.mjs $DRY_FLAG --lang "${{ steps.flags.outputs.lang }}" \
+            < /tmp/candidates.json > /tmp/posted-fb.json
+
+      - name: Sleep between platforms
+        if: ${{ steps.select.outputs.skip != 'true' }}
+        run: sleep 30
+
+      - name: Post to LinkedIn
+        if: ${{ steps.select.outputs.skip != 'true' }}
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+        run: |
+          DRY_FLAG=""
+          if [ "${{ steps.flags.outputs.dry_run }}" = "true" ]; then DRY_FLAG="--dry-run"; fi
+          node scripts/social/post-linkedin.mjs $DRY_FLAG --lang "${{ steps.flags.outputs.lang }}" \
+            < /tmp/candidates.json > /tmp/posted-linkedin.json
+
+      - name: Update state
+        if: ${{ steps.select.outputs.skip != 'true' && steps.flags.outputs.dry_run != 'true' }}
+        run: |
+          cat /tmp/posted-fb.json /tmp/posted-linkedin.json | node scripts/social/update-state.mjs
+
+      - name: Commit state changes
+        if: ${{ steps.select.outputs.skip != 'true' && steps.flags.outputs.dry_run != 'true' }}
+        run: |
+          if git diff --quiet -- state/social-last-post.json; then
+            echo "no state changes — skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state/social-last-post.json
+          git commit -m "chore(social): update last-post state [skip ci]"
+          git push

@@ -1,0 +1,20 @@
+{
+  "name": "h2oatlas-og-worker",
+  "version": "0.1.0",
+  "description": "Cloudflare Worker that renders 1200x630 Open Graph PNGs for h2oatlas.ee per-place share previews.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "workers-og": "^0.0.25"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240725.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.78.0"
+  }
+}

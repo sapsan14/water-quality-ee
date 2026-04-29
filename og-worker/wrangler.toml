@@ -1,0 +1,19 @@
+# Cloudflare Worker that renders Open Graph PNGs for h2oatlas.ee.
+# Deploy: cd og-worker && npx wrangler deploy
+# Local:  cd og-worker && npx wrangler dev   (serves http://localhost:8787)
+
+name = "h2oatlas-og"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+workers_dev = true
+
+# Bind a route on the production zone once `og.h2oatlas.ee` is set up in
+# Cloudflare DNS (CNAME → workers.dev or via Zone routes).
+# Comment back in after the DNS record exists — leaving it active before
+# the record is provisioned makes `wrangler deploy` fail on CI.
+# routes = [
+#   { pattern = "og.h2oatlas.ee/*", custom_domain = true }
+# ]
+
+[vars]
+OG_INDEX_URL = "https://h2oatlas.ee/data/og-index.json"

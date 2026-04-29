@@ -1,0 +1,5 @@
+{
+  "_doc": "Rolling state of social posts per place. Updated by .github/workflows/social-digest.yml after each successful run. Schema: { posts: { <place_id>: <ISO timestamp> } }. Limited to 200 newest entries to bound file size.",
+  "updated_at": null,
+  "posts": {}
+}

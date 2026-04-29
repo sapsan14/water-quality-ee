@@ -8,6 +8,8 @@ import SignedBadge from "./SignedBadge";
 import { track } from "../lib/analytics";
 import type { FrontendPlace, FrontendSnapshot } from "../lib/types";
 import { pointInFeature } from "../lib/geo";
+import { useSelectedPlaceUrl } from "../lib/url-state";
+import ShareButtons from "./ShareButtons";
 
 const MapClient = dynamic(() => import("./MapClient"), {
   ssr: false,
@@ -488,7 +490,9 @@ export default function Dashboard({ snapshot }: Props) {
   const [nearbyRadiusKm, setNearbyRadiusKm] = useState(10);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Mirror selectedId into ?place=<id> so locations are deep-linkable
+  // (FB / LinkedIn share previews, copy-link, browser Back button).
+  const [selectedId, setSelectedId] = useSelectedPlaceUrl();
   // When a co-located cluster is tapped on mobile, its child place IDs
   // are stored here so the bottom sheet can show a pick-list instead of
   // trying to spiderfy (which collapses right back on touch devices).
@@ -3290,6 +3294,12 @@ export default function Dashboard({ snapshot }: Props) {
                 })}
               </div>
               <span className="pointCardId">ID {selectedPlace.id}</span>
+              <ShareButtons
+                placeId={selectedPlace.id}
+                placeName={selectedPlace.location}
+                county={selectedPlace.county}
+                lang={lang}
+              />
             </div>
             <div className={`panel reportPanel reportPanelCollapsible ${measurementsOpen ? "" : "reportPanelClosed"}`}>
               <div className="reportPanelHeader">
