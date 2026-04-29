@@ -1764,6 +1764,53 @@ html[data-theme="dark"] .pointCardProbBad  { color: #fca5a5; }
   opacity: 0.6;
 }
 
+.shareButtons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.shareButtonsLabel {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-right: 0.15rem;
+}
+
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  background: var(--panel-soft, rgba(0, 0, 0, 0.02));
+  color: inherit;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+
+.shareBtn:hover { background: var(--panel-hover, rgba(0, 0, 0, 0.05)); }
+.shareBtn:active { transform: translateY(1px); }
+.shareBtn:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+
+.shareBtnFb { color: #1877f2; }
+.shareBtnLi { color: #0a66c2; }
+.shareBtnNative { color: var(--accent, #3b82f6); }
+
+html[data-theme="dark"] .shareBtn {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+html[data-theme="dark"] .shareBtn:hover { background: rgba(255, 255, 255, 0.08); }
+html[data-theme="dark"] .shareBtnFb { color: #60a5fa; }
+html[data-theme="dark"] .shareBtnLi { color: #7cb1ff; }
+
 .alertList {
   margin: 0;
   padding: 0;

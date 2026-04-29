@@ -23,11 +23,17 @@ const manrope = Manrope({
   variable: "--font-cyrillic-manrope"
 });
 
+const DEFAULT_OG_IMAGE = "/og-default.png";
+
 export const metadata: Metadata = {
   title: "H2O Atlas \u2014 Water Quality Map of Estonia",
   description:
     "Interactive map of Estonian water quality powered by Terviseamet open data and ML risk assessments. 69,000+ samples across swimming, drinking water, pools, and source domains.",
-  icons: { icon: "/favicon.svg" },
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
   metadataBase: new URL("https://h2oatlas.ee"),
   openGraph: {
     title: "H2O Atlas \u2014 Water Quality Map of Estonia",
@@ -37,12 +43,14 @@ export const metadata: Metadata = {
     siteName: "H2O Atlas",
     locale: "en",
     type: "website",
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: "H2O Atlas \u2014 Water Quality Map of Estonia" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "H2O Atlas \u2014 Water Quality Map of Estonia",
     description:
       "Interactive map of Estonian water quality powered by open data and ML assessments.",
+    images: [DEFAULT_OG_IMAGE],
   },
   alternates: {
     languages: {
@@ -51,6 +59,36 @@ export const metadata: Metadata = {
       en: "https://h2oatlas.ee",
     },
   },
+};
+
+// Schema.org JSON-LD: lets Google pick up the site for Dataset Search and
+// improves rich-result eligibility (sitelinks, breadcrumb). Two top-level
+// graph nodes: a WebSite (search intent) and a Dataset (open-data discovery).
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://h2oatlas.ee/#website",
+      url: "https://h2oatlas.ee",
+      name: "H2O Atlas",
+      description: "Interactive map of Estonian water quality powered by Terviseamet open data and ML risk assessments.",
+      inLanguage: ["et", "ru", "en"],
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://h2oatlas.ee/#dataset",
+      name: "H2O Atlas \u2014 Estonian Water Quality Snapshot",
+      description: "Aggregated and ML-scored snapshot of Estonian water quality samples (swimming, drinking water, pools, sources) from Terviseamet open data.",
+      url: "https://h2oatlas.ee",
+      keywords: ["water quality", "Estonia", "Terviseamet", "open data", "machine learning"],
+      license: "https://creativecommons.org/licenses/by/4.0/",
+      isAccessibleForFree: true,
+      creator: { "@type": "Organization", name: "TalTech Masin\u00f5pe 2026" },
+      sourceOrganization: { "@type": "Organization", name: "Terviseamet", url: "https://vtiav.sm.ee" },
+      spatialCoverage: { "@type": "Place", name: "Estonia" },
+    },
+  ],
 };
 
 // Explicit mobile viewport — Next 16 no longer injects a default tag, so
@@ -83,6 +121,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className={`${spaceGrotesk.variable} ${ibmPlexSans.variable} ${manrope.variable} cyr-ibm`}>{children}</body>
     </html>
