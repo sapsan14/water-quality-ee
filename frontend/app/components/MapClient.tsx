@@ -222,7 +222,8 @@ function popupHtml(place: FrontendPlace, locale: "ru" | "et" | "en") {
   `;
 }
 
-function clusterColor(avg: number) {
+function clusterColor(avg: number | null) {
+  if (avg === null) return "#94a3b8";
   if (avg >= 0.7) return "#ef4444";
   if (avg >= 0.4) return "#f59e0b";
   return "#22c55e";
@@ -291,7 +292,7 @@ function MarkerClusterLayer({
         const probs = children
           .map((m) => m.options?.place?.model_violation_prob)
           .filter((v: unknown) => typeof v === "number") as number[];
-        const avg = probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : 0.5;
+        const avg = probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : null;
         const color = clusterColor(avg);
         const count = c.getChildCount();
         const size = count > 99 ? 52 : count > 9 ? 48 : 44;
